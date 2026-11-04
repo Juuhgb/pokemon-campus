@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Encontro com Pokémon</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Nunito:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#fff6e5}
+a{color:#1d1b3a}a:hover{color:#ff5a4e}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #fff6e5; font-family: 'Nunito', system-ui, sans-serif; color: #1d1b3a; display: flex; flex-direction: column">
+
+  <div style="position: relative; height: 330px; flex-shrink: 0; background: #bfe3ff; border-bottom: 2.5px solid #1d1b3a; overflow: hidden">
+    <svg width="390" height="330" viewBox="0 0 390 330" aria-hidden="true" style="position: absolute; inset: 0">
+      <circle cx="320" cy="70" r="30" fill="#ffc23d" stroke="#1d1b3a" stroke-width="2.5"></circle>
+      <path d="M40 90 q20-22 44-6 q14-16 34 0 q16 4 10 18 h-92 q-10-6 4-12z" fill="#ffffff" stroke="#1d1b3a" stroke-width="2.5"></path>
+      <path d="M-10 250 Q 100 200 200 240 T 400 230 V 340 H -10 Z" fill="#9fd477" stroke="#1d1b3a" stroke-width="2.5"></path>
+      <ellipse cx="195" cy="262" rx="92" ry="20" fill="#7cc35c" stroke="#1d1b3a" stroke-width="2.5"></ellipse>
+    </svg>
+    <a href="Main.dc.html" aria-label="Voltar ao mapa" style="position: absolute; left: 16px; top: 16px; width: 48px; height: 48px; box-sizing: border-box; border-radius: 16px; background: #ffffff; border: 2.5px solid #1d1b3a; box-shadow: 3px 3px 0 #1d1b3a; display: flex; align-items: center; justify-content: center; color: #1d1b3a">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+    </a>
+    <span style="position: absolute; right: 16px; top: 20px; padding: 6px 12px; border-radius: 999px; background: #ffffff; border: 2.5px solid #1d1b3a; font-size: 13px; font-weight: 800">Some em 24:31</span>
+    <div style="position: absolute; left: 50%; top: 120px; transform: translateX(-50%)">
+      <dc-import name="Creature" kind="bolt" color="#ffc23d" size="140" hint-size="140px,140px"></dc-import>
+    </div>
+  </div>
+
+  <section aria-labelledby="enc-title" style="flex: 1; min-height: 0; padding: 20px 20px 28px; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px">
+      <div>
+        <h1 id="enc-title" style="margin: 0; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 36px; font-weight: 700; line-height: 1">Faiscão</h1>
+        <p style="margin: 6px 0 0; font-size: 15px; font-weight: 700; color: #5b587a">Um Pokémon selvagem apareceu!</p>
+      </div>
+      <span style="padding: 6px 12px; border-radius: 12px; background: #1d1b3a; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 18px; font-weight: 600; color: #ffc23d">Nv. 12</span>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 8px">
+      <span style="padding: 5px 12px; border-radius: 999px; background: #ffc23d; border: 2px solid #1d1b3a; font-size: 13px; font-weight: 800">Elétrico</span>
+      <span style="padding: 5px 12px; border-radius: 999px; background: #7ad88f; border: 2px solid #1d1b3a; font-size: 13px; font-weight: 800">Incomum</span>
+      <span style="padding: 5px 12px; border-radius: 999px; background: #ffffff; border: 2px solid #1d1b3a; font-size: 13px; font-weight: 800">Ciência da Computação</span>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 20px; background: {{rangeBg}}; border: 2.5px solid #1d1b3a; box-shadow: 4px 4px 0 #1d1b3a">
+      <span style="font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 34px; font-weight: 700; line-height: 1">{{distance}}</span>
+      <span style="flex: 1; font-size: 14px; font-weight: 800; line-height: 1.35">{{rangeText}}</span>
+    </div>
+
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 10px">
+      <sc-if value="{{enabled}}" hint-placeholder-val="{{ true }}">
+        <a href="Battle.dc.html" style="display: flex; align-items: center; justify-content: center; height: 62px; box-sizing: border-box; border-radius: 20px; text-decoration: none; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 22px; font-weight: 700; background: #ff5a4e; color: #1d1b3a; border: 2.5px solid #1d1b3a; box-shadow: 5px 5px 0 #1d1b3a">Batalhar / Capturar</a>
+      </sc-if>
+      <sc-if value="{{disabled}}" hint-placeholder-val="{{ false }}">
+        <button type="button" disabled style="height: 62px; border-radius: 20px; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 22px; font-weight: 700; background: #ece9f5; color: #5b587a; border: 2.5px dashed #1d1b3a">Batalhar / Capturar</button>
+      </sc-if>
+      <a href="Main.dc.html" style="display: flex; align-items: center; justify-content: center; min-height: 44px; font-size: 15px; font-weight: 800; text-decoration: underline; text-underline-offset: 3px">Voltar ao mapa</a>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"inRange":{"editor":"boolean","default":true},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const inRange = this.props.inRange ?? true;
+    return {
+      enabled: inRange,
+      disabled: !inRange,
+      distance: inRange ? '18 m' : '52 m',
+      rangeBg: inRange ? '#7ad88f' : '#ffffff',
+      rangeText: inRange ? 'Você está no alcance! Pode batalhar.' : 'Chegue a até 30 m para interagir. Faltam 22 m.',
+      buttonBg: inRange ? '#ff5a4e' : '#ece9f5',
+      buttonColor: inRange ? '#1d1b3a' : '#5b587a',
+      buttonBorderStyle: inRange ? 'solid' : 'dashed',
+      buttonShadow: inRange ? '5px 5px 0 #1d1b3a' : 'none',
+    };
+  }
+}
+</script>
+</body>
+</html>

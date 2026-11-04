@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Barra de navegação</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<nav aria-label="Navegação principal" style="width: 390px; height: 84px; box-sizing: border-box; padding: 10px 12px 14px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; background: #ffffff; border-top: 2.5px solid #1d1b3a; font-family: 'Fredoka', system-ui, sans-serif">
+  <sc-for list="{{tabs}}" as="tab" hint-placeholder-count="4">
+    <a href="{{tab.href}}" aria-current="{{tab.current}}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 56px; box-sizing: border-box; border-radius: 16px; text-decoration: none; font-size: 13px; font-weight: 600; color: #1d1b3a; background: {{tab.bg}}; border: 2.5px solid {{tab.border}}; box-shadow: {{tab.shadow}}">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <sc-if value="{{tab.isMap}}" hint-placeholder-val="{{ false }}"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"></path><path d="M9 4v14M15 6v14"></path></sc-if>
+        <sc-if value="{{tab.isCollection}}" hint-placeholder-val="{{ false }}"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"></path><path d="M5 17a3 3 0 0 1 3-3h11"></path></sc-if>
+        <sc-if value="{{tab.isTeam}}" hint-placeholder-val="{{ false }}"><circle cx="9" cy="8" r="3"></circle><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"></path><circle cx="17" cy="9" r="2.4"></circle><path d="M15.5 14.2c3 .2 5.5 2.6 5.5 5.8"></path></sc-if>
+        <sc-if value="{{tab.isProfile}}" hint-placeholder-val="{{ false }}"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></sc-if>
+      </svg>
+      {{tab.label}}
+    </a>
+  </sc-for>
+</nav>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"active":{"editor":"enum","options":["map","collection","team","profile"],"default":"map"},"$preview":{"width":390,"height":84}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const active = this.props.active ?? 'map';
+    const tabs = [
+      { id: 'map', label: 'Mapa', href: 'Main.dc.html' },
+      { id: 'collection', label: 'Coleção', href: 'Collection.dc.html' },
+      { id: 'team', label: 'Equipe', href: 'Team.dc.html' },
+      { id: 'profile', label: 'Perfil', href: 'Profile.dc.html' },
+    ].map((tab) => {
+      const on = tab.id === active;
+      return {
+        ...tab,
+        current: on ? 'page' : 'false',
+        bg: on ? '#ffc23d' : 'transparent',
+        border: on ? '#1d1b3a' : 'transparent',
+        shadow: on ? '3px 3px 0 #1d1b3a' : 'none',
+        isMap: tab.id === 'map',
+        isCollection: tab.id === 'collection',
+        isTeam: tab.id === 'team',
+        isProfile: tab.id === 'profile',
+      };
+    });
+    return { tabs };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Lançando a bola</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Nunito:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#fff6e5}
+a{color:#1d1b3a}a:hover{color:#ff5a4e}
+@keyframes pc-absorb{0%{transform:scale(1);opacity:1}100%{transform:scale(.05);opacity:0}}
+@keyframes pc-appear{0%{transform:scale(.2);opacity:0}60%{transform:scale(1.12);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes pc-shake-a{0%,100%{transform:rotate(0)}20%{transform:rotate(-22deg)}45%{transform:rotate(16deg)}70%{transform:rotate(-8deg)}85%{transform:rotate(3deg)}}
+@keyframes pc-shake-b{0%,100%{transform:rotate(0)}20%{transform:rotate(22deg)}45%{transform:rotate(-16deg)}70%{transform:rotate(8deg)}85%{transform:rotate(-3deg)}}
+@keyframes pc-click{0%{transform:scale(1)}30%{transform:scale(1.08,.9)}60%{transform:scale(.96,1.05)}100%{transform:scale(1)}}
+@keyframes pc-burst{0%{transform:translateY(0) rotate(0);opacity:1}40%{transform:translateY(-26px) rotate(-25deg);opacity:1}100%{transform:translateY(0) rotate(-90deg);opacity:.45}}
+@keyframes pc-out{0%{transform:scale(.1) translateY(60px);opacity:0}70%{transform:scale(1.1) translateY(-6px);opacity:1}100%{transform:scale(1) translateY(0);opacity:1}}
+@keyframes pc-spin{to{transform:rotate(360deg)}}
+@keyframes pc-dot{0%{transform:scale(.6)}60%{transform:scale(1.3)}100%{transform:scale(1)}}
+.pc-absorb{animation:pc-absorb .6s ease-in both}
+.pc-appear{animation:pc-appear .45s .35s ease-out both}
+.pc-shake-a{animation:pc-shake-a .65s ease-in-out both;transform-origin:50% 92%}
+.pc-shake-b{animation:pc-shake-b .65s ease-in-out both;transform-origin:50% 92%}
+.pc-click{animation:pc-click .4s ease-out both}
+.pc-burst{animation:pc-burst .6s ease-out both}
+.pc-out{animation:pc-out .5s .15s ease-out both}
+.pc-spin{animation:pc-spin 6s linear infinite}
+.pc-dot{animation:pc-dot .35s ease-out both}
+@media (prefers-reduced-motion: reduce){.pc-absorb,.pc-appear,.pc-shake-a,.pc-shake-b,.pc-click,.pc-burst,.pc-out,.pc-spin,.pc-dot{animation:none}}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: {{bg}}; font-family: 'Nunito', system-ui, sans-serif; color: #1d1b3a">
+
+  <svg width="390" height="844" viewBox="0 0 390 844" aria-hidden="true" style="position: absolute; inset: 0">
+    <path d="M-10 540 Q 120 500 220 528 T 400 520 V 860 H -10 Z" fill="#9fd477" stroke="#1d1b3a" stroke-width="2.5"></path>
+    <ellipse cx="195" cy="586" rx="110" ry="24" fill="#7cc35c" stroke="#1d1b3a" stroke-width="2.5"></ellipse>
+    <path d="M40 120 q20-22 44-6 q14-16 34 0 q16 4 10 18 h-92 q-10-6 4-12z" fill="#ffffff" stroke="#1d1b3a" stroke-width="2.5"></path>
+    <path d="M270 200 q16-18 36-5 q12-13 28 0 q13 4 8 15 h-76 q-8-5 4-10z" fill="#ffffff" stroke="#1d1b3a" stroke-width="2.5"></path>
+  </svg>
+
+  <div style="position: absolute; left: 0; right: 0; top: 28px; display: flex; justify-content: center">
+    <span style="padding: 6px 14px; border-radius: 999px; background: #ffffff; border: 2.5px solid #1d1b3a; font-size: 13px; font-weight: 800">Faiscão · Nv. 12 · PV 9/48</span>
+  </div>
+
+  <div role="status" aria-live="polite" style="position: absolute; left: 24px; right: 24px; top: 110px; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center">
+    <div aria-label="{{shakeLabel}}" style="display: flex; gap: 14px">
+      <sc-for list="{{dots}}" as="d" hint-placeholder-count="3">
+        <span class="{{d.cls}}" style="width: 26px; height: 26px; box-sizing: border-box; border-radius: 999px; border: 3px solid #1d1b3a; display: flex; align-items: center; justify-content: center; background: {{d.bg}}; box-shadow: {{d.shadow}}">
+          <sc-if value="{{d.failed}}" hint-placeholder-val="{{ false }}">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1d1b3a" stroke-width="4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+          </sc-if>
+        </span>
+      </sc-for>
+    </div>
+    <h1 style="margin: 0; padding: 6px 18px; border-radius: 16px; background: #ffffff; border: 2.5px solid #1d1b3a; box-shadow: 4px 4px 0 #1d1b3a; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 34px; font-weight: 700; line-height: 1.1">{{title}}</h1>
+    <p style="margin: 0; max-width: 300px; padding: 6px 12px; border-radius: 12px; background: rgba(255,255,255,0.88); font-size: 15px; font-weight: 800; line-height: 1.4">{{subtitle}}</p>
+  </div>
+
+  <sc-if value="{{caught}}" hint-placeholder-val="{{ false }}">
+    <svg class="pc-spin" width="240" height="240" viewBox="0 0 260 260" aria-hidden="true" style="position: absolute; left: 75px; top: 390px">
+      <path d="M130 10 L142 98 L130 86 L118 98 Z M250 130 L162 142 L174 130 L162 118 Z M130 250 L118 162 L130 174 L142 162 Z M10 130 L98 118 L86 130 L98 142 Z" fill="#ffc23d" stroke="#1d1b3a" stroke-width="2.5" stroke-linejoin="round"></path>
+    </svg>
+  </sc-if>
+
+  <sc-if value="{{absorbing}}" hint-placeholder-val="{{ false }}">
+    <div class="pc-absorb" style="position: absolute; left: 125px; top: 420px">
+      <dc-import name="Creature" kind="bolt" color="#ffc23d" size="140" hint-size="140px,140px"></dc-import>
+    </div>
+  </sc-if>
+
+  <div class="{{appearClass}}" style="position: absolute; left: 135px; top: 455px; width: 120px; height: 120px">
+    <div class="{{ballClass}}" style="width: 120px; height: 120px">
+      <dc-import name="Ball" type="{{ballType}}" size="120" hint-size="120px,120px"></dc-import>
+    </div>
+  </div>
+
+  <sc-if value="{{escaped}}" hint-placeholder-val="{{ false }}">
+    <div class="pc-out" style="position: absolute; left: 196px; top: 360px">
+      <dc-import name="Creature" kind="bolt" color="#ffc23d" size="110" hint-size="110px,110px"></dc-import>
+    </div>
+  </sc-if>
+
+  <div style="position: absolute; left: 24px; right: 24px; bottom: 30px; display: flex; flex-direction: column; gap: 10px">
+    <sc-if value="{{busy}}" hint-placeholder-val="{{ true }}">
+      <p style="margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 14px; border-radius: 16px; background: #ffffff; border: 2.5px solid #1d1b3a; font-size: 13px; font-weight: 800; text-align: center">
+        Precisa chacoalhar 3 vezes para capturar.
+      </p>
+    </sc-if>
+    <sc-if value="{{caught}}" hint-placeholder-val="{{ false }}">
+      <a href="BattleResult.dc.html" style="display: flex; align-items: center; justify-content: center; height: 60px; box-sizing: border-box; border-radius: 18px; border: 2.5px solid #1d1b3a; background: #ff5a4e; box-shadow: 5px 5px 0 #1d1b3a; text-decoration: none; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 20px; font-weight: 700">Continuar</a>
+    </sc-if>
+    <sc-if value="{{escapedWithRetry}}" hint-placeholder-val="{{ false }}">
+      <button type="button" onClick="{{retry}}" style="height: 60px; border-radius: 18px; border: 2.5px solid #1d1b3a; background: #ffc23d; box-shadow: 5px 5px 0 #1d1b3a; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 20px; font-weight: 700; color: #1d1b3a; cursor: pointer">Tentar de novo</button>
+    </sc-if>
+    <sc-if value="{{escaped}}" hint-placeholder-val="{{ false }}">
+      <a href="Battle.dc.html" style="display: flex; align-items: center; justify-content: center; min-height: 44px; text-decoration: underline; text-underline-offset: 3px; font-size: 15px; font-weight: 800">Voltar à batalha</a>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"ball":{"editor":"enum","options":["poke","great"],"default":"poke"},"outcome":{"editor":"enum","options":["caught","escaped"],"default":"caught"},"escapeAfter":{"editor":"enum","options":["0","1","2"],"default":"2"},"onRetry":{"editor":null},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  state = { phase: 'appear', shakes: 0 };
+
+  componentDidMount() {
+    this.run();
+  }
+
+  componentWillUnmount() {
+    this.stop();
+  }
+
+  stop() {
+    if (this.timer) clearInterval(this.timer);
+    if (this.delay) clearTimeout(this.delay);
+    this.timer = null;
+    this.delay = null;
+  }
+
+  run() {
+    this.stop();
+    this.setState({ phase: 'appear', shakes: 0 });
+    const caught = (this.props.outcome ?? 'caught') === 'caught';
+    const target = caught ? 3 : Math.min(2, Number(this.props.escapeAfter ?? 2));
+    this.delay = setTimeout(() => {
+      this.setState({ phase: 'shaking' });
+      this.timer = setInterval(() => {
+        if (this.state.shakes < target) {
+          this.setState({ shakes: this.state.shakes + 1 });
+        } else {
+          this.stop();
+          this.setState({ phase: caught ? 'caught' : 'escaped' });
+        }
+      }, 1100);
+    }, 900);
+  }
+
+  renderVals() {
+    const phase = this.state.phase;
+    const shakes = this.state.shakes;
+    const great = (this.props.ball ?? 'poke') === 'great';
+    const ballName = great ? 'Grande bola' : 'Pokébola';
+    const caught = phase === 'caught';
+    const escaped = phase === 'escaped';
+    const busy = phase === 'appear' || phase === 'shaking';
+    const vezes = shakes === 1 ? '1 vez' : shakes + ' vezes';
+    const texts = {
+      appear: ['Lá vai!', 'Faiscão foi puxado para dentro da ' + ballName + '.'],
+      shaking: [shakes === 0 ? 'Segura…' : shakes + '…', 'A ' + ballName + ' está chacoalhando.'],
+      caught: ['Pegou!', 'Chacoalhou 3 vezes. Faiscão foi para o seu álbum.'],
+      escaped: ['Escapou!', shakes === 0 ? 'A bola abriu na hora. Faiscão saiu.' : 'Chacoalhou só ' + vezes + '. Precisava de 3.'],
+    };
+    const [title, subtitle] = texts[phase];
+    let ballClass = '';
+    if (phase === 'shaking' && shakes > 0) ballClass = shakes % 2 === 1 ? 'pc-shake-a' : 'pc-shake-b';
+    if (caught) ballClass = 'pc-click';
+    if (escaped) ballClass = 'pc-burst';
+    const onRetry = this.props.onRetry;
+    return {
+      bg: caught ? '#ffe7a3' : escaped ? '#ffd9cf' : '#bfe3ff',
+      ballType: great ? 'great' : 'poke',
+      appearClass: phase === 'appear' ? 'pc-appear' : '',
+      ballClass,
+      absorbing: phase === 'appear',
+      shakeLabel: 'Chacoalhadas: ' + shakes + ' de 3',
+      dots: [1, 2, 3].map((n) => {
+        const done = caught || n <= shakes;
+        const failed = escaped && n === shakes + 1;
+        return {
+          failed,
+          bg: failed ? '#ff5a4e' : done ? '#ffc23d' : '#ffffff',
+          shadow: done || failed ? '2px 2px 0 #1d1b3a' : 'none',
+          cls: done || failed ? 'pc-dot' : '',
+        };
+      }),
+      title,
+      subtitle,
+      busy,
+      caught,
+      escaped,
+      escapedWithRetry: escaped,
+      retry: () => (typeof onRetry === 'function' ? onRetry() : this.run()),
+    };
+  }
+}
+</script>
+</body>
+</html>

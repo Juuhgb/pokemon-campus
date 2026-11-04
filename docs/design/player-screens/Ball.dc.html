@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Bola de captura</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<span style="display: block; width: {{size}}px; height: {{size}}px; border-radius: 999px; box-shadow: {{shadow}}">
+  <svg width="{{size}}" height="{{size}}" viewBox="0 0 24 24" role="img" aria-label="{{label}}" style="display: block">
+    <circle cx="12" cy="12" r="10.6" fill="#ffffff"></circle>
+    <path d="M1.4 12a10.6 10.6 0 0 1 21.2 0z" fill="{{top}}"></path>
+    <sc-if value="{{isGreat}}" hint-placeholder-val="{{ false }}">
+      <path d="M4 9.2 L7.4 4.4 L9.6 5.5 L6.3 10.2 Z" fill="#ff5a4e" stroke="#1d1b3a" stroke-width="{{thin}}" stroke-linejoin="round"></path>
+      <path d="M20 9.2 L16.6 4.4 L14.4 5.5 L17.7 10.2 Z" fill="#ff5a4e" stroke="#1d1b3a" stroke-width="{{thin}}" stroke-linejoin="round"></path>
+    </sc-if>
+    <path d="M1.4 12h7.2M15.4 12h7.2" stroke="#1d1b3a" stroke-width="{{stroke}}" fill="none"></path>
+    <circle cx="12" cy="12" r="10.6" fill="none" stroke="#1d1b3a" stroke-width="{{stroke}}"></circle>
+    <circle cx="12" cy="12" r="3.3" fill="#ffffff" stroke="#1d1b3a" stroke-width="{{stroke}}"></circle>
+    <circle cx="12" cy="12" r="1.3" fill="none" stroke="#1d1b3a" stroke-width="{{thin}}"></circle>
+  </svg>
+</span>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"type":{"editor":"enum","options":["poke","great"],"default":"poke"},"size":{"editor":"int","min":20,"max":200,"default":72},"$preview":{"width":96,"height":96}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const great = (this.props.type ?? 'poke') === 'great';
+    const size = Number(this.props.size ?? 72);
+    const inkPx = size >= 80 ? 3 : size >= 40 ? 2.5 : 2;
+    const stroke = Math.max(1.2, (inkPx * 24) / size);
+    return {
+      size,
+      isGreat: great,
+      top: great ? '#3b82f6' : '#ff5a4e',
+      label: great ? 'Grande bola' : 'Pokébola',
+      stroke: stroke.toFixed(2),
+      thin: (stroke * 0.6).toFixed(2),
+      shadow: size >= 64 ? '5px 5px 0 #1d1b3a' : size >= 36 ? '3px 3px 0 #1d1b3a' : 'none',
+    };
+  }
+}
+</script>
+</body>
+</html>

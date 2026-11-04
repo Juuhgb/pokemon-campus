@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Escolha do Pokémon inicial</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Nunito:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#fff6e5}
+a{color:#1d1b3a}a:hover{color:#ff5a4e}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #fff6e5; font-family: 'Nunito', system-ui, sans-serif; color: #1d1b3a; display: flex; flex-direction: column; padding: 22px 20px 30px; box-sizing: border-box; gap: 16px">
+
+  <sc-if value="{{choosing}}" hint-placeholder-val="{{ true }}">
+    <header style="display: flex; flex-direction: column; gap: 8px">
+      <span style="align-self: flex-start; display: flex; align-items: center; gap: 8px; padding: 4px 12px 4px 4px; border-radius: 999px; background: #ffffff; border: 2.5px solid #1d1b3a; font-size: 13px; font-weight: 700">
+        <span aria-hidden="true" style="width: 28px; height: 28px; border-radius: 999px; background: #6aa8ff; border: 2px solid #1d1b3a; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 11px; box-sizing: border-box">AL</span>
+        Oi, Ana Lima!
+      </span>
+      <h1 style="margin: 4px 0 0; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 34px; font-weight: 700; line-height: 1">Escolha seu parceiro</h1>
+      <p style="margin: 0; font-size: 15px; font-weight: 700; line-height: 1.45; color: #5b587a">Ele entra na sua equipe e acompanha você nas primeiras batalhas.</p>
+    </header>
+
+    <div role="radiogroup" aria-label="Pokémon inicial" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+      <sc-for list="{{starters}}" as="s" hint-placeholder-count="3">
+        <button type="button" role="radio" aria-checked="{{s.checked}}" onClick="{{s.pick}}" style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 6px 12px; border-radius: 20px; cursor: pointer; font-family: inherit; color: #1d1b3a; border: 2.5px solid #1d1b3a; background: {{s.bg}}; box-shadow: {{s.shadow}}; transform: {{s.lift}}">
+          <dc-import name="Creature" kind="{{s.kind}}" color="{{s.color}}" size="62" hint-size="62px,62px"></dc-import>
+          <span style="font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 16px; font-weight: 600">{{s.name}}</span>
+          <span style="padding: 2px 8px; border-radius: 999px; background: #ffffff; border: 2px solid #1d1b3a; font-size: 11px; font-weight: 800">{{s.type}}</span>
+        </button>
+      </sc-for>
+    </div>
+
+    <section aria-live="polite" style="padding: 16px; border-radius: 22px; background: #ffffff; border: 2.5px solid #1d1b3a; box-shadow: 4px 4px 0 #1d1b3a; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between">
+        <h2 style="margin: 0; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 24px; font-weight: 700">{{current.name}}</h2>
+        <span style="font-size: 13px; font-weight: 800; color: #5b587a">Tipo {{current.type}} · Nv. 5</span>
+      </div>
+      <p style="margin: 0; font-size: 14px; font-weight: 600; line-height: 1.5; color: #3a3760">{{current.description}}</p>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <sc-for list="{{current.stats}}" as="st" hint-placeholder-count="3">
+          <div style="display: flex; align-items: center; gap: 10px">
+            <span style="width: 58px; font-size: 12px; font-weight: 800">{{st.label}}</span>
+            <div style="flex: 1; height: 14px; border-radius: 999px; background: #ece9f5; border: 2px solid #1d1b3a; overflow: hidden; box-sizing: border-box">
+              <div style="width: {{st.percent}}%; height: 100%; background: {{current.color}}; border-right: 2px solid #1d1b3a; box-sizing: border-box"></div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 12px">
+      <button type="button" onClick="{{confirm}}" style="height: 60px; border-radius: 18px; border: 2.5px solid #1d1b3a; background: #ff5a4e; box-shadow: 5px 5px 0 #1d1b3a; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 20px; font-weight: 700; color: #1d1b3a; cursor: pointer">Escolher {{current.name}}</button>
+      <div aria-label="Passo 2 de 3" style="display: flex; justify-content: center; gap: 6px">
+        <span style="width: 10px; height: 10px; border-radius: 999px; background: #ff5a4e; border: 2px solid #1d1b3a; box-sizing: border-box"></span>
+        <span style="width: 24px; height: 10px; border-radius: 999px; background: #ff5a4e; border: 2px solid #1d1b3a; box-sizing: border-box"></span>
+        <span style="width: 10px; height: 10px; border-radius: 999px; background: #ffffff; border: 2px solid #1d1b3a; box-sizing: border-box"></span>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{confirmed}}" hint-placeholder-val="{{ false }}">
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; text-align: center">
+      <div style="position: relative; width: 240px; height: 240px; display: flex; align-items: center; justify-content: center">
+        <div aria-hidden="true" style="position: absolute; inset: 0; border-radius: 40px; background: {{current.color}}; border: 2.5px solid #1d1b3a; box-shadow: 6px 6px 0 #1d1b3a; transform: rotate(-4deg)"></div>
+        <div style="position: relative">
+          <dc-import name="Creature" kind="{{current.kind}}" color="#ffffff" size="140" hint-size="140px,140px"></dc-import>
+        </div>
+      </div>
+      <h1 style="margin: 8px 0 0; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 32px; font-weight: 700; line-height: 1.05">{{current.name}} agora é seu parceiro!</h1>
+      <p style="margin: 0; max-width: 300px; font-size: 15px; font-weight: 700; line-height: 1.45; color: #5b587a">Ele já está na vaga 1 da sua equipe. Saia pelo campus para achar os outros.</p>
+      <button type="button" onClick="{{back}}" style="min-height: 44px; padding: 0 16px; border: 0; background: transparent; font-family: inherit; font-size: 14px; font-weight: 800; color: #1d1b3a; text-decoration: underline; text-underline-offset: 3px; cursor: pointer">Trocar de escolha</button>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <a href="Location.dc.html" style="display: flex; align-items: center; justify-content: center; height: 60px; box-sizing: border-box; border-radius: 18px; border: 2.5px solid #1d1b3a; background: #ff5a4e; box-shadow: 5px 5px 0 #1d1b3a; text-decoration: none; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 20px; font-weight: 700; color: #1d1b3a">Continuar</a>
+      <div aria-label="Passo 2 de 3" style="display: flex; justify-content: center; gap: 6px">
+        <span style="width: 10px; height: 10px; border-radius: 999px; background: #ff5a4e; border: 2px solid #1d1b3a; box-sizing: border-box"></span>
+        <span style="width: 24px; height: 10px; border-radius: 999px; background: #ff5a4e; border: 2px solid #1d1b3a; box-sizing: border-box"></span>
+        <span style="width: 10px; height: 10px; border-radius: 999px; background: #ffffff; border: 2px solid #1d1b3a; box-sizing: border-box"></span>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  state = { picked: 'brotinho', confirmed: false };
+
+  renderVals() {
+    const options = [
+      {
+        id: 'brotinho', name: 'Brotinho', kind: 'leaf', type: 'Planta', color: '#7ad88f',
+        description: 'Calmo e resistente. Recupera energia aos poucos e aguenta batalhas longas.',
+        stats: [{ label: 'Vida', percent: 80 }, { label: 'Ataque', percent: 55 }, { label: 'Defesa', percent: 70 }],
+      },
+      {
+        id: 'gotinha', name: 'Gotinha', kind: 'drop', type: 'Água', color: '#6aa8ff',
+        description: 'Equilibrado e curioso. Bom para quem quer aprender com calma.',
+        stats: [{ label: 'Vida', percent: 70 }, { label: 'Ataque', percent: 65 }, { label: 'Defesa', percent: 65 }],
+      },
+      {
+        id: 'brasinha', name: 'Brasinha', kind: 'flame', type: 'Fogo', color: '#ff8a5c',
+        description: 'Rápido e impulsivo. Ataca forte, mas precisa de cuidado com a defesa.',
+        stats: [{ label: 'Vida', percent: 60 }, { label: 'Ataque', percent: 85 }, { label: 'Defesa', percent: 50 }],
+      },
+    ];
+    const picked = this.state.picked;
+    const starters = options.map((o) => {
+      const on = o.id === picked;
+      return {
+        ...o,
+        checked: on ? 'true' : 'false',
+        bg: on ? '#ffc23d' : '#ffffff',
+        shadow: on ? '5px 5px 0 #1d1b3a' : 'none',
+        lift: on ? 'translateY(-4px)' : 'none',
+        pick: () => this.setState({ picked: o.id }),
+      };
+    });
+    const current = options.find((o) => o.id === picked) ?? options[0];
+    return {
+      starters,
+      current,
+      choosing: !this.state.confirmed,
+      confirmed: this.state.confirmed,
+      confirm: () => this.setState({ confirmed: true }),
+      back: () => this.setState({ confirmed: false }),
+    };
+  }
+}
+</script>
+</body>
+</html>
