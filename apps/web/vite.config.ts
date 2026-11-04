@@ -30,6 +30,7 @@ export default defineConfig(({ mode }) => ({
       },
       workbox: {
         navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/__/],
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
         // Guarda apenas os tiles já vistos pelo jogador (sem pré-download em massa, conforme a política do OSM).
         runtimeCaching: [
