@@ -38,6 +38,37 @@ A estrutura atende ao requisito central do Pokémon Campus: explorar e registrar
 
 Essa organização descreve o desenho do jogo; as rotas implementadas e as que ainda são especificações estão distinguidas em docs/CONTRACTS.md.
 
+## Módulo de exploração (mapa, GPS e spawns)
+
+Código em `apps/web/src/features/exploration/`; a API pública fica em `index.ts`.
+
+- Mapa com React Leaflet e tiles do OpenStreetMap (atribuição exibida no canto do mapa), centralizado no Campus Luiz Meneghel da UENP.
+- **As cinco zonas dos cursos são polígonos de demonstração** (`data/campusZones.ts`, `isDemo: true`). Não representam limites oficiais; substitua as coordenadas por dados verificados ou carregue-as de `GET /api/v1/zones`.
+- GPS real com `watchPosition` (`services/location.ts`); distâncias com Haversine e detecção de zona feitas no próprio dispositivo, sem rede.
+- Spawns simulados em `data/mockSpawns.ts`, acessados pela interface `SpawnRepository`. O repositório local-first guarda os últimos spawns no IndexedDB para uso offline.
+- O botão "Batalhar / Capturar" só é habilitado a até 30 m de um spawn ativo e apenas emite um `EncounterStartRequest`; a validação definitiva é do backend.
+- Se os tiles não carregarem, a tela troca para um radar que funciona só com coordenadas.
+- **GPS simulado (apenas em `npm run dev`)**: toque em "GPS simulado" e depois no mapa. O código é removido do build de produção e a posição do cliente nunca serve como autorização.
+
+## Hospedagem
+
+O app web (PWA estático em `apps/web/dist`) é publicado no Firebase Hosting pelo workflow `.github/workflows/ci.yml`:
+
+- todo PR e push na main: lint, typecheck, testes e build;
+- PR → link de preview temporário (7 dias) no projeto dev;
+- merge na main → staging em `https://pokemon-campus-dev.web.app`;
+- staging → produção (`https://pokemon-campus-prod.web.app`) após aprovação manual no environment `producao`.
+
+Para ativar:
+
+1. Crie os projetos Firebase `pokemon-campus-dev` e `pokemon-campus-prod` (ou ajuste os IDs em `.firebaserc` e no workflow).
+2. Rode `npx firebase-tools init hosting:github` em cada projeto para gerar as contas de serviço e salve-as como secrets `FIREBASE_SA_DEV` e `FIREBASE_SA_PROD` no GitHub.
+3. Crie os environments `staging` e `producao` no repositório e exija aprovação em `producao`.
+
+Enquanto os secrets não existirem, os jobs de deploy são pulados sem falhar. Deploy manual: `npm run build` e `npx firebase-tools deploy --only hosting --project dev`.
+
+O Firebase Hosting serve apenas o front-end. A API Fastify/PostgreSQL precisa de outra hospedagem (ex.: Cloud Run, Render ou Railway) quando o módulo de sincronização for integrado.
+
 ## Scripts
 
 - npm run dev inicia web e API juntos.

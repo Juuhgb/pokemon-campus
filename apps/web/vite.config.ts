@@ -25,7 +25,22 @@ export default defineConfig({
         theme_color: '#101827',
         icons: [{ src: 'pokemon-campus.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }],
       },
-      workbox: { navigateFallback: '/index.html', globPatterns: ['**/*.{js,css,html,svg,woff2}'] },
+      workbox: {
+        navigateFallback: '/index.html',
+        globPatterns: ['**/*.{js,css,html,svg,woff2}'],
+        // Guarda apenas os tiles já vistos pelo jogador (sem pré-download em massa, conforme a política do OSM).
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.hostname === 'tile.openstreetmap.org',
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'osm-tiles',
+              expiration: { maxEntries: 400, maxAgeSeconds: 7 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
+      },
     }),
   ],
 });

@@ -1,0 +1,1 @@
+{ "projects": { "default": "pokemon-campus-dev", "dev": "pokemon-campus-dev", "prod": "pokemon-campus-prod" } }
