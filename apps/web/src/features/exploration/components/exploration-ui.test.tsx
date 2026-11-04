@@ -29,7 +29,7 @@ describe('EncounterSheet', () => {
     render(
       <EncounterSheet spawn={SPAWN} eligibility={{ allowed: true, distanceMeters: 12 }} now={NOW} onStartEncounter={onStart} onClose={vi.fn()} />,
     );
-    expect(screen.getByRole('heading', { name: 'Faiscão' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Pikachu' })).toBeTruthy();
     expect(screen.getByText('Nv. 12')).toBeTruthy();
     expect(screen.getByText('Raro')).toBeTruthy();
     expect(screen.getByText('12 m')).toBeTruthy();
@@ -97,10 +97,10 @@ describe('NearbyCards', () => {
         onSelect={onSelect}
       />,
     );
-    const card = screen.getByRole('button', { name: /Faiscão/ });
+    const card = screen.getByRole('button', { name: /Pikachu/ });
     expect(card.textContent).toMatch(/No alcance/);
     expect(screen.getByLabelText('Direção norte')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /Gotinha/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Squirtle/ })).toBeNull();
     fireEvent.click(card);
     expect(onSelect).toHaveBeenCalledWith('spawn-1');
   });

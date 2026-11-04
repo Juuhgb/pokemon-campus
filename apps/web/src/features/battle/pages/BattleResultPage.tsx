@@ -59,7 +59,7 @@ export function BattleResultPage() {
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-4 bg-creme px-5 pt-6 pb-7 text-tinta">
       <div className="relative grid h-[250px] place-items-center">
         <div aria-hidden="true" className="absolute inset-x-10 inset-y-2.5 -rotate-3 rounded-[40px] sticker-lg" style={{ background: copy.heroBg }} />
-        <div className="relative"><CreatureBadge kind={battle.status === 'lost' ? 'unknown' : hero.kind} color={battle.status === 'lost' ? '#e6e3f0' : hero.color} size={136} label={hero.displayName} /></div>
+        <div className="relative"><CreatureBadge kind={battle.status === 'lost' ? 'unknown' : hero.kind} image={hero.image} color={battle.status === 'lost' ? '#e6e3f0' : hero.color} size={136} label={hero.displayName} /></div>
         <span className="absolute top-0 right-9 rotate-6 rounded-[14px] bg-tinta px-3.5 py-1.5 font-display text-base font-semibold text-amarelo">{copy.badge}</span>
       </div>
 
@@ -76,7 +76,7 @@ export function BattleResultPage() {
           const percent = creature ? (creature.xp / xpToNextLevel(creature.level)) * 100 : 0;
           return (
             <div key={member.creatureId} className="flex items-center gap-3">
-              <CreatureBadge kind={species.kind} color={species.color} size={36} />
+              <CreatureBadge kind={species.kind} image={species.image} color={species.color} size={36} />
               <div className="flex flex-1 flex-col gap-1">
                 <div className="flex justify-between text-sm font-extrabold">
                   <span>{species.displayName}{creature ? ` · Nv. ${creature.level}` : ''}</span>

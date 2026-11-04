@@ -2,7 +2,8 @@ import type { Rarity } from '../exploration/types.js';
 
 /**
  * Catálogo de espécies usado pelas telas enquanto GET /api/v1/species não existe.
- * Criaturas e golpes são originais do projeto.
+ * As espécies usam Pokémon reais (nome e imagem); os ids internos continuam os antigos
+ * para não quebrar o progresso salvo dos jogadores.
  */
 export type CreatureKind = 'leaf' | 'bolt' | 'drop' | 'flame' | 'rock' | 'wing' | 'star' | 'unknown';
 
@@ -20,6 +21,8 @@ export interface SpeciesInfo {
   kind: CreatureKind;
   type: string;
   color: string;
+  /** Imagem em /public/pokemon; sem ela, o ícone redondo é usado. */
+  image?: string;
   rarity: Rarity;
   baseStats: { hp: number; attack: number; defense: number };
   description: string;
@@ -31,46 +34,46 @@ const SCRATCH: Move = { id: 'arranhao', name: 'Arranhão', type: 'Normal', power
 
 export const SPECIES: SpeciesInfo[] = [
   {
-    id: 'brotinho', number: '001', displayName: 'Brotinho', kind: 'leaf', type: 'Planta', color: '#7ad88f', rarity: 'common',
+    id: 'brotinho', number: '001', displayName: 'Bulbasaur', kind: 'leaf', type: 'Planta', color: '#7ad88f', image: '/pokemon/bulbasaur.png', rarity: 'common',
     baseStats: { hp: 24, attack: 9, defense: 11 },
     description: 'Calmo e resistente. Recupera energia aos poucos e aguenta batalhas longas.',
     moves: [{ id: 'folha-navalha', name: 'Folha navalha', type: 'Planta', power: 45 }, { id: 'chicote', name: 'Chicote de cipó', type: 'Planta', power: 40 }, TACKLE, SCRATCH],
   },
   {
-    id: 'gotinha', number: '002', displayName: 'Gotinha', kind: 'drop', type: 'Água', color: '#6aa8ff', rarity: 'common',
+    id: 'gotinha', number: '002', displayName: 'Squirtle', kind: 'drop', type: 'Água', color: '#6aa8ff', image: '/pokemon/squirtle.png', rarity: 'common',
     baseStats: { hp: 22, attack: 10, defense: 10 },
     description: 'Equilibrado e curioso. Bom para quem quer aprender com calma.',
     moves: [{ id: 'jato', name: 'Jato d’água', type: 'Água', power: 40 }, { id: 'bolha', name: 'Bolhas', type: 'Água', power: 45 }, TACKLE, SCRATCH],
   },
   {
-    id: 'pedregulho', number: '003', displayName: 'Pedregulho', kind: 'rock', type: 'Pedra', color: '#d9c3a0', rarity: 'common',
+    id: 'pedregulho', number: '003', displayName: 'Geodude', kind: 'rock', type: 'Pedra', color: '#d9c3a0', image: '/pokemon/geodude.png', rarity: 'common',
     baseStats: { hp: 28, attack: 9, defense: 14 },
     description: 'Lento, mas quase impossível de derrubar.',
     moves: [{ id: 'pedrada', name: 'Pedrada', type: 'Pedra', power: 50 }, TACKLE, SCRATCH, { id: 'rolagem', name: 'Rolagem', type: 'Pedra', power: 30 }],
   },
   {
-    id: 'faiscao', number: '004', displayName: 'Faiscão', kind: 'bolt', type: 'Elétrico', color: '#ffc23d', rarity: 'uncommon',
+    id: 'faiscao', number: '004', displayName: 'Pikachu', kind: 'bolt', type: 'Elétrico', color: '#ffc23d', image: '/pokemon/pikachu.png', rarity: 'uncommon',
     baseStats: { hp: 22, attack: 13, defense: 9 },
     description: 'Agitado e veloz. Solta faíscas quando fica animado.',
     moves: [{ id: 'faisca', name: 'Faísca', type: 'Elétrico', power: 45 }, { id: 'choque', name: 'Choque', type: 'Elétrico', power: 40 }, TACKLE, SCRATCH],
   },
   {
-    id: 'coruja', number: '005', displayName: 'Corujito', kind: 'wing', type: 'Voador', color: '#c9b8ff', rarity: 'uncommon',
+    id: 'coruja', number: '005', displayName: 'Chikorita', kind: 'leaf', type: 'Planta', color: '#b6e388', image: '/pokemon/chikorita.png', rarity: 'uncommon',
     baseStats: { hp: 24, attack: 11, defense: 10 },
-    description: 'Observador. Prefere as árvores perto da biblioteca.',
-    moves: [{ id: 'bicada', name: 'Bicada', type: 'Voador', power: 40 }, { id: 'rasante', name: 'Rasante', type: 'Voador', power: 50 }, TACKLE, SCRATCH],
+    description: 'Gentil e atento. Prefere os gramados perto da biblioteca.',
+    moves: [{ id: 'folha-magica', name: 'Folha mágica', type: 'Planta', power: 45 }, { id: 'raio-solar', name: 'Raio solar', type: 'Planta', power: 50 }, TACKLE, SCRATCH],
   },
   {
-    id: 'brasinha', number: '006', displayName: 'Brasinha', kind: 'flame', type: 'Fogo', color: '#ff8a5c', rarity: 'rare',
+    id: 'brasinha', number: '006', displayName: 'Charmander', kind: 'flame', type: 'Fogo', color: '#ff8a5c', image: '/pokemon/charmander.png', rarity: 'rare',
     baseStats: { hp: 21, attack: 14, defense: 8 },
     description: 'Rápido e impulsivo. Ataca forte, mas precisa de cuidado com a defesa.',
     moves: [{ id: 'brasa', name: 'Brasa', type: 'Fogo', power: 40 }, { id: 'labareda', name: 'Labareda', type: 'Fogo', power: 55 }, TACKLE, SCRATCH],
   },
   {
-    id: 'aurora', number: '007', displayName: 'Aurorix', kind: 'star', type: 'Luz', color: '#ffd76a', rarity: 'legendary',
+    id: 'aurora', number: '007', displayName: 'Vaporeon', kind: 'drop', type: 'Água', color: '#7fc8e8', image: '/pokemon/vaporeon.png', rarity: 'legendary',
     baseStats: { hp: 30, attack: 15, defense: 13 },
-    description: 'Aparece raramente ao entardecer. Poucos já viram de perto.',
-    moves: [{ id: 'raio-de-luz', name: 'Raio de luz', type: 'Luz', power: 60 }, { id: 'brilho', name: 'Brilho', type: 'Luz', power: 45 }, TACKLE, SCRATCH],
+    description: 'Aparece raramente perto do lago ao entardecer. Poucos já viram de perto.',
+    moves: [{ id: 'hidro-bomba', name: 'Hidro bomba', type: 'Água', power: 60 }, { id: 'aqua-cauda', name: 'Aqua cauda', type: 'Água', power: 45 }, TACKLE, SCRATCH],
   },
 ];
 

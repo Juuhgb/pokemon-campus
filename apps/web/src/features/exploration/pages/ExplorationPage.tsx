@@ -16,7 +16,7 @@ import { createLocalFirstSpawnRepository, createMockSpawnRepository, type SpawnR
 import type { ZoneRepository } from '../services/zoneRepository.js';
 import { localZoneRepository } from '../services/zoneStore.js';
 import type { EncounterStartHandler, EncounterStartRequest, ExplorationSpawn, GeoPoint } from '../types.js';
-import { ENCOUNTER_RADIUS_METERS, evaluateEncounter, isSpawnActive, nearbySpawns } from '../utils/encounter.js';
+import { ENCOUNTER_RADIUS_METERS, evaluateEncounter, nearbySpawns, VISIBILITY_RADIUS_METERS } from '../utils/encounter.js';
 import { findZoneAt } from '../utils/geofence.js';
 
 const spawnCache = createIndexedDbSpawnCache();
@@ -69,8 +69,12 @@ export function ExplorationPage({
   const player: GeoPoint | null = geo.position;
   const activeZone = useMemo(() => (player ? findZoneAt(player, zones) : null), [player, zones]);
   const selectedZone = zones.find((zone) => zone.id === selectedZoneId) ?? null;
-  const activeSpawns = useMemo(() => spawns.filter((spawn) => isSpawnActive(spawn, now)), [spawns, now]);
-  const nearby = useMemo(() => (player ? nearbySpawns(spawns, player, now) : []), [spawns, player, now]);
+  // Só os Pokémon perto do jogador aparecem (mapa e lista); sem localização, nenhum.
+  const nearby = useMemo(
+    () => (player ? nearbySpawns(spawns, player, now, VISIBILITY_RADIUS_METERS) : []),
+    [spawns, player, now],
+  );
+  const visibleSpawns = useMemo(() => nearby.map((item) => item.spawn), [nearby]);
   const inRangeIds = useMemo(
     () => new Set(nearby.filter((item) => item.distanceMeters <= ENCOUNTER_RADIUS_METERS).map((item) => item.spawn.spawnId)),
     [nearby],
@@ -133,7 +137,7 @@ export function ExplorationPage({
               O mapa não pôde ser carregado (sem conexão ou servidor de mapas indisponível). A lista abaixo usa só o GPS e funciona offline.
             </p>
             {player ? (
-              <NearbyCards player={player} nearby={nearby} onSelect={setSelectedSpawnId} layout="list" />
+              <NearbyCards player={player} nearby={nearby} rangeMeters={VISIBILITY_RADIUS_METERS} onSelect={setSelectedSpawnId} layout="list" />
             ) : (
               <p className="m-0 text-sm font-bold text-tinta-suave">A lista precisa da sua localização.</p>
             )}
@@ -145,7 +149,7 @@ export function ExplorationPage({
           <div className={`h-full w-full ${pickingLocation ? 'cursor-crosshair' : ''}`}>
             <CampusMap
               zones={zones}
-              spawns={activeSpawns}
+              spawns={visibleSpawns}
               player={geo.position}
               activeZoneId={activeZone?.id ?? null}
               selectedZoneId={selectedZoneId}
@@ -214,9 +218,9 @@ export function ExplorationPage({
             )}
             <div className="pl-4">
               {player ? (
-                <NearbyCards player={player} nearby={nearby} onSelect={setSelectedSpawnId} />
+                <NearbyCards player={player} nearby={nearby} rangeMeters={VISIBILITY_RADIUS_METERS} onSelect={setSelectedSpawnId} />
               ) : (
-                <p className="m-0 mr-4 rounded-2xl ink-border bg-white px-4 py-3 text-sm font-bold">{activeSpawns.length} Pokémon ativos no campus. Toque em um para ver detalhes.</p>
+                <p className="m-0 mr-4 rounded-2xl ink-border bg-white px-4 py-3 text-sm font-bold">Ative a localização para ver os Pokémon perto de você.</p>
               )}
             </div>
           </div>

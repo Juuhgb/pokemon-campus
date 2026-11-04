@@ -112,7 +112,7 @@ export function CaptureThrow({ ball, foe, shakes: target, canRetry, onContinue, 
         )}
         {phase === 'appear' && (
           <div className="pc-absorb absolute top-[420px] left-1/2 -ml-[70px]">
-            <CreatureBadge kind={species.kind} color={species.color} size={140} />
+            <CreatureBadge kind={species.kind} image={species.image} color={species.color} size={140} />
           </div>
         )}
         <div className={`absolute top-[455px] left-1/2 -ml-[60px] h-[120px] w-[120px] ${phase === 'appear' ? 'pc-appear' : ''}`}>
@@ -120,7 +120,7 @@ export function CaptureThrow({ ball, foe, shakes: target, canRetry, onContinue, 
         </div>
         {escaped && (
           <div className="pc-out absolute top-[360px] left-1/2 ml-[2px]">
-            <CreatureBadge kind={species.kind} color={species.color} size={110} label={species.displayName} />
+            <CreatureBadge kind={species.kind} image={species.image} color={species.color} size={110} label={species.displayName} />
           </div>
         )}
 

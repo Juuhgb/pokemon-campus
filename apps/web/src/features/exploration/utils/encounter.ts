@@ -4,6 +4,9 @@ import { haversineMeters } from './distance.js';
 /** Raio máximo para iniciar um encontro. O backend repete a validação. */
 export const ENCOUNTER_RADIUS_METERS = 30;
 
+/** Até essa distância o jogador enxerga o Pokémon no mapa; mais longe ele fica escondido. */
+export const VISIBILITY_RADIUS_METERS = 80;
+
 export type SpawnTimeStatus = 'not-started' | 'active' | 'expired';
 
 export function spawnTimeStatus(spawn: Pick<ExplorationSpawn, 'startsAt' | 'expiresAt'>, now: Date): SpawnTimeStatus {

@@ -18,8 +18,8 @@ export function PokemonMarker({ spawn, inRange, selected, onSelect }: PokemonMar
     className: '',
     iconSize: [44, 44],
     iconAnchor: [22, 22],
-    html: `<span class="creature-marker${inRange ? ' creature-marker--in-range' : ''}${selected ? ' creature-marker--selected' : ''}">${creatureBadgeHtml(species.kind, species.color, 44)}</span>`,
-  }), [species.kind, species.color, inRange, selected]);
+    html: `<span class="creature-marker${inRange ? ' creature-marker--in-range' : ''}${selected ? ' creature-marker--selected' : ''}">${creatureBadgeHtml(species.kind, species.color, 44, species.image)}</span>`,
+  }), [species.kind, species.color, species.image, inRange, selected]);
 
   return (
     <Marker

@@ -87,7 +87,7 @@ export function CollectionPage() {
                 <span>#{species.number}</span>
                 <span>{known ? `×${count}` : ''}</span>
               </span>
-              <CreatureBadge kind={known ? species.kind : 'unknown'} color={known ? species.color : '#e6e3f0'} size={54} />
+              <CreatureBadge kind={known ? species.kind : 'unknown'} image={species.image} color={known ? species.color : '#e6e3f0'} size={54} />
               <h2 className="mt-1 mb-0 font-display text-base leading-tight font-semibold">{known ? species.displayName : '???'}</h2>
               <span className="rounded-full px-2 py-0.5 text-[11px] font-extrabold" style={{ background: chip.bg, color: chip.fg }}>
                 {known ? RARITY_LABEL[species.rarity] : 'Falta achar'}

@@ -77,7 +77,7 @@ export function CapturePage() {
         <span className="absolute top-[18px] right-3.5 rounded-full ink-border bg-white px-3 py-1 text-xs font-extrabold">
           {species.displayName} · PV {battle.foe.hp}/{battle.foe.maxHp}
         </span>
-        <div className="absolute top-[150px] left-1/2 -translate-x-1/2"><CreatureBadge kind={species.kind} color={species.color} size={140} label={species.displayName} /></div>
+        <div className="absolute top-[150px] left-1/2 -translate-x-1/2"><CreatureBadge kind={species.kind} image={species.image} color={species.color} size={140} label={species.displayName} /></div>
       </Arena>
 
       <section className="flex flex-1 flex-col gap-3 px-4 pt-4.5 pb-6">
