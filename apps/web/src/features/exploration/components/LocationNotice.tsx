@@ -12,13 +12,13 @@ export function LocationNotice({ status, error, simulationAvailable }: LocationN
   if (status === 'ready' && !error) return null;
 
   const message = error?.message ?? 'Procurando sua localização… Permita o acesso quando o navegador pedir.';
-  const tone = status === 'error' ? 'border-rose-500/40 bg-rose-950/90 text-rose-100' : 'border-sky-500/40 bg-slate-900/90 text-sky-100';
+  const isError = status === 'error';
 
   return (
-    <div role={status === 'error' ? 'alert' : 'status'} className={`rounded-2xl border px-4 py-3 text-sm shadow-lg backdrop-blur ${tone}`}>
-      <p>{message}</p>
-      {status === 'error' && simulationAvailable && (
-        <p className="mt-1 text-xs opacity-80">Em desenvolvimento, use “GPS simulado” e toque no mapa para escolher uma posição.</p>
+    <div role={isError ? 'alert' : 'status'} className={`rounded-2xl sticker-sm px-4 py-3 text-sm font-bold ${isError ? 'bg-[#ffd9cf]' : 'bg-white'}`}>
+      <p className="m-0">{message}</p>
+      {isError && simulationAvailable && (
+        <p className="mt-1 mb-0 text-xs text-tinta-suave">Em desenvolvimento, use “GPS simulado” e toque no mapa para escolher uma posição.</p>
       )}
     </div>
   );

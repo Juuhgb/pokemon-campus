@@ -1,7 +1,8 @@
 import L from 'leaflet';
 import { useMemo } from 'react';
 import { Marker, Tooltip } from 'react-leaflet';
-import { RARITY_COLOR, RARITY_LABEL, speciesDisplay } from '../data/species.js';
+import { creatureBadgeHtml } from '../../../components/ui/CreatureBadge.js';
+import { getSpecies, RARITY_LABEL } from '../../catalog/species.js';
 import type { ExplorationSpawn } from '../types.js';
 
 interface PokemonMarkerProps {
@@ -12,14 +13,13 @@ interface PokemonMarkerProps {
 }
 
 export function PokemonMarker({ spawn, inRange, selected, onSelect }: PokemonMarkerProps) {
-  const species = speciesDisplay(spawn.speciesId);
+  const species = getSpecies(spawn.speciesId);
   const icon = useMemo(() => L.divIcon({
     className: '',
-    iconSize: [40, 40],
-    iconAnchor: [20, 20],
-    html: `<span class="pokemon-marker${inRange ? ' pokemon-marker--in-range' : ''}${selected ? ' pokemon-marker--selected' : ''}"
-      style="--rarity:${RARITY_COLOR[spawn.rarity]}" aria-hidden="true">${species.emoji}</span>`,
-  }), [species.emoji, spawn.rarity, inRange, selected]);
+    iconSize: [44, 44],
+    iconAnchor: [22, 22],
+    html: `<span class="creature-marker${inRange ? ' creature-marker--in-range' : ''}${selected ? ' creature-marker--selected' : ''}">${creatureBadgeHtml(species.kind, species.color, 44)}</span>`,
+  }), [species.kind, species.color, inRange, selected]);
 
   return (
     <Marker
@@ -28,7 +28,7 @@ export function PokemonMarker({ spawn, inRange, selected, onSelect }: PokemonMar
       title={`${species.displayName}, nível ${spawn.level}`}
       eventHandlers={{ click: () => onSelect(spawn.spawnId) }}
     >
-      <Tooltip direction="top" offset={[0, -18]}>
+      <Tooltip direction="top" offset={[0, -22]}>
         {species.displayName} · Nv. {spawn.level} · {RARITY_LABEL[spawn.rarity]}
       </Tooltip>
     </Marker>

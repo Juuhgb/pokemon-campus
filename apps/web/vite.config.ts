@@ -24,8 +24,8 @@ export default defineConfig(({ mode }) => ({
         start_url: '/',
         scope: '/',
         display: 'standalone',
-        background_color: '#101827',
-        theme_color: '#101827',
+        background_color: '#fff6e5',
+        theme_color: '#fff6e5',
         icons: [{ src: 'pokemon-campus.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }],
       },
       workbox: {
@@ -39,6 +39,16 @@ export default defineConfig(({ mode }) => ({
             options: {
               cacheName: 'osm-tiles',
               expiration: { maxEntries: 400, maxAgeSeconds: 7 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            // Fontes Fredoka e Nunito (Google Fonts) para o visual funcionar offline.
+            urlPattern: ({ url }) => url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com',
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'google-fonts',
+              expiration: { maxEntries: 30, maxAgeSeconds: 365 * 24 * 60 * 60 },
               cacheableResponse: { statuses: [0, 200] },
             },
           },

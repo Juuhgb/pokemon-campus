@@ -14,9 +14,9 @@ export function ConnectionStatus() {
   }, []);
 
   return (
-    <span className={`rounded-full px-3 py-1.5 text-sm font-medium ${online ? 'bg-emerald-400/15 text-emerald-200' : 'bg-amber-400/15 text-amber-200'}`}>
+    <span role="status" className="inline-flex items-center gap-1.5 rounded-full ink-border bg-white px-3 py-1.5 text-[13px] font-extrabold text-tinta">
+      <span aria-hidden="true" className={`h-2.5 w-2.5 rounded-full border-2 border-tinta ${online ? 'bg-verde-forte' : 'bg-coral'}`} />
       {online ? 'Online' : 'Offline'}
     </span>
   );
 }
-

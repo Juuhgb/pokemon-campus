@@ -50,6 +50,25 @@ Código em `apps/web/src/features/exploration/`; a API pública fica em `index.t
 - Se os tiles não carregarem, a tela troca para um radar que funciona só com coordenadas.
 - **GPS simulado (apenas em `npm run dev`)**: toque em "GPS simulado" e depois no mapa. O código é removido do build de produção e a posição do cliente nunca serve como autorização.
 
+### Telas do jogador
+
+Seguem o design em `docs/design/` (estilo "Aventura colorida": Fredoka + Nunito, creme, contorno escuro e sombra sólida).
+
+| Rota | Tela |
+| --- | --- |
+| `/boas-vindas`, `/inicial`, `/localizacao` | Onboarding: entrar com Google (simulado), escolher o inicial, permitir GPS |
+| `/` | Mapa com as zonas, Pokémon por perto (cartas com distância e direção) e encontro |
+| `/batalha`, `/captura`, `/resultado` | Batalha (atacar, capturar, trocar, fugir), captura com 3 chacoalhadas e recompensas |
+| `/colecao`, `/equipe` | Álbum por raridade e equipe de até 3 |
+| `/perfil`, `/ranking`, `/configuracoes` | Pontuação, mochila, ranking geral/por curso, nome, curso e conta Google |
+
+O que ainda é protótipo local:
+
+- **Login com Google** é simulado; o real vem do módulo de autenticação.
+- **Perfil, coleção, equipe, mochila e pontos** ficam no `localStorage` deste navegador (`features/player/`) até existirem as rotas da API. "Sair da conta" apaga esse progresso.
+- **Batalha e captura** rodam no cliente com as regras do `game-engine` (`calculateDamage`, `captureChance`, `deterministicRollV1`), mas não enviam eventos de sincronização: o resultado oficial continua sendo do servidor quando o módulo de batalha/sync for integrado.
+- **Ranking** usa jogadores de exemplo além do próprio jogador.
+
 ### Painel de admin (`/admin`)
 
 Abra `http://localhost:5173/admin` (ou `https://<IP>:5173/admin` com `npm run dev:phone`). O código fica em `apps/web/src/features/admin/`. A tela do jogo não mostra ferramentas de edição.

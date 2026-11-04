@@ -13,8 +13,8 @@ interface PlayerMarkerProps {
 function playerIcon(simulated: boolean) {
   return L.divIcon({
     className: '',
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
     html: `<span class="player-marker ${simulated ? 'player-marker--simulated' : ''}"><span></span></span>`,
   });
 }
@@ -26,12 +26,12 @@ export function PlayerMarker({ position, showEncounterRadius = true }: PlayerMar
 
   return (
     <>
-      {position.accuracyMeters > 0 && (
+      {position.accuracyMeters > ENCOUNTER_RADIUS_METERS && (
         <Circle
           center={center}
           radius={position.accuracyMeters}
           interactive={false}
-          pathOptions={{ color: '#38bdf8', weight: 1, opacity: 0.4, fillOpacity: 0.08 }}
+          pathOptions={{ color: '#3b82f6', weight: 1, opacity: 0.5, fillOpacity: 0.06 }}
         />
       )}
       {showEncounterRadius && (
@@ -39,11 +39,11 @@ export function PlayerMarker({ position, showEncounterRadius = true }: PlayerMar
           center={center}
           radius={ENCOUNTER_RADIUS_METERS}
           interactive={false}
-          pathOptions={{ color: simulated ? '#fb923c' : '#22d3ee', weight: 1.5, dashArray: '4 4', fillOpacity: 0.05 }}
+          pathOptions={{ color: '#1d1b3a', weight: 2.5, dashArray: '6 6', fillColor: '#ffc23d', fillOpacity: 0.22 }}
         />
       )}
       <Marker position={center} icon={icon} zIndexOffset={1000} keyboard={false}>
-        <Tooltip direction="top" offset={[0, -14]}>{simulated ? 'Você (posição simulada)' : 'Você'}</Tooltip>
+        <Tooltip direction="top" offset={[0, -16]}>{simulated ? 'Você (posição simulada)' : 'Você'}</Tooltip>
       </Marker>
     </>
   );

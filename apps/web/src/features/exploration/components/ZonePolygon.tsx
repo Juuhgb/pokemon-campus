@@ -13,10 +13,11 @@ export function ZonePolygon({ zone, active, selected, onSelect }: ZonePolygonPro
     <Polygon
       positions={zone.boundary.map((point) => [point.latitude, point.longitude] as [number, number])}
       pathOptions={{
-        color: zone.color,
-        weight: selected || active ? 3 : 1.5,
-        fillOpacity: active ? 0.3 : 0.15,
-        dashArray: zone.isDemo ? '6 6' : undefined,
+        color: '#1d1b3a',
+        weight: selected || active ? 3.5 : 2.5,
+        fillColor: zone.color,
+        fillOpacity: active ? 0.5 : 0.35,
+        dashArray: zone.isDemo ? '8 6' : undefined,
       }}
       eventHandlers={{ click: () => onSelect(zone.id) }}
     >

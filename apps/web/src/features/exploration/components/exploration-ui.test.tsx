@@ -6,8 +6,8 @@ import type { LocationProvider } from '../services/location.js';
 import { locationError } from '../services/location.js';
 import type { ExplorationSpawn, LocationError, LocationFix } from '../types.js';
 import { LocationNotice } from './LocationNotice.js';
-import { NearbyRadar } from './NearbyRadar.js';
-import { SpawnDetails } from './SpawnDetails.js';
+import { EncounterSheet } from './EncounterSheet.js';
+import { NearbyCards } from './NearbyCards.js';
 
 afterEach(cleanup);
 
@@ -23,16 +23,16 @@ const SPAWN: ExplorationSpawn = {
   expiresAt: '2026-11-04T15:30:00.000Z',
 };
 
-describe('SpawnDetails', () => {
+describe('EncounterSheet', () => {
   it('mostra espécie, nível, raridade e distância e habilita o botão dentro do alcance', () => {
     const onStart = vi.fn();
     render(
-      <SpawnDetails spawn={SPAWN} eligibility={{ allowed: true, distanceMeters: 12 }} now={NOW} onStartEncounter={onStart} onClose={vi.fn()} />,
+      <EncounterSheet spawn={SPAWN} eligibility={{ allowed: true, distanceMeters: 12 }} now={NOW} onStartEncounter={onStart} onClose={vi.fn()} />,
     );
-    expect(screen.getByText('Faiscão')).toBeTruthy();
-    expect(screen.getByText(/Nível 12/)).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Faiscão' })).toBeTruthy();
+    expect(screen.getByText('Nv. 12')).toBeTruthy();
     expect(screen.getByText('Raro')).toBeTruthy();
-    expect(screen.getByText(/A 12 m/)).toBeTruthy();
+    expect(screen.getByText('12 m')).toBeTruthy();
 
     const button = screen.getByRole('button', { name: 'Batalhar / Capturar' }) as HTMLButtonElement;
     expect(button.disabled).toBe(false);
@@ -40,10 +40,10 @@ describe('SpawnDetails', () => {
     expect(onStart).toHaveBeenCalledWith(SPAWN);
   });
 
-  it('desabilita o botão e mostra a distância fora do alcance', () => {
+  it('desabilita o botão e mostra quanto falta fora do alcance', () => {
     const onStart = vi.fn();
     render(
-      <SpawnDetails
+      <EncounterSheet
         spawn={SPAWN}
         eligibility={{ allowed: false, reason: 'out-of-range', distanceMeters: 80 }}
         now={NOW}
@@ -53,15 +53,15 @@ describe('SpawnDetails', () => {
     );
     const button = screen.getByRole('button', { name: 'Batalhar / Capturar' }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
-    expect(screen.getByText(/A 80 m/)).toBeTruthy();
-    expect(screen.getByText(/faltam 50 m/)).toBeTruthy();
+    expect(screen.getByText('80 m')).toBeTruthy();
+    expect(screen.getByText(/Faltam 50 m/)).toBeTruthy();
     fireEvent.click(button);
     expect(onStart).not.toHaveBeenCalled();
   });
 
   it('informa quando o spawn expirou', () => {
     render(
-      <SpawnDetails
+      <EncounterSheet
         spawn={SPAWN}
         eligibility={{ allowed: false, reason: 'expired', distanceMeters: 5 }}
         now={NOW}
@@ -85,20 +85,24 @@ describe('LocationNotice', () => {
   });
 });
 
-describe('NearbyRadar', () => {
-  it('lista apenas os Pokémon dentro do alcance do radar', () => {
+describe('NearbyCards', () => {
+  it('lista só os Pokémon dentro do alcance, com distância e direção', () => {
     const far = { ...SPAWN, spawnId: 'far', speciesId: 'gotinha' };
+    const onSelect = vi.fn();
     render(
-      <NearbyRadar
-        player={{ latitude: -23.113, longitude: -50.357 }}
+      <NearbyCards
+        player={{ latitude: -23.1135, longitude: -50.357 }}
         nearby={[{ spawn: SPAWN, distanceMeters: 20 }, { spawn: far, distanceMeters: 900 }]}
         rangeMeters={250}
-        selectedSpawnId={null}
-        onSelect={vi.fn()}
+        onSelect={onSelect}
       />,
     );
-    expect(screen.getByRole('button', { name: /Faiscão/ })).toBeTruthy();
+    const card = screen.getByRole('button', { name: /Faiscão/ });
+    expect(card.textContent).toMatch(/No alcance/);
+    expect(screen.getByLabelText('Direção norte')).toBeTruthy();
     expect(screen.queryByRole('button', { name: /Gotinha/ })).toBeNull();
+    fireEvent.click(card);
+    expect(onSelect).toHaveBeenCalledWith('spawn-1');
   });
 });
 

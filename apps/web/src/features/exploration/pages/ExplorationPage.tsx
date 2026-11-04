@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { CampusMap } from '../components/CampusMap.js';
 import { DevLocationPanel } from '../components/DevLocationPanel.js';
+import { EncounterSheet } from '../components/EncounterSheet.js';
 import { LocationNotice } from '../components/LocationNotice.js';
-import { NearbyRadar } from '../components/NearbyRadar.js';
-import { SpawnDetails } from '../components/SpawnDetails.js';
+import { NearbyCards } from '../components/NearbyCards.js';
 import { createMockSpawns } from '../data/mockSpawns.js';
 import { useDebouncedValue } from '../hooks/useDebouncedValue.js';
 import { useSpawns, useZones } from '../hooks/useExplorationData.js';
@@ -28,9 +28,15 @@ interface ExplorationPageProps {
   spawnRepository?: SpawnRepository;
   zoneRepository?: ZoneRepository;
   locationProvider?: LocationProvider;
-  /** Conteúdo extra no cabeçalho (ex.: indicador de conexão). */
+  /** Conteúdo extra no topo (ex.: indicador de conexão). */
   headerAction?: ReactNode;
+  /** Conteúdo fixo embaixo do mapa (ex.: barra de navegação). */
+  footer?: ReactNode;
+  /** Spawns que não devem aparecer (ex.: já capturados nesta sessão). */
+  hiddenSpawnIds?: ReadonlySet<string>;
 }
+
+const NO_HIDDEN: ReadonlySet<string> = new Set();
 
 export function ExplorationPage({
   onStartEncounter,
@@ -38,6 +44,8 @@ export function ExplorationPage({
   zoneRepository = localZoneRepository,
   locationProvider,
   headerAction,
+  footer,
+  hiddenSpawnIds = NO_HIDDEN,
 }: ExplorationPageProps) {
   const now = useNow();
   const geo = useGeolocation(locationProvider);
@@ -47,7 +55,8 @@ export function ExplorationPage({
     () => spawnRepository ?? createLocalFirstSpawnRepository(createMockSpawnRepository((at) => createMockSpawns(at, settledZones)), spawnCache),
     [spawnRepository, settledZones],
   );
-  const { spawns, error: spawnsError } = useSpawns(effectiveSpawnRepository);
+  const { spawns: allSpawns, error: spawnsError } = useSpawns(effectiveSpawnRepository);
+  const spawns = useMemo(() => allSpawns.filter((spawn) => !hiddenSpawnIds.has(spawn.spawnId)), [allSpawns, hiddenSpawnIds]);
 
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [selectedSpawnId, setSelectedSpawnId] = useState<string | null>(null);
@@ -112,33 +121,23 @@ export function ExplorationPage({
     }
   }, [geo.position, onStartEncounter, showToast]);
 
-  return (
-    <div className="flex h-dvh flex-col bg-slate-950 text-slate-100">
-      <header className="z-[1000] flex items-center justify-between gap-3 border-b border-slate-800 bg-slate-950/95 px-4 py-2">
-        <div className="min-w-0">
-          <h1 className="text-lg font-bold leading-tight">Pokémon Campus</h1>
-          <p className="truncate text-xs text-slate-400">
-            {player ? (activeZone ? <>Você está em <strong style={{ color: activeZone.color }}>{activeZone.name}</strong></> : 'Fora das zonas dos cursos') : 'Localização indisponível'}
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          {geo.isSimulated && <span className="rounded-full bg-orange-400/20 px-2 py-1 text-xs font-semibold text-orange-200">GPS simulado</span>}
-          {headerAction}
-        </div>
-      </header>
+  const zoneLabel = player ? (activeZone ? activeZone.name : 'Fora das zonas dos cursos') : 'Localização indisponível';
+  const selectedZoneName = selectedSpawn ? zones.find((zone) => zone.id === selectedSpawn.zoneId)?.name : undefined;
 
+  return (
+    <div className="flex h-dvh flex-col bg-creme text-tinta">
       <div className="relative min-h-0 flex-1">
         {tilesUnavailable ? (
-          <div className="flex h-full flex-col items-center justify-center gap-4 overflow-y-auto p-4">
-            <p role="status" className="max-w-sm text-center text-sm text-amber-200">
-              O mapa não pôde ser carregado (sem conexão ou servidor de mapas indisponível). Use o radar abaixo para encontrar Pokémon.
+          <div className="flex h-full flex-col gap-4 overflow-y-auto px-4 pt-28 pb-6">
+            <p role="status" className="m-0 rounded-2xl ink-border bg-white px-4 py-3 text-sm font-bold">
+              O mapa não pôde ser carregado (sem conexão ou servidor de mapas indisponível). A lista abaixo usa só o GPS e funciona offline.
             </p>
             {player ? (
-              <NearbyRadar player={player} nearby={nearby} selectedSpawnId={selectedSpawnId} onSelect={setSelectedSpawnId} expanded />
+              <NearbyCards player={player} nearby={nearby} onSelect={setSelectedSpawnId} layout="list" />
             ) : (
-              <p className="text-sm text-slate-400">O radar precisa da sua localização.</p>
+              <p className="m-0 text-sm font-bold text-tinta-suave">A lista precisa da sua localização.</p>
             )}
-            <button type="button" onClick={() => setTilesUnavailable(false)} className="rounded-full bg-slate-800 px-4 py-2 text-sm hover:bg-slate-700">
+            <button type="button" onClick={() => setTilesUnavailable(false)} className="self-start rounded-[14px] ink-border bg-white px-4 py-2 text-sm font-extrabold">
               Tentar carregar o mapa
             </button>
           </div>
@@ -161,17 +160,32 @@ export function ExplorationPage({
           </div>
         )}
 
-        <div className="pointer-events-none absolute inset-x-3 top-3 z-[1000] flex flex-col gap-2 [&>*]:pointer-events-auto">
+        <div className="pointer-events-none absolute inset-x-4 top-4 z-[1000] flex flex-col gap-2 [&>*]:pointer-events-auto">
+          <div className="flex items-start justify-between gap-2.5">
+            <div className="flex min-w-0 items-center gap-2.5 rounded-[18px] sticker bg-white py-2 pr-3.5 pl-2">
+              <span aria-hidden="true" className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-xl ink-border" style={{ background: activeZone?.color ?? '#ece9f5' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d1b3a" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M4 10l8-6 8 6v10H4z" /><path d="M10 20v-5h4v5" /></svg>
+              </span>
+              <span className="flex min-w-0 flex-col">
+                <span className="text-xs font-extrabold text-tinta-suave">{player && activeZone ? 'Você está em' : 'Exploração'}</span>
+                <span className="truncate font-display text-[17px] leading-tight font-semibold">{zoneLabel}</span>
+              </span>
+            </div>
+            <div className="flex shrink-0 flex-col items-end gap-1.5">
+              {headerAction}
+              {geo.isSimulated && <span className="rounded-full border-2 border-tinta bg-amarelo px-2.5 py-0.5 text-xs font-extrabold">GPS simulado</span>}
+            </div>
+          </div>
           <LocationNotice status={geo.status} error={geo.error} simulationAvailable={geo.simulationAvailable} />
-          {spawnsError && <p role="alert" className="rounded-2xl bg-rose-950/90 px-4 py-2 text-sm text-rose-100">{spawnsError}</p>}
+          {spawnsError && <p role="alert" className="m-0 rounded-2xl ink-border bg-[#ffd9cf] px-4 py-2 text-sm font-bold">{spawnsError}</p>}
           {selectedZone && (
-            <div className="flex items-center gap-2 self-start rounded-full bg-slate-900/90 px-3 py-1.5 text-sm shadow-lg">
-              <span className="h-3 w-3 rounded-full" style={{ background: selectedZone.color }} aria-hidden="true" />
+            <div className="flex items-center gap-2 self-start rounded-full ink-border bg-white px-3 py-1.5 text-sm font-bold">
+              <span className="h-3 w-3 rounded-full border-2 border-tinta" style={{ background: selectedZone.color }} aria-hidden="true" />
               <span>
                 {selectedZone.name}
-                {selectedZone.isDemo && <span className="text-slate-400"> · área de demonstração</span>}
+                {selectedZone.isDemo && <span className="text-tinta-suave"> · área de demonstração</span>}
               </span>
-              <button type="button" onClick={() => setSelectedZoneId(null)} aria-label="Fechar zona selecionada" className="text-slate-400">✕</button>
+              <button type="button" onClick={() => setSelectedZoneId(null)} aria-label="Fechar zona selecionada" className="grid h-7 w-7 place-items-center">✕</button>
             </div>
           )}
           {SIMULATED_LOCATION_AVAILABLE && (
@@ -186,40 +200,48 @@ export function ExplorationPage({
           )}
         </div>
 
-        {player && !tilesUnavailable && (
-          <button
-            type="button"
-            onClick={() => setRecenterSignal((value) => value + 1)}
-            className="absolute bottom-4 right-3 z-[1000] grid h-12 w-12 place-items-center rounded-full bg-slate-900/95 text-xl shadow-lg hover:bg-slate-800"
-            aria-label="Centralizar no jogador"
-          >
-            ◎
-          </button>
+        {!tilesUnavailable && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-3 z-[1000] flex flex-col gap-3 [&>*]:pointer-events-auto">
+            {player && (
+              <button
+                type="button"
+                onClick={() => setRecenterSignal((value) => value + 1)}
+                className="mr-4 grid h-[52px] w-[52px] place-items-center self-end rounded-2xl sticker bg-white"
+                aria-label="Centralizar no jogador"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="7" /><circle cx="12" cy="12" r="2" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" /></svg>
+              </button>
+            )}
+            <div className="pl-4">
+              {player ? (
+                <NearbyCards player={player} nearby={nearby} onSelect={setSelectedSpawnId} />
+              ) : (
+                <p className="m-0 mr-4 rounded-2xl ink-border bg-white px-4 py-3 text-sm font-bold">{activeSpawns.length} Pokémon ativos no campus. Toque em um para ver detalhes.</p>
+              )}
+            </div>
+          </div>
         )}
 
         {toast && (
-          <p role="status" className="absolute inset-x-3 bottom-20 z-[1000] mx-auto max-w-md rounded-2xl bg-emerald-900/95 px-4 py-3 text-center text-sm text-emerald-50 shadow-lg">
+          <p role="status" className="absolute inset-x-4 bottom-56 z-[1000] mx-auto max-w-md rounded-2xl sticker bg-verde px-4 py-3 text-center text-sm font-extrabold">
             {toast}
           </p>
         )}
       </div>
 
-      <footer className="z-[1000] max-h-[45dvh] overflow-y-auto border-t border-slate-800 bg-slate-950 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        {selectedSpawn && selectedEligibility ? (
-          <SpawnDetails
-            spawn={selectedSpawn}
-            eligibility={selectedEligibility}
-            now={now}
-            pending={encounterPending}
-            onStartEncounter={startEncounter}
-            onClose={() => setSelectedSpawnId(null)}
-          />
-        ) : player && !tilesUnavailable ? (
-          <NearbyRadar player={player} nearby={nearby} selectedSpawnId={selectedSpawnId} onSelect={setSelectedSpawnId} />
-        ) : (
-          <p className="text-sm text-slate-400">{activeSpawns.length} Pokémon ativos no campus. Toque em um para ver detalhes.</p>
-        )}
-      </footer>
+      {footer}
+
+      {selectedSpawn && selectedEligibility && (
+        <EncounterSheet
+          spawn={selectedSpawn}
+          eligibility={selectedEligibility}
+          now={now}
+          zoneName={selectedZoneName}
+          pending={encounterPending}
+          onStartEncounter={startEncounter}
+          onClose={() => setSelectedSpawnId(null)}
+        />
+      )}
     </div>
   );
 }
