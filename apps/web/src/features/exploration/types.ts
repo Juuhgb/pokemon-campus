@@ -26,6 +26,8 @@ export interface ExplorationSpawn {
   zoneId?: string;
   /** Token assinado pelo servidor; ausente nos dados simulados. */
   spawnToken?: string;
+  battleSeed?: string;
+  rulesVersion?: number;
 }
 
 export interface CampusZone {
@@ -76,6 +78,8 @@ export interface EncounterStartRequest {
   speciesId: string;
   level: number;
   spawnToken?: string;
+  battleSeed?: string;
+  rulesVersion?: number;
   /** ISO 8601 UTC do momento do pedido no dispositivo. */
   requestedAt: string;
   playerPosition: GeoPoint;

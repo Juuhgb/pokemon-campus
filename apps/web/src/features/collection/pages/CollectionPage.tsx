@@ -92,6 +92,19 @@ export function CollectionPage() {
               <span className="rounded-full px-2 py-0.5 text-[11px] font-extrabold" style={{ background: chip.bg, color: chip.fg }}>
                 {known ? RARITY_LABEL[species.rarity] : 'Falta achar'}
               </span>
+              {known && (
+                <details className="w-full text-left text-xs font-bold">
+                  <summary className="cursor-pointer rounded-lg p-2">Ver na Pokédex</summary>
+                  <div className="flex flex-col gap-2 p-2">
+                    <p>{species.description}</p>
+                    <p>Tipo: {species.type}</p>
+                    <p>Golpes: {species.moves.map((move) => move.name).join(', ')}</p>
+                    {player.creatures.filter((creature) => creature.speciesId === species.id).map((creature) => (
+                      <p key={creature.id}>Nv. {creature.level} · PV {creature.hp}/{creature.maxHp} · {creature.xp} XP</p>
+                    ))}
+                  </div>
+                </details>
+              )}
             </article>
           );
         })}

@@ -1,3 +1,5 @@
+import { applyExperience } from '@pokemon-campus/game-engine';
+export { xpToNextLevel } from '@pokemon-campus/game-engine';
 import { getSpecies, statsAtLevel } from '../catalog/species.js';
 
 /**
@@ -38,6 +40,7 @@ export interface PlayerState {
   course: CourseSlug;
   score: number;
   battles: number;
+  settledBattles?: string[];
   captures: number;
   creatures: OwnedCreature[];
   team: string[];
@@ -68,9 +71,10 @@ export type PlayerAction =
   | { type: 'useBall'; item: BallItem }
   | { type: 'capture'; creatureId: string; speciesId: string; level: number; at: string }
   | { type: 'battleFinished'; xpByCreature: Record<string, number>; points: number }
+  | { type: 'settleBattle'; battleId: string; xpByCreature: Record<string, number>; points: number; captured?: { creatureId: string; speciesId: string; level: number; at: string } }
   | { type: 'reset' };
 
-export const xpToNextLevel = (level: number) => level * 20;
+
 
 export function newCreature(id: string, speciesId: string, level: number, at: string): OwnedCreature {
   const { maxHp } = statsAtLevel(getSpecies(speciesId), level);
@@ -78,12 +82,7 @@ export function newCreature(id: string, speciesId: string, level: number, at: st
 }
 
 function gainXp(creature: OwnedCreature, amount: number): OwnedCreature {
-  let { level, xp } = creature;
-  xp += Math.max(0, amount);
-  while (level < 100 && xp >= xpToNextLevel(level)) {
-    xp -= xpToNextLevel(level);
-    level += 1;
-  }
+  const { level, xp } = applyExperience(creature.level, creature.xp, amount);
   const { maxHp } = statsAtLevel(getSpecies(creature.speciesId), level);
   return { ...creature, level, xp, maxHp, hp: maxHp };
 }
@@ -128,6 +127,13 @@ export function playerReducer(state: PlayerState, action: PlayerAction): PlayerS
         score: state.score + Math.max(0, action.points),
         creatures: state.creatures.map((creature) => gainXp(creature, action.xpByCreature[creature.id] ?? 0)),
       };
+    case 'settleBattle': {
+      if (state.settledBattles?.includes(action.battleId)) return state;
+      const captured = action.captured
+        ? playerReducer(state, { type: 'capture', ...action.captured }) : state;
+      const rewarded = playerReducer(captured, { type: 'battleFinished', xpByCreature: action.xpByCreature, points: action.points });
+      return { ...rewarded, settledBattles: [...(state.settledBattles ?? []), action.battleId] };
+    }
     case 'reset':
       return INITIAL_PLAYER;
   }

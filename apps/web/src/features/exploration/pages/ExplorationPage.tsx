@@ -100,6 +100,8 @@ export function ExplorationPage({
       speciesId: spawn.speciesId,
       level: spawn.level,
       spawnToken: spawn.spawnToken,
+      battleSeed: spawn.battleSeed,
+      rulesVersion: spawn.rulesVersion,
       requestedAt: new Date().toISOString(),
       playerPosition: { latitude: position.latitude, longitude: position.longitude },
       locationSource: position.source,

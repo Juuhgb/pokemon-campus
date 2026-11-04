@@ -29,7 +29,7 @@ export function CapturePage() {
   const species = getSpecies(battle.foe.speciesId);
 
   const throwBall = () => {
-    if (player.inventory[ball] <= 0) return;
+    if (attempt || battle.status !== 'active' || battle.mustSwitch || player.inventory[ball] <= 0) return;
     dispatch({ type: 'useBall', item: ball });
     // O resultado é calculado agora (rolagem determinística) e aplicado ao fim da animação.
     setAttempt({ next: attemptCapture(battle, ball), ball, key: Date.now() });
@@ -118,7 +118,7 @@ export function CapturePage() {
           })}
         </div>
 
-        <button type="button" onClick={throwBall} disabled={noBalls} className={`${buttonStyles.primary} mt-auto text-[21px]`}>
+        <button type="button" onClick={throwBall} disabled={noBalls || battle.status !== 'active' || battle.mustSwitch} className={`${buttonStyles.primary} mt-auto text-[21px]`}>
           {noBalls ? 'Sem bolas desse tipo' : `Lançar ${BALL_NAME[ball]}`}
         </button>
       </section>
