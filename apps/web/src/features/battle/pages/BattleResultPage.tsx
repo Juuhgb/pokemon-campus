@@ -31,10 +31,14 @@ export function BattleResultPage() {
   useEffect(() => {
     if (!battle || battle.status === 'active' || !rewards || rewarded.current) return;
     rewarded.current = true;
-    if (battle.status === 'captured') {
-      dispatch({ type: 'capture', creatureId: crypto.randomUUID(), speciesId: battle.foe.speciesId, level: battle.foe.level, at: new Date().toISOString() });
-    }
-    dispatch({ type: 'battleFinished', xpByCreature: rewards.xpByCreature, points: rewards.points });
+    dispatch({
+      type: 'settleBattle', battleId: battle.id,
+      xpByCreature: rewards.xpByCreature, points: rewards.points,
+      captured: battle.status === 'captured' ? {
+        creatureId: crypto.randomUUID(), speciesId: battle.foe.speciesId,
+        level: battle.foe.level, at: new Date().toISOString(),
+      } : undefined,
+    });
   }, [battle, rewards, dispatch]);
 
   if (!battle || battle.status === 'active' || !rewards) return null;

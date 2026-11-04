@@ -78,3 +78,15 @@ describe('utilitários do jogador', () => {
     expect(rankingFor(player, 'course').every((row) => row.course === 'enfermagem')).toBe(true);
   });
 });
+
+it('settles capture, XP and score atomically and ignores replay after restoring saved state', () => {
+  const action = { type: 'settleBattle' as const, battleId: 'battle-1', points: 110, xpByCreature: { s: 25 },
+    captured: { creatureId: 'caught', speciesId: 'brasinha', level: 5, at: AT } };
+  const once = playerReducer(onboarded(), action);
+  expect(once.captures).toBe(1);
+  expect(once.battles).toBe(1);
+  expect(once.score).toBe(110);
+  expect(once.creatures[0]!.xp).toBe(25);
+  const restored = parseStoredPlayer(JSON.stringify(once));
+  expect(playerReducer(restored, action)).toBe(restored);
+});

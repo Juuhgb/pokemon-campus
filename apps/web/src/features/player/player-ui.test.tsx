@@ -1,3 +1,4 @@
+import { CollectionPage } from '../collection/pages/CollectionPage.js';
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -78,4 +79,14 @@ describe('CaptureThrow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }));
     expect(onRetry).toHaveBeenCalled();
   });
+});
+
+it('shows owned species details in the Pokedex and keeps unknown species hidden', () => {
+  render(<PlayerProvider initial={player}><CollectionPage /></PlayerProvider>);
+  expect(screen.getAllByText('Ver na Pokédex')).toHaveLength(2);
+  expect(screen.getByText(/Tipo: Fogo/)).toBeTruthy();
+  expect(screen.getByText(/Nv. 15 · PV/)).toBeTruthy();
+  expect(screen.getAllByText('???').length).toBeGreaterThan(0);
+  fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'Brasinha' } });
+  expect(screen.getAllByText('Ver na Pokédex')).toHaveLength(1);
 });

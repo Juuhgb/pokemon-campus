@@ -79,5 +79,7 @@ export function fromSharedSpawn(spawn: Spawn, rarity: Rarity = 'common'): Explor
     expiresAt: spawn.activeUntil,
     zoneId: spawn.zoneId,
     spawnToken: spawn.spawnToken,
+      battleSeed: spawn.battleSeed,
+      rulesVersion: spawn.rulesVersion,
   };
 }

@@ -89,6 +89,8 @@ describe('fromSharedSpawn', () => {
       expiresAt: '2026-11-04T16:00:00.000Z',
       zoneId: 'a1f1c2d3-0001-4000-8000-000000000001',
       spawnToken: 'token-assinado-pelo-servidor',
+      battleSeed: 'seed-0123456789abcdef',
+      rulesVersion: 1,
     });
   });
 });

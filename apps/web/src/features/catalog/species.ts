@@ -1,3 +1,4 @@
+import { statsAtLevelV1 } from '@pokemon-campus/game-engine';
 import type { Rarity } from '../exploration/types.js';
 
 /**
@@ -106,9 +107,5 @@ export const RARITY_CHIP: Record<Rarity, { bg: string; fg: string }> = {
 
 /** Atributos de uma criatura no nível dado (fórmula simples de protótipo). */
 export function statsAtLevel(species: SpeciesInfo, level: number) {
-  return {
-    maxHp: Math.round(species.baseStats.hp + level * 1.8),
-    attack: Math.round(species.baseStats.attack + level * 0.9),
-    defense: Math.round(species.baseStats.defense + level * 0.8),
-  };
+  return statsAtLevelV1(species.baseStats, level);
 }

@@ -108,3 +108,11 @@ describe('fim de batalha', () => {
     expect(won.xpByCreature.a).toBeGreaterThan(won.xpByCreature.b!);
   });
 });
+
+it('uses the canonical seed, independently from the signed spawn token', () => {
+  const a = createBattle({ ...SPAWN, battleSeed: 'canonical-seed-12345', rulesVersion: 1, spawnToken: 'token-a' }, team);
+  const b = createBattle({ ...SPAWN, battleSeed: 'canonical-seed-12345', rulesVersion: 1, spawnToken: 'token-b' }, team);
+  expect(a.seed).toBe('canonical-seed-12345');
+  expect(attack(a, 'arranhao').foe).toEqual(attack(b, 'arranhao').foe);
+  expect(() => createBattle({ ...SPAWN, rulesVersion: 2 }, team)).toThrow();
+});
