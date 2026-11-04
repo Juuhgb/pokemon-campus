@@ -5,6 +5,8 @@ export const UtcDateTimeSchema = z.string().datetime();
 export const VersionSchema = z.number().int().nonnegative();
 export const ServerSequenceSchema = z.string().regex(/^[0-9]+$/);
 export const SpeciesIdSchema = z.string().regex(/^[a-z0-9][a-z0-9-]{0,47}$/);
+export const BattleSeedSchema = z.string().min(16).max(256);
+export const RulesVersionSchema = z.number().int().positive();
 
 export const CreatureStatsSchema = z.object({
   level: z.number().int().min(1).max(100),
@@ -81,6 +83,8 @@ export const SpawnSchema = z.object({
   level: z.number().int().min(1).max(100),
   activeFrom: UtcDateTimeSchema,
   activeUntil: UtcDateTimeSchema,
+  battleSeed: BattleSeedSchema,
+  rulesVersion: RulesVersionSchema,
   spawnToken: z.string().min(16),
 });
 export type Spawn = z.infer<typeof SpawnSchema>;
@@ -120,6 +124,26 @@ export const PartyUpdateRequestSchema = z.object({
 });
 export type PartyUpdateRequest = z.infer<typeof PartyUpdateRequestSchema>;
 
+export const InventoryItemIdSchema = z.enum(['POKE_BALL', 'GREAT_BALL']);
+export type InventoryItemId = z.infer<typeof InventoryItemIdSchema>;
+
+export const InventoryItemSchema = z.object({
+  itemId: InventoryItemIdSchema,
+  quantity: z.number().int().nonnegative(),
+});
+export type InventoryItem = z.infer<typeof InventoryItemSchema>;
+
+export const PlayerInventorySchema = z.object({
+  playerId: UuidSchema,
+  version: VersionSchema,
+  items: z.array(InventoryItemSchema).refine(
+    (items) => new Set(items.map((item) => item.itemId)).size === items.length,
+    'An inventory item can appear only once',
+  ),
+  updatedAt: UtcDateTimeSchema,
+});
+export type PlayerInventory = z.infer<typeof PlayerInventorySchema>;
+
 export const EncounterStatusSchema = z.enum(['active', 'captured', 'fled', 'expired']);
 
 export const EncounterSnapshotSchema = z.object({
@@ -133,6 +157,8 @@ export const EncounterSnapshotSchema = z.object({
     maxHp: z.number().int().positive(),
   }),
   partyCreatureIds: CreatureIdsSchema,
+  battleSeed: BattleSeedSchema,
+  rulesVersion: RulesVersionSchema,
   status: EncounterStatusSchema,
   turnNumber: z.number().int().positive(),
   version: VersionSchema,
@@ -140,6 +166,17 @@ export const EncounterSnapshotSchema = z.object({
   expiresAt: UtcDateTimeSchema,
 });
 export type EncounterSnapshot = z.infer<typeof EncounterSnapshotSchema>;
+
+export const PlayerStateSnapshotSchema = z.object({
+  player: PlayerProfileSchema,
+  creatures: z.array(PlayerCreatureSchema),
+  party: PartySchema,
+  inventory: PlayerInventorySchema,
+  activeEncounters: z.array(EncounterSnapshotSchema),
+  cursor: ServerSequenceSchema,
+  generatedAt: UtcDateTimeSchema,
+});
+export type PlayerStateSnapshot = z.infer<typeof PlayerStateSnapshotSchema>;
 
 export const GameActionSchema = z.discriminatedUnion('type', [
   z.object({
@@ -172,7 +209,16 @@ export const BattleActionPayloadSchema = z.object({
   encounterId: UuidSchema,
   expectedVersion: VersionSchema,
   expectedTurnNumber: z.number().int().positive(),
+  expectedInventoryVersion: VersionSchema.optional(),
   action: GameActionSchema,
+}).superRefine((payload, context) => {
+  if (payload.action.type === 'CAPTURE' && payload.expectedInventoryVersion === undefined) {
+    context.addIssue({
+      code: 'custom',
+      path: ['expectedInventoryVersion'],
+      message: 'Capture actions must include the expected inventory version',
+    });
+  }
 });
 
 export const PartyUpdatedPayloadSchema = z.object({
@@ -207,6 +253,31 @@ export type PendingSyncEvent = z.infer<typeof PendingSyncEventSchema>;
 
 export const SyncRequestSchema = z.object({
   events: z.array(PendingSyncEventSchema).min(1).max(100),
+}).superRefine((request, context) => {
+  const idempotencyKeys = new Set<string>();
+  const lastSequenceByDevice = new Map<string, number>();
+
+  request.events.forEach((event, index) => {
+    if (idempotencyKeys.has(event.idempotencyKey)) {
+      context.addIssue({
+        code: 'custom',
+        path: ['events', index, 'idempotencyKey'],
+        message: 'An idempotency key can appear only once in a batch',
+      });
+    }
+    idempotencyKeys.add(event.idempotencyKey);
+
+    const deviceKey = `${event.playerId}:${event.deviceId}`;
+    const previousSequence = lastSequenceByDevice.get(deviceKey);
+    if (previousSequence !== undefined && event.clientSequence <= previousSequence) {
+      context.addIssue({
+        code: 'custom',
+        path: ['events', index, 'clientSequence'],
+        message: 'Events from one device must be sent in increasing sequence order',
+      });
+    }
+    lastSequenceByDevice.set(deviceKey, event.clientSequence);
+  });
 });
 export type SyncRequest = z.infer<typeof SyncRequestSchema>;
 
@@ -218,21 +289,36 @@ export const SyncRejectCodeSchema = z.enum([
   'ENCOUNTER_EXPIRED',
   'STALE_TURN',
   'CREATURE_NOT_OWNED',
+  'INVENTORY_CONFLICT',
+  'INSUFFICIENT_ITEM',
   'INVALID_ACTION',
   'SEQUENCE_REPLAY',
 ]);
 
-const SnapshotSchema = z.union([EncounterSnapshotSchema, PartySchema]);
+export const SyncAggregateSnapshotSchema = z.discriminatedUnion('aggregateType', [
+  z.object({ aggregateType: z.literal('party'), party: PartySchema }),
+  z.object({
+    aggregateType: z.literal('battle'),
+    encounter: EncounterSnapshotSchema,
+    inventory: PlayerInventorySchema,
+    player: PlayerProfileSchema.optional(),
+    creature: PlayerCreatureSchema.optional(),
+  }),
+]);
+export type SyncAggregateSnapshot = z.infer<typeof SyncAggregateSnapshotSchema>;
+
+export const AcceptedSyncEventResultSchema = z.object({
+  idempotencyKey: UuidSchema,
+  status: z.literal('accepted'),
+  serverSequence: ServerSequenceSchema,
+  acceptedAt: UtcDateTimeSchema,
+  aggregateVersion: VersionSchema.optional(),
+  snapshot: SyncAggregateSnapshotSchema.optional(),
+});
+export type AcceptedSyncEventResult = z.infer<typeof AcceptedSyncEventResultSchema>;
 
 export const SyncEventResultSchema = z.discriminatedUnion('status', [
-  z.object({
-    idempotencyKey: UuidSchema,
-    status: z.literal('accepted'),
-    serverSequence: ServerSequenceSchema,
-    acceptedAt: UtcDateTimeSchema,
-    aggregateVersion: VersionSchema.optional(),
-    snapshot: SnapshotSchema.optional(),
-  }),
+  AcceptedSyncEventResultSchema,
   z.object({
     idempotencyKey: UuidSchema,
     status: z.literal('duplicate'),
@@ -245,7 +331,7 @@ export const SyncEventResultSchema = z.discriminatedUnion('status', [
     code: SyncRejectCodeSchema,
     message: z.string().min(1),
     currentVersion: VersionSchema.optional(),
-    snapshot: SnapshotSchema.optional(),
+    snapshot: SyncAggregateSnapshotSchema.optional(),
   }),
 ]);
 export type SyncEventResult = z.infer<typeof SyncEventResultSchema>;
@@ -257,9 +343,8 @@ export const SyncResponseSchema = z.object({
 export type SyncResponse = z.infer<typeof SyncResponseSchema>;
 
 export const ServerChangeSchema = z.object({
-  serverSequence: ServerSequenceSchema,
-  acceptedAt: UtcDateTimeSchema,
   event: PendingSyncEventSchema,
+  result: AcceptedSyncEventResultSchema,
 });
 
 export const SyncChangesResponseSchema = z.object({

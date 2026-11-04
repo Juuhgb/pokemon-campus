@@ -6,9 +6,28 @@ Este documento é a referência comum para os quatro módulos. A proposta está 
 
 - A API usa JSON, nomes de propriedades em camelCase e prefixo /api/v1. A rota /health permanece sem versão.
 - IDs de entidades e dispositivos são UUID. Datas são UTC em ISO 8601, terminando em Z.
-- O servidor é a autoridade para dano, captura, experiência, pontuação e estado final. O cliente envia ações pretendidas; não envia resultados calculados.
+- O servidor é a autoridade para dano, captura, experiência, pontuação e estado final. O cliente envia ações pretendidas; não envia resultados calculados. Progresso local fica pendente até o servidor confirmar.
 - Todo erro HTTP usa o formato ApiErrorSchema de packages/shared. Rejeições de eventos durante sync são respostas por item, não falhas HTTP da requisição inteira.
 - Endpoints de leitura do mapa, espécies, ranking e perfil público podem ser usados sem login. Perfil pessoal (`/players/me`), coleção, equipe, encontros e sync exigem `Authorization: Bearer <token>`.
+
+## Conceitos distribuídos da conversa
+
+| Conceito | Como aparece no contrato |
+| --- | --- |
+| Sistemas distribuídos | Cada celular é um nó com estado local e comunicação com a API central. |
+| Offline-first | Mapa e progresso confirmado ficam em cache; ações offline entram no outbox. |
+| Consistência eventual | O cliente mostra ações pendentes e converge após a resposta canônica do servidor. |
+| Replicação de dados | Spawns, coleção, equipe e inventário têm cópia no PostgreSQL e snapshots no Dexie. |
+| Sincronização | Eventos são enviados em lote e mudanças aceitas chegam por pull com cursor. |
+| Concorrência | Dois dispositivos podem agir no mesmo Encounter ou gastar itens do mesmo inventário. |
+| Resolução de conflitos | A primeira transação válida que confirma a versão vence; as outras recebem snapshot atual. |
+| Idempotência | Reenvio da mesma idempotencyKey não repete captura, consumo ou recompensa. |
+| Tolerância a falhas | Outbox durável, reconexão e backoff exponencial com jitter recuperam falhas de rede. |
+| Ordenação de eventos | clientSequence ordena por dispositivo; turnNumber e serverSequence ordenam as mudanças aceitas. |
+| Determinismo | Cliente e servidor compartilham game-engine, battleSeed e rulesVersion. |
+| Transações atômicas | Encontro, item, criatura, XP, score e recibo confirmam juntos ou revertem juntos. |
+| Recuperação de estado | Snapshot canônico e cursor restauram o app e retomam o pull após perda local. |
+| Autoridade central | O servidor valida ações e decide o estado oficial do jogo. |
 
 ### Estado da implementação
 
@@ -22,12 +41,14 @@ Este arquivo fixa o contrato-alvo para o grupo. Neste momento, a API implementa 
 | POST /api/v1/auth/register | Público | RegisterPlayerRequest | AuthSession; 201 |
 | POST /api/v1/auth/login | Público | LoginPlayerRequest | AuthSession; 200 |
 | GET /api/v1/players/me | Login | — | PlayerProfile |
+| GET /api/v1/players/me/state | Login | — | PlayerStateSnapshot |
 | GET /api/v1/players/:playerId | Público | UUID no caminho | PlayerProfile |
 | GET /api/v1/zones | Público | — | Zone[] |
 | GET /api/v1/spawns?zoneId=<uuid>&at=<data> | Público | Zona e instante opcionais | Spawn[] |
 | GET /api/v1/species?cursor=<cursor>&limit=50 | Público | Paginação | { items: CreatureSpecies[], nextCursor } |
 | GET /api/v1/players/me/creatures | Login | — | PlayerCreature[] |
 | GET /api/v1/players/me/party | Login | — | Party |
+| GET /api/v1/players/me/inventory | Login | — | PlayerInventory |
 | PUT /api/v1/players/me/party | Login | PartyUpdateRequest | Party |
 | GET /api/v1/encounters/:encounterId | Login | UUID no caminho | EncounterSnapshot |
 | POST /api/v1/sync/events | Login | SyncRequest | SyncResponse |
@@ -58,22 +79,38 @@ Códigos HTTP: 400 entrada inválida, 401 sem sessão válida, 403 ação não p
 | Player | id UUID, email, displayName, passwordHash, score, createdAt | API |
 | CreatureSpecies | id slug estável, displayName, types, baseStats, baseCaptureRate | Conteúdo/API |
 | Zone | id UUID, slug, name, boundary de pontos latitude/longitude, active | Mapa/API |
-| Spawn | id UUID, zoneId, speciesId, position, level, activeFrom, activeUntil, spawnToken | Mapa/API |
+| Spawn | id UUID, zoneId, speciesId, position, level, activeFrom, activeUntil, battleSeed, rulesVersion, spawnToken | Mapa/API |
 | PlayerCreature | id UUID, playerId, speciesId, nickname, level, experience, currentHp, maxHp, caughtAt, sourceEncounterId, version | Gameplay/API |
 | Party | playerId, creatureIds ordenados (0–3), version, updatedAt | Gameplay/API |
-| Encounter | id UUID gerado no cliente, playerId, spawnId, opponent, partyCreatureIds, status, turnNumber, version, startedAt, expiresAt | Gameplay/API |
+| PlayerInventory | playerId, items com quantidades, version, updatedAt | Gameplay/API |
+| Encounter | id UUID gerado no cliente, playerId, spawnId, opponent, partyCreatureIds, battleSeed, rulesVersion, status, turnNumber, version, startedAt, expiresAt | Gameplay/API |
+| PlayerStateSnapshot | player, creatures, party, inventory, activeEncounters, cursor e generatedAt | API/Sync |
 | SyncEvent | idempotencyKey, playerId, deviceId, clientSequence, schemaVersion, type, payload, occurredAt, acceptedAt e serverSequence | Sync/API |
 | BattleTurn | idempotencyKey, encounterId, turnNumber, actor, action, result, acceptedAt | Gameplay/API |
 
-A equipe pode consultar os campos completos em schemas executáveis no arquivo packages/shared/src/index.ts e as tabelas PostgreSQL em apps/api/src/database/migrations/002_contracts.sql. A Pokédex é derivada de PlayerCreature agrupando por speciesId; não precisa de tabela separada no MVP. O ranking é derivado de Player.score.
+A equipe pode consultar os campos completos em schemas executáveis no arquivo packages/shared/src/index.ts e as tabelas PostgreSQL em apps/api/src/database/migrations/002_contracts.sql e 003_deterministic_battle.sql. A Pokédex é derivada de PlayerCreature agrupando por speciesId; não precisa de tabela separada no MVP. O ranking é derivado de Player.score.
 
 ### Regras dos modelos
 
 - Uma Party contém no máximo três criaturas; a ordem de creatureIds corresponde aos slots 1, 2 e 3.
 - Cada criatura capturada pertence a um único jogador. O servidor valida posse antes de permitir equipe ou ação.
 - Zone.boundary é uma lista ordenada de vértices latitude/longitude; o servidor fecha o polígono ao calcular a área.
-- Spawn.spawnToken é opaco e assinado pelo servidor. Ele permite validar um spawn baixado para uso offline; o cliente nunca escolhe nem altera a semente do spawn.
+- O servidor gera uma battleSeed por spawn e a inclui no snapshot de spawns baixado antes de ficar offline. O spawnToken assinado vincula spawn, semente, validade e rulesVersion. Na sincronização, o servidor carrega a semente canônica do banco; nunca aceita semente ou resultado enviados pelo cliente.
 - Encounter.version aumenta em cada alteração aceita. turnNumber aumenta depois de cada ação aceita.
+- O Encounter congela battleSeed e rulesVersion ao começar. A versão 1 usa deterministicRollV1(seed, turnNumber, purpose) do game-engine; cliente e servidor compartilham o mesmo pacote puro, sem React, Dexie, Fastify ou PostgreSQL dentro das regras.
+- Uma mudança no algoritmo de combate gera uma nova rulesVersion. O servidor mantém as versões necessárias para resolver encontros já iniciados.
+
+## Padrões aproveitados do Segura e Balança
+
+- Zod valida modelos e dados de fronteira; os tipos TypeScript são inferidos dos mesmos schemas em @pokemon-campus/shared.
+- Regras de gameplay e cálculos determinísticos ficam em @pokemon-campus/game-engine, como o domínio puro do projeto de referência. Não importam UI, rede ou banco de dados.
+- A web separa páginas/componentes, mapa e sync. A sincronização depende de uma porta RemotePort; uma implementação HTTP e um mock podem ser conectados sem mudar as telas. A API separa routes, services e database.
+- O Dexie guarda snapshots e eventos de saída. Cada item local pode estar pendente, enviando ou rejeitado; erros transitórios usam backoff exponencial com jitter. Metadados locais não fazem parte do DTO enviado.
+- O PWA mantém uma alternativa de interface quando GPS ou sensores de movimento não estão disponíveis. A Vibration API não é suportada pelo Safari no iPhone; vibração é sempre opcional, com alternativa visual/sonora e controles acessíveis.
+- Coordenadas do celular servem para orientar a exploração, como no projeto de referência; não são prova antifraude. O servidor valida o spawnToken e as regras do jogo sem confiar em localização ou horário enviados pelo cliente.
+- Ao criar a suíte, seguir a separação da referência: Vitest para domínio e sync com IndexedDB simulado; Playwright para fluxos completos no navegador. Esses testes ainda não fazem parte do projeto atual.
+
+O repositório de referência usa Firebase/Firestore para sua própria aplicação. Esses serviços não são copiados: neste jogo, os adaptadores remotos usam a API Fastify/PostgreSQL definida na conversa.
 
 ## Formato de evento
 
@@ -120,6 +157,8 @@ Todos os eventos enviados ao servidor seguem PendingSyncEventSchema. idempotency
       }
     }
 
+Para uma ação `CAPTURE`, o payload também inclui `expectedInventoryVersion`. O servidor valida a quantidade e consome a Pokébola na mesma transação que resolve a tentativa.
+
 ### Exemplo: troca de equipe
 
     {
@@ -141,19 +180,24 @@ Todos os eventos enviados ao servidor seguem PendingSyncEventSchema. idempotency
 1. O cliente grava o evento no outbox do Dexie antes de mostrar a ação como concluída. Na UI, a ação fica marcada como pendente. O `PUT /api/v1/players/me/party` online e o evento `party.updated` offline aplicam a mesma regra de `expectedVersion`.
 2. Ao reconectar, envia até 100 eventos em ordem de clientSequence por dispositivo. O servidor valida cada evento e devolve `results` na mesma ordem; um conflito não desfaz os outros eventos aceitos do mesmo lote.
 3. O servidor deduplica por idempotencyKey. Reenviar uma ação já aceita retorna status duplicate com o recibo original; ela nunca é executada duas vezes. A rejeição anterior é repetida com o mesmo resultado rejected.
-4. clientSequence é crescente por deviceId. Reutilizar uma sequência com outra idempotencyKey retorna SEQUENCE_REPLAY.
-5. Party e Encounter usam expectedVersion. O servidor aplica atualização sob transação/lock e compara versão; somente uma alteração concorrente pode vencer. A outra recebe VERSION_CONFLICT ou STALE_TURN e o snapshot canônico atual.
+4. clientSequence é crescente por par playerId/deviceId e sua última posição é persistida no servidor. Reutilizar uma sequência com outra idempotencyKey retorna SEQUENCE_REPLAY. O dispositivo mantém seu UUID e contador no Dexie.
+5. Party, inventário e Encounter usam expectedVersion. O servidor aplica atualização sob transação/lock e compara versão; somente uma alteração concorrente pode vencer. A outra recebe VERSION_CONFLICT, INVENTORY_CONFLICT ou STALE_TURN e o snapshot canônico atual.
 6. occurredAt é dado de auditoria e pode estar errado. Para ordenar ações de um mesmo dispositivo usa-se clientSequence; para concorrência entre dispositivos usa-se version/turnNumber. A hora do servidor acceptedAt é autoritativa.
 7. Evento rejeitado não deve ser reenviado indefinidamente. Corrija a intenção com o estado canônico e crie um novo evento, nova idempotencyKey e novo clientSequence.
-8. Após aceitar, o servidor devolve serverSequence e snapshot/result. O cliente remove o item da fila e pode buscar alterações posteriores por GET /api/v1/sync/changes?after=<nextCursor>.
+8. Após aceitar, o servidor devolve serverSequence e snapshot/result. O cliente remove o item da fila e pode buscar alterações posteriores por GET /api/v1/sync/changes?after=<nextCursor>. Cada alteração baixada contém evento original e resultado canônico aceito.
+9. Cada evento é uma transação PostgreSQL independente. Validação, atualização do encontro, consumo de item, criatura capturada, XP, pontuação, linha de batalha e recibo idempotente são confirmados juntos ou revertidos juntos. Um lote pode ter sucessos parciais, mas nunca efeitos pela metade em um evento.
+10. serverSequence é um cursor decimal opaco e crescente por jogador. O servidor bloqueia a linha de player_sync_cursors e incrementa o cursor dentro da transação aceita, serializando commits para esse jogador. Lacunas de migrações podem existir; clientes não incrementam o cursor por conta própria.
+11. Após perder os dados locais, o cliente chama GET /api/v1/players/me/state. A API lê jogador, coleção, equipe, inventário, encontros ativos e cursor em um snapshot consistente; o cliente substitui seus snapshots no Dexie e continua com GET /api/v1/sync/changes?after=<cursor>.
 
-SyncResponse retorna results[] com status accepted, duplicate ou rejected. Eventos accepted e duplicate têm acceptedAt e serverSequence; accepted também pode trazer aggregateVersion e snapshot. Eventos rejected trazem code, message e, quando aplicável, currentVersion e snapshot.
+O fluxo segue o padrão do projeto de referência: outbox local durável, retentativas com backoff e pull explícito. A ação só fica confirmada depois da resposta do servidor.
+
+SyncResponse retorna results[] com status accepted, duplicate ou rejected. Eventos accepted e duplicate têm acceptedAt e serverSequence; accepted também pode trazer aggregateVersion e snapshot. Uma ação de batalha retorna aggregateType `battle` com encontro e inventário canônicos; em captura bem-sucedida, inclui também jogador e criatura criada. Eventos rejected trazem code, message e, quando aplicável, currentVersion e snapshot.
 
 ## Papéis do grupo
 
-1. Mapa/exploração: Zone, Spawn, GeoPoint, GET zones/spawns e armazenamento do mapa.
-2. Batalha/captura/progressão: CreatureSpecies, PlayerCreature, Party, Encounter, GameAction e regras puras em game-engine.
-3. Backend/banco/spawns: rotas Fastify, autenticação, PostgreSQL, validações de autoridade e conteúdo de zones/spawns/species.
-4. Offline/sincronização: outbox Dexie, geração de idempotencyKey/clientSequence, lote de eventos, cursores, reconexão e apresentação de conflitos.
+1. Mapa/exploração: Zone, Spawn, GeoPoint, GPS, GET zones/spawns e cache local do mapa.
+2. Batalha/captura/progressão: CreatureSpecies, PlayerCreature, Party, PlayerInventory, Encounter, GameAction e regras determinísticas puras em game-engine.
+3. Backend/banco/spawns: rotas Fastify, autenticação, PostgreSQL, validações de autoridade, geração de seed e transações atômicas.
+4. Offline/sincronização: outbox Dexie, geração de idempotencyKey/clientSequence, backoff, lote de eventos, cursor, restauração de snapshot e apresentação de conflitos.
 
 Todos usam o pacote @pokemon-campus/shared. Alterações em nomes, enums ou versões de contrato são combinadas pela equipe e versionadas em schemaVersion.

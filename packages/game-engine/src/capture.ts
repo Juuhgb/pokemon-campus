@@ -1,4 +1,5 @@
 import type { CreatureStats } from '@pokemon-campus/shared';
+import { deterministicRollV1 } from './random.js';
 
 export function captureChance(target: Pick<CreatureStats, 'hp' | 'maxHp'>, bonus = 0): number {
   if (target.maxHp <= 0 || target.hp < 0 || target.hp > target.maxHp) {
@@ -10,5 +11,14 @@ export function captureChance(target: Pick<CreatureStats, 'hp' | 'maxHp'>, bonus
 export function succeedsCapture(roll: number, target: Pick<CreatureStats, 'hp' | 'maxHp'>, bonus = 0): boolean {
   if (roll < 0 || roll >= 1) throw new RangeError('Capture roll must be in the range [0, 1)');
   return roll < captureChance(target, bonus);
+}
+
+export function succeedsCaptureForTurn(
+  seed: string,
+  turnNumber: number,
+  target: Pick<CreatureStats, 'hp' | 'maxHp'>,
+  bonus = 0,
+): boolean {
+  return succeedsCapture(deterministicRollV1(seed, turnNumber, 'capture'), target, bonus);
 }
 
