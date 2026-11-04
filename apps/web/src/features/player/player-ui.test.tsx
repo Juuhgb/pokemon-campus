@@ -1,9 +1,9 @@
-import { CollectionPage } from '../collection/pages/CollectionPage.js';
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CaptureThrow, SHAKE_INTERVAL_MS } from '../battle/components/CaptureThrow.js';
 import { toCombatant } from '../battle/battleState.js';
+import { CollectionPage } from '../collection/pages/CollectionPage.js';
 import { TeamPage } from '../collection/pages/TeamPage.js';
 import { SettingsPage } from '../profile/pages/SettingsPage.js';
 import { PlayerProvider } from './PlayerProvider.js';
