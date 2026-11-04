@@ -2,6 +2,7 @@ import 'leaflet/dist/leaflet.css';
 import { useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import { CAMPUS_BOUNDS, CAMPUS_CENTER, CAMPUS_DEFAULT_ZOOM } from '../data/campusZones.js';
+import { PERSONAL_AREA } from '../data/personalArea.js';
 import type { CampusZone, ExplorationSpawn, GeoPoint, LocationFix } from '../types.js';
 import { PlayerMarker } from './PlayerMarker.js';
 import { PokemonMarker } from './PokemonMarker.js';
@@ -10,6 +11,18 @@ import { ZonePolygon } from './ZonePolygon.js';
 /** Tiles padrão do OpenStreetMap. Respeite a política de uso: https://operations.osmfoundation.org/policies/tiles/ */
 export const OSM_TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 export const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">Colaboradores do OpenStreetMap</a>';
+
+/** Limites de navegação: o campus e, se configurada, a área pessoal, com folga de ~3 km. */
+const MAP_BOUNDS: [[number, number], [number, number]] = (() => {
+  const points = [...CAMPUS_BOUNDS, ...(PERSONAL_AREA ? [PERSONAL_AREA.center] : [])];
+  const latitudes = points.map((point) => point.latitude);
+  const longitudes = points.map((point) => point.longitude);
+  const padding = 0.03;
+  return [
+    [Math.min(...latitudes) - padding, Math.min(...longitudes) - padding],
+    [Math.max(...latitudes) + padding, Math.max(...longitudes) + padding],
+  ];
+})();
 
 /** Após este número de falhas sem nenhum tile carregado, consideramos o mapa indisponível. */
 const TILE_FAILURE_THRESHOLD = 4;
@@ -82,10 +95,7 @@ export function CampusMap(props: CampusMapProps) {
       zoom={CAMPUS_DEFAULT_ZOOM}
       minZoom={14}
       maxZoom={19}
-      maxBounds={[
-        [CAMPUS_BOUNDS[0].latitude - 0.03, CAMPUS_BOUNDS[0].longitude - 0.03],
-        [CAMPUS_BOUNDS[1].latitude + 0.03, CAMPUS_BOUNDS[1].longitude + 0.03],
-      ]}
+      maxBounds={MAP_BOUNDS}
       className="h-full w-full"
       zoomControl={false}
       attributionControl

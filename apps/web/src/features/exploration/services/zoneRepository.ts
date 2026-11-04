@@ -1,5 +1,6 @@
 import type { Zone } from '@pokemon-campus/shared';
 import { CAMPUS_ZONES } from '../data/campusZones.js';
+import { PERSONAL_AREA, personalAreaZone } from '../data/personalArea.js';
 import type { CampusZone } from '../types.js';
 
 /** Porta de leitura das zonas. Hoje: dados locais; futuro: GET /api/v1/zones. */
@@ -7,7 +8,9 @@ export interface ZoneRepository {
   listZones(): Promise<CampusZone[]>;
 }
 
-export function createStaticZoneRepository(zones: CampusZone[] = CAMPUS_ZONES): ZoneRepository {
+const DEFAULT_ZONES: CampusZone[] = PERSONAL_AREA ? [...CAMPUS_ZONES, personalAreaZone(PERSONAL_AREA)] : CAMPUS_ZONES;
+
+export function createStaticZoneRepository(zones: CampusZone[] = DEFAULT_ZONES): ZoneRepository {
   return {
     async listZones() {
       return zones;

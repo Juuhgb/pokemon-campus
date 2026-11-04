@@ -2,6 +2,7 @@ import type { ExplorationSpawn, GeoPoint, Rarity } from '../types.js';
 import { offsetByMeters } from '../utils/distance.js';
 import { CAMPUS_CENTER, CAMPUS_ZONES } from './campusZones.js';
 import { polygonCentroid } from '../utils/geofence.js';
+import { PERSONAL_ZONE_ID, type PersonalArea } from './personalArea.js';
 
 /** Duração de cada "rodada" de spawns simulados. */
 export const MOCK_SLOT_MS = 30 * 60 * 1000;
@@ -38,16 +39,28 @@ const SEEDS: MockSpawnSeed[] = [
   { key: 'upcoming', speciesId: 'faiscao', level: 8, rarity: 'uncommon', anchor: CAMPUS_CENTER, northMeters: -10, eastMeters: -25, window: 'upcoming' },
 ];
 
+/** Três spawns espalhados dentro da área pessoal (um perto do centro, para dar para pegar de casa). */
+function personalAreaSeeds(area: PersonalArea): MockSpawnSeed[] {
+  const r = area.radiusMeters;
+  const base = { anchor: area.center, zoneId: PERSONAL_ZONE_ID };
+  return [
+    { key: 'home-a', speciesId: 'brotinho', level: 5, rarity: 'common', ...base, northMeters: Math.min(10, r * 0.2), eastMeters: Math.min(6, r * 0.1) },
+    { key: 'home-b', speciesId: 'coruja', level: 8, rarity: 'uncommon', ...base, northMeters: -r * 0.5, eastMeters: r * 0.4 },
+    { key: 'home-c', speciesId: 'brasinha', level: 14, rarity: 'rare', ...base, northMeters: r * 0.1, eastMeters: -r * 0.7 },
+  ];
+}
+
 /**
  * Gera spawns simulados para o instante `now`.
  * As janelas são alinhadas a rodadas fixas de 30 min e os IDs derivam da rodada,
  * então dois jogadores (ou dispositivos) no mesmo horário veem exatamente os mesmos spawns.
  */
-export function createMockSpawns(now: Date = new Date()): ExplorationSpawn[] {
+export function createMockSpawns(now: Date = new Date(), personalArea: PersonalArea | null = null): ExplorationSpawn[] {
   const slot = Math.floor(now.getTime() / MOCK_SLOT_MS);
   const slotStart = slot * MOCK_SLOT_MS;
+  const seeds = personalArea ? [...SEEDS, ...personalAreaSeeds(personalArea)] : SEEDS;
 
-  return SEEDS.map((seed) => {
+  return seeds.map((seed) => {
     const position = offsetByMeters(seed.anchor, seed.northMeters, seed.eastMeters);
     const window = seed.window ?? 'current';
     const startsAt = window === 'upcoming' ? slotStart + 2 * MOCK_SLOT_MS : window === 'expired' ? slotStart - 2 * MOCK_SLOT_MS : slotStart;

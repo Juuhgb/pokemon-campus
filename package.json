@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "npm run build:packages && concurrently -k -n web,api -c green,blue \"npm run dev --workspace @pokemon-campus/web\" \"npm run dev --workspace @pokemon-campus/api\"",
     "dev:web": "npm run build:packages && npm run dev --workspace @pokemon-campus/web",
+    "dev:phone": "npm run build:packages && npm run dev:phone --workspace @pokemon-campus/web",
     "dev:api": "npm run build:packages && npm run dev --workspace @pokemon-campus/api",
     "build:packages": "npm run build --workspace @pokemon-campus/shared && npm run build --workspace @pokemon-campus/game-engine",
     "build": "npm run build:packages && npm run build --workspace @pokemon-campus/api && npm run build --workspace @pokemon-campus/web",
@@ -28,6 +29,7 @@
     "@types/pg": "^8.15.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
     "@vitejs/plugin-react": "^5.2.0",
     "concurrently": "^9.2.1",
     "eslint": "^9.39.5",

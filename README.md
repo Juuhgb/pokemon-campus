@@ -50,6 +50,18 @@ Código em `apps/web/src/features/exploration/`; a API pública fica em `index.t
 - Se os tiles não carregarem, a tela troca para um radar que funciona só com coordenadas.
 - **GPS simulado (apenas em `npm run dev`)**: toque em "GPS simulado" e depois no mapa. O código é removido do build de produção e a posição do cliente nunca serve como autorização.
 
+### Jogar no celular
+
+O GPS do navegador só funciona em HTTPS (ou em `localhost`). Com o celular na mesma rede Wi-Fi do computador:
+
+    npm run dev:phone
+
+Abra no celular o endereço `https://<IP-do-computador>:5173` mostrado em "Network". O certificado é autoassinado: aceite o aviso ("Avançado → Continuar") e permita a localização. Se o celular não conectar, libere a porta 5173 no firewall do Windows para redes privadas. Também é possível usar o link de preview/staging do Firebase Hosting, que já é HTTPS.
+
+### Área de spawn pessoal (ex.: sua casa)
+
+Para jogar fora do campus, crie `apps/web/.env.local` a partir de `apps/web/.env.example` com a latitude e a longitude do local. O jogo cria uma zona circular com três Pokémon simulados (um perto do centro, dentro do raio de captura). O arquivo é ignorado pelo git, então as coordenadas não vão para o repositório. Não use essas variáveis em builds públicos: o valor fica embutido no JavaScript publicado.
+
 ## Hospedagem
 
 O app web (PWA estático em `apps/web/dist`) é publicado no Firebase Hosting pelo workflow `.github/workflows/ci.yml`:

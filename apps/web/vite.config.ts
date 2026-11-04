@@ -2,13 +2,16 @@ import { fileURLToPath, URL } from 'node:url';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import basicSsl from '@vitejs/plugin-basic-ssl';
 import { defineConfig } from 'vite';
 
-export default defineConfig({
+// `npm run dev:phone`: HTTPS na rede local, necessário para o GPS funcionar no celular.
+export default defineConfig(({ mode }) => ({
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   plugins: [
     react(),
     tailwindcss(),
+    ...(mode === 'phone' ? [basicSsl()] : []),
     VitePWA({
       registerType: 'prompt',
       includeAssets: ['pokemon-campus.svg'],
@@ -43,5 +46,5 @@ export default defineConfig({
       },
     }),
   ],
-});
+}));
 
