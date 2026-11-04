@@ -73,9 +73,14 @@ body {
   min-width: 320px;
 }
 
+/*
+ * Preso à janela inteira (inclusive atrás da barra de gestos do Android com viewport-fit=cover);
+ * em alguns aparelhos `100dvh` termina antes do fim real da tela e sobrava uma faixa embaixo.
+ * As barras usam env(safe-area-inset-*) para o conteúdo não ficar sob os gestos do sistema.
+ */
 #root {
-  height: 100vh;
-  height: 100dvh;
+  position: fixed;
+  inset: 0;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: none;

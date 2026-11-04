@@ -26,7 +26,7 @@ export function LocationPage() {
   };
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-5 bg-creme px-6 pt-6 pb-8 text-tinta">
+    <main className="mx-auto flex min-h-full w-full max-w-md flex-col gap-5 bg-creme px-6 pt-6 pb-8 text-tinta">
       <div aria-hidden="true" className="relative -mx-1 h-[260px]">
         <div className="absolute inset-x-5 top-2.5 bottom-5 overflow-hidden rounded-[32px] sticker-lg bg-[#dff0c8]">
           <svg width="100%" height="100%" viewBox="0 0 310 230" preserveAspectRatio="none">

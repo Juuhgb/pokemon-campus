@@ -20,7 +20,7 @@ export function StarterPage() {
 
   if (confirmed) {
     return (
-      <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-creme px-5 pt-6 pb-8 text-tinta">
+      <main className="mx-auto flex min-h-full w-full max-w-md flex-col bg-creme px-5 pt-6 pb-8 text-tinta">
         <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
           <div className="relative grid h-60 w-60 place-items-center">
             <div aria-hidden="true" className="absolute inset-0 -rotate-4 rounded-[40px] sticker-lg" style={{ background: current.color }} />
@@ -39,7 +39,7 @@ export function StarterPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-4 bg-creme px-5 pt-6 pb-8 text-tinta">
+    <main className="mx-auto flex min-h-full w-full max-w-md flex-col gap-4 bg-creme px-5 pt-6 pb-8 text-tinta">
       <header className="flex flex-col gap-2">
         <span className="flex items-center gap-2 self-start rounded-full ink-border bg-white py-1 pr-3 pl-1 text-[13px] font-bold">
           <span aria-hidden="true" className="grid h-7 w-7 place-items-center rounded-full border-2 border-tinta bg-azul text-[11px] font-extrabold">{initials(player.displayName)}</span>

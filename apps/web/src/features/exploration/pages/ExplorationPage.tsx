@@ -141,7 +141,7 @@ export function ExplorationPage({
   const selectedZoneName = selectedSpawn ? zones.find((zone) => zone.id === selectedSpawn.zoneId)?.name : undefined;
 
   return (
-    <div className="flex h-dvh flex-col bg-creme text-tinta">
+    <div className="flex h-full flex-col bg-creme text-tinta">
       <div className="relative min-h-0 flex-1">
         {tilesUnavailable ? (
           <div className="flex h-full flex-col gap-4 overflow-y-auto px-4 pt-28 pb-6">

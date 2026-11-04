@@ -9,7 +9,7 @@ export function WelcomePage() {
   const google = useGoogleLink(goToStarter);
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-creme px-6 pt-6 pb-8 text-tinta">
+    <main className="mx-auto flex min-h-full w-full max-w-md flex-col bg-creme px-6 pt-6 pb-8 text-tinta">
       <div aria-hidden="true" className="relative -mx-1 h-[340px]">
         <div className="absolute inset-x-2.5 top-5 bottom-8 -rotate-3 rounded-[36px] sticker-lg bg-azul" />
         <div className="absolute inset-x-8 top-10 bottom-12 rotate-2 rounded-[30px] ink-border bg-amarelo" />

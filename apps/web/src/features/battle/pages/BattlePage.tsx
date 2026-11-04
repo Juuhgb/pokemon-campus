@@ -83,7 +83,7 @@ export function BattlePage() {
   const turnKey = anim?.key ?? animKey.current;
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-creme text-tinta">
+    <main className="mx-auto flex min-h-full w-full max-w-md flex-col bg-creme text-tinta">
       <Arena height={420}>
         <div className="absolute inset-x-3.5 top-3.5 flex items-start justify-between gap-2">
           <span className="rounded-full bg-tinta px-3 py-1 font-display text-[15px] font-semibold text-amarelo">Turno {battle.turn}</span>

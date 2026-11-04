@@ -37,7 +37,7 @@ export function BottomNav({ active }: { active: Tab }) {
 /** Tela com barra inferior: conteúdo rolável + navegação fixa. */
 export function TabScreen({ active, children, label }: { active: Tab; children: ReactNode; label: string }) {
   return (
-    <div className="flex h-dvh flex-col bg-creme text-tinta">
+    <div className="flex h-full flex-col bg-creme text-tinta">
       <main aria-label={label} className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-md px-5 pt-6 pb-6">{children}</div>
       </main>

@@ -60,7 +60,7 @@ export function BattleResultPage() {
   };
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-4 bg-creme px-5 pt-6 pb-7 text-tinta">
+    <main className="mx-auto flex min-h-full w-full max-w-md flex-col gap-4 bg-creme px-5 pt-6 pb-7 text-tinta">
       <div className="relative grid h-[250px] place-items-center">
         <div aria-hidden="true" className="absolute inset-x-10 inset-y-2.5 -rotate-3 rounded-[40px] sticker-lg" style={{ background: copy.heroBg }} />
         <div className="relative"><CreatureBadge kind={battle.status === 'lost' ? 'unknown' : hero.kind} image={hero.image} color={battle.status === 'lost' ? '#e6e3f0' : hero.color} size={136} label={hero.displayName} /></div>

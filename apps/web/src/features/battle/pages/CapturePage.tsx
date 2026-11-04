@@ -71,7 +71,7 @@ export function CapturePage() {
   const noBalls = player.inventory[ball] <= 0;
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-creme text-tinta">
+    <main className="mx-auto flex min-h-full w-full max-w-md flex-col bg-creme text-tinta">
       <Arena height={400} variant="center">
         <div className="absolute top-3.5 left-3.5"><BackLink to={ROUTES.battle} label="Voltar à batalha" /></div>
         <span className="absolute top-[18px] right-3.5 rounded-full ink-border bg-white px-3 py-1 text-xs font-extrabold">
