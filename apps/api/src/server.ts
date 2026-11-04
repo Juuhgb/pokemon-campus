@@ -3,6 +3,9 @@ import Fastify from 'fastify';
 import { registerHealthRoutes } from './routes/health.js';
 import { registerPlayerRoutes } from './routes/players.js';
 import { createPool } from './database/pool.js';
+import { registerCampusRoutes } from './routes/campus.js';
+import { registerAuthRoutes } from './routes/auth.js';
+import { migrate } from './database/migrate.js';
 
 export async function createServer() {
   const app = Fastify({ logger: true });
@@ -10,8 +13,11 @@ export async function createServer() {
 
   await app.register(cors, { origin: process.env.WEB_ORIGIN ?? 'http://localhost:5173' });
   app.addHook('onClose', async () => pool?.end());
+  if (pool && process.env.RUN_MIGRATIONS !== 'false') await migrate(pool);
   await app.register(registerHealthRoutes);
+  await app.register(registerAuthRoutes, { pool });
   await app.register(registerPlayerRoutes, { pool });
+  await app.register(registerCampusRoutes, { pool });
 
   return app;
 }

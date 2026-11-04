@@ -67,3 +67,19 @@ CREATE UNIQUE INDEX IF NOT EXISTS sync_events_player_device_client_sequence_uniq
   ON sync_events (player_id, device_id, client_sequence);
 
 DROP SEQUENCE IF EXISTS sync_server_sequence;
+
+-- Dados iniciais de inventário/equipe e sessões revogáveis usadas pela API.
+CREATE TABLE IF NOT EXISTS auth_sessions (
+  token_hash TEXT PRIMARY KEY,
+  player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS auth_sessions_expiry_idx ON auth_sessions (expires_at);
+
+INSERT INTO parties(player_id) SELECT id FROM players ON CONFLICT DO NOTHING;
+INSERT INTO player_inventories(player_id) SELECT id FROM players ON CONFLICT DO NOTHING;
+INSERT INTO player_inventory_items(player_id,item_id,quantity)
+SELECT id,'POKE_BALL',5 FROM players ON CONFLICT(player_id,item_id) DO NOTHING;
+INSERT INTO player_inventory_items(player_id,item_id,quantity)
+SELECT id,'GREAT_BALL',0 FROM players ON CONFLICT(player_id,item_id) DO NOTHING;
