@@ -1,0 +1,32 @@
+import { fileURLToPath, URL } from 'node:url';
+import tailwindcss from '@tailwindcss/vite';
+import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
+  plugins: [
+    react(),
+    tailwindcss(),
+    VitePWA({
+      registerType: 'prompt',
+      includeAssets: ['pokemon-campus.svg'],
+      manifest: {
+        id: '/',
+        name: 'Pokémon Campus',
+        short_name: 'Pokémon Campus',
+        description: 'Explore o campus, descubra criaturas e jogue mesmo sem conexão.',
+        lang: 'pt-BR',
+        start_url: '/',
+        scope: '/',
+        display: 'standalone',
+        background_color: '#101827',
+        theme_color: '#101827',
+        icons: [{ src: 'pokemon-campus.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }],
+      },
+      workbox: { navigateFallback: '/index.html', globPatterns: ['**/*.{js,css,html,svg,woff2}'] },
+    }),
+  ],
+});
+

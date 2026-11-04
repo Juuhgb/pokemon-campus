@@ -1,0 +1,24 @@
+{
+  "name": "@pokemon-campus/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit -p tsconfig.json && vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "preview": "vite preview --host 127.0.0.1 --port 4173"
+  },
+  "dependencies": {
+    "@pokemon-campus/game-engine": "0.1.0",
+    "@pokemon-campus/shared": "0.1.0",
+    "dexie": "^4.4.7",
+    "dexie-react-hooks": "^1.1.7",
+    "leaflet": "1.9",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-leaflet": "^5.0.0",
+    "zod": "^4.6.7"
+  }
+}
+
