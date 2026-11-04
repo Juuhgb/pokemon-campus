@@ -1,9 +1,9 @@
 import L, { type LeafletEvent } from 'leaflet';
 import { Fragment, useRef } from 'react';
 import { Marker, Polyline } from 'react-leaflet';
-import type { CampusZone, GeoPoint } from '../types.js';
-import { polygonCentroid } from '../utils/geofence.js';
-import { midpoint } from '../utils/zoneGeometry.js';
+import type { CampusZone, GeoPoint } from '../../exploration/types.js';
+import { polygonCentroid } from '../../exploration/utils/geofence.js';
+import { midpoint } from '../../exploration/utils/zoneGeometry.js';
 
 export type ZoneEditorState =
   | { mode: 'browse' }

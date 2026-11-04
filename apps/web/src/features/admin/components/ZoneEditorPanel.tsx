@@ -1,10 +1,9 @@
 import { useState, type ChangeEvent } from 'react';
-import type { CampusZone } from '../types.js';
-import { polygonAreaSquareMeters } from '../utils/zoneGeometry.js';
+import type { CampusZone } from '../../exploration/types.js';
+import { polygonAreaSquareMeters } from '../../exploration/utils/zoneGeometry.js';
 import type { ZoneEditorState } from './ZoneEditorLayer.js';
 
 export interface ZoneEditorActions {
-  close: () => void;
   select: (zoneId: string) => void;
   backToList: () => void;
   startDrawing: () => void;
@@ -156,10 +155,7 @@ export function ZoneEditorPanel({ state, zones, actions }: ZoneEditorPanelProps)
 
   return (
     <section aria-label="Editor de zonas" className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="truncate text-base font-semibold text-orange-200">{title}</h2>
-        <button type="button" className={buttonClass} onClick={actions.close}>Sair do editor</button>
-      </div>
+      <h2 className="truncate text-base font-semibold text-orange-200">{title}</h2>
       {state.mode === 'draw' && <DrawPanel points={state.points.length} actions={actions} />}
       {editing && <EditPanel zone={editing} actions={actions} />}
       {state.mode !== 'draw' && !editing && <ListPanel zones={zones} actions={actions} />}

@@ -1,5 +1,5 @@
 import { database } from '../../../sync/database.js';
-import type { ZoneStore } from './zoneRepository.js';
+import { createEditableZoneRepository, type ZoneStore } from './zoneRepository.js';
 
 const STORE_KEY = 'exploration:zones';
 
@@ -17,3 +17,9 @@ export function createIndexedDbZoneStore(): ZoneStore {
     },
   };
 }
+
+/**
+ * Repositório de zonas compartilhado entre o jogo (leitura) e o painel de admin (edição).
+ * Sem edições salvas, devolve as zonas padrão.
+ */
+export const localZoneRepository = createEditableZoneRepository(createIndexedDbZoneStore());

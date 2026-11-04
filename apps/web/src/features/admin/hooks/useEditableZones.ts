@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { EditableZoneRepository, ZoneRepository } from '../services/zoneRepository.js';
-import type { CampusZone } from '../types.js';
+import type { EditableZoneRepository, ZoneRepository } from '../../exploration/services/zoneRepository.js';
+import type { CampusZone } from '../../exploration/types.js';
 
 const SAVE_DELAY_MS = 400;
 
