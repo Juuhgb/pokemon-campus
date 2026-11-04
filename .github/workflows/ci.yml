@@ -1,9 +1,9 @@
 # Verificação (lint, tipos, testes, build) em todo PR e push na main.
-# Hospedagem do app web (PWA) no Firebase Hosting:
-#   PR → link de preview temporário (projeto dev)
-#   merge na main → staging (projeto dev)
-#   staging → produção, com aprovação manual no environment "producao".
-# Os jobs de deploy são pulados enquanto os secrets não existirem.
+# Hospedagem do app web (PWA) no Firebase Hosting, projeto "pokecampus-uenp":
+#   PR → link de preview temporário (7 dias)
+#   push/merge na main → site publicado em https://pokecampus-uenp.web.app
+# Os deploys são pulados enquanto o secret FIREBASE_SERVICE_ACCOUNT_POKECAMPUS_UENP não existir
+# (ele é criado por `npx firebase-tools init hosting:github`).
 name: ci
 on:
   pull_request:
@@ -12,6 +12,8 @@ on:
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+env:
+  FIREBASE_PROJECT: pokecampus-uenp
 jobs:
   verificar:
     runs-on: ubuntu-latest
@@ -31,67 +33,46 @@ jobs:
     runs-on: ubuntu-latest
     permissions: { contents: read, pull-requests: write, checks: write }
     env:
-      SA_DEV: ${{ secrets.FIREBASE_SA_DEV }}
+      FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_POKECAMPUS_UENP }}
     steps:
-      - if: env.SA_DEV == ''
-        run: echo "::notice::Preview pulado. Falta o secret FIREBASE_SA_DEV."
-      - if: env.SA_DEV != ''
+      - if: env.FIREBASE_SA == ''
+        run: echo "::notice::Preview pulado. Falta o secret FIREBASE_SERVICE_ACCOUNT_POKECAMPUS_UENP."
+      - if: env.FIREBASE_SA != ''
         uses: actions/checkout@v4
-      - if: env.SA_DEV != ''
+      - if: env.FIREBASE_SA != ''
         uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
-      - if: env.SA_DEV != ''
+      - if: env.FIREBASE_SA != ''
         run: npm ci && npm run build:packages && npm run build --workspace @pokemon-campus/web
-      - if: env.SA_DEV != ''
+      - if: env.FIREBASE_SA != ''
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SA_DEV }}
-          projectId: pokemon-campus-dev
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_POKECAMPUS_UENP }}
+          projectId: ${{ env.FIREBASE_PROJECT }}
           expires: 7d
 
-  staging:
+  publicar:
     if: github.event_name == 'push'
     needs: [verificar]
     runs-on: ubuntu-latest
-    environment: { name: staging, url: 'https://pokemon-campus-dev.web.app' }
+    environment: { name: producao, url: 'https://pokecampus-uenp.web.app' }
     env:
-      SA_DEV: ${{ secrets.FIREBASE_SA_DEV }}
+      FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_POKECAMPUS_UENP }}
     steps:
-      - if: env.SA_DEV == ''
-        run: echo "::notice::Staging pulado. Falta o secret FIREBASE_SA_DEV."
-      - if: env.SA_DEV != ''
+      - if: env.FIREBASE_SA == ''
+        run: echo "::notice::Publicação pulada. Falta o secret FIREBASE_SERVICE_ACCOUNT_POKECAMPUS_UENP."
+      - if: env.FIREBASE_SA != ''
         uses: actions/checkout@v4
-      - if: env.SA_DEV != ''
+      - if: env.FIREBASE_SA != ''
         uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
-      - if: env.SA_DEV != ''
+      - if: env.FIREBASE_SA != ''
         run: npm ci && npm run build:packages && npm run build --workspace @pokemon-campus/web
-      - if: env.SA_DEV != ''
-        uses: google-github-actions/auth@v2
-        with: { credentials_json: '${{ secrets.FIREBASE_SA_DEV }}' }
-      - if: env.SA_DEV != ''
-        run: npx --yes firebase-tools@14 deploy --only hosting --project dev --non-interactive
-
-  producao:
-    if: github.event_name == 'push'
-    needs: [staging]
-    runs-on: ubuntu-latest
-    environment: { name: producao, url: 'https://pokemon-campus-prod.web.app' }
-    env:
-      SA_PROD: ${{ secrets.FIREBASE_SA_PROD }}
-    steps:
-      - if: env.SA_PROD == ''
-        run: echo "::notice::Produção pulada. Falta o secret FIREBASE_SA_PROD."
-      - if: env.SA_PROD != ''
-        uses: actions/checkout@v4
-      - if: env.SA_PROD != ''
-        uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm }
-      - if: env.SA_PROD != ''
-        run: npm ci && npm run build:packages && npm run build --workspace @pokemon-campus/web
-      - if: env.SA_PROD != ''
-        uses: google-github-actions/auth@v2
-        with: { credentials_json: '${{ secrets.FIREBASE_SA_PROD }}' }
-      - if: env.SA_PROD != ''
-        run: npx --yes firebase-tools@14 deploy --only hosting --project prod --non-interactive
+      - if: env.FIREBASE_SA != ''
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_POKECAMPUS_UENP }}
+          projectId: ${{ env.FIREBASE_PROJECT }}
+          channelId: live

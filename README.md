@@ -94,20 +94,21 @@ Para jogar fora do campus, crie `apps/web/.env.local` a partir de `apps/web/.env
 
 ## Hospedagem
 
-O app web (PWA estático em `apps/web/dist`) é publicado no Firebase Hosting pelo workflow `.github/workflows/ci.yml`:
+O app web (PWA estático em `apps/web/dist`) é publicado no Firebase Hosting, projeto **`pokecampus-uenp`**: **https://pokecampus-uenp.web.app**.
+
+Publicar manualmente (do computador):
+
+    npx firebase-tools login
+    npm run build
+    npx firebase-tools deploy --only hosting
+
+Publicação automática pelo workflow `.github/workflows/ci.yml`:
 
 - todo PR e push na main: lint, typecheck, testes e build;
-- PR → link de preview temporário (7 dias) no projeto dev;
-- merge na main → staging em `https://pokemon-campus-dev.web.app`;
-- staging → produção (`https://pokemon-campus-prod.web.app`) após aprovação manual no environment `producao`.
+- PR → link de preview temporário (7 dias);
+- push/merge na main → publica em `https://pokecampus-uenp.web.app`.
 
-Para ativar:
-
-1. Crie os projetos Firebase `pokemon-campus-dev` e `pokemon-campus-prod` (ou ajuste os IDs em `.firebaserc` e no workflow).
-2. Rode `npx firebase-tools init hosting:github` em cada projeto para gerar as contas de serviço e salve-as como secrets `FIREBASE_SA_DEV` e `FIREBASE_SA_PROD` no GitHub.
-3. Crie os environments `staging` e `producao` no repositório e exija aprovação em `producao`.
-
-Enquanto os secrets não existirem, os jobs de deploy são pulados sem falhar. Deploy manual: `npm run build` e `npx firebase-tools deploy --only hosting --project dev`.
+Para ativar a automática, rode uma vez `npx firebase-tools init hosting:github`, informe o repositório `Juuhgb/pokemon-campus` e **não** sobrescreva `firebase.json` nem os workflows. Ele cria o secret `FIREBASE_SERVICE_ACCOUNT_POKECAMPUS_UENP` no GitHub. Enquanto o secret não existir, os deploys são pulados sem falhar.
 
 O Firebase Hosting serve apenas o front-end. A API Fastify/PostgreSQL precisa de outra hospedagem (ex.: Cloud Run, Render ou Railway) quando o módulo de sincronização for integrado.
 

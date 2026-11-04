@@ -1,1 +1,1 @@
-{ "projects": { "default": "pokemon-campus-dev", "dev": "pokemon-campus-dev", "prod": "pokemon-campus-prod" } }
+{ "projects": { "default": "pokecampus-uenp", "dev": "pokecampus-uenp", "prod": "pokecampus-uenp" } }
