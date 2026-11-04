@@ -20,6 +20,16 @@ function spawnToken(id: string, seed: string, until: Date, rulesVersion: number)
   const body = Buffer.from(JSON.stringify({ id, seed, until: until.toISOString(), rulesVersion })).toString('base64url');
   return `${body}.${signature(body)}`;
 }
+function pointInPolygon(latitude: number, longitude: number, vertices: Array<{latitude:number;longitude:number}>): boolean {
+  let inside=false;
+  for(let i=0,j=vertices.length-1;i<vertices.length;j=i++) {
+    const a=vertices[i]!, b=vertices[j]!;
+    const crosses=(a.longitude>longitude)!==(b.longitude>longitude)
+      && latitude < ((b.latitude-a.latitude)*(longitude-a.longitude))/(b.longitude-a.longitude)+a.latitude;
+    if(crosses)inside=!inside;
+  }
+  return inside;
+}
 
 export async function registerCampusRoutes(app: FastifyInstance, { pool }: Options): Promise<void> {
   const db = (request: FastifyRequest, reply: FastifyReply) => pool ?? (error(reply, request, 503, 'DATABASE_UNAVAILABLE', 'DATABASE_URL is not configured'), undefined);
@@ -93,9 +103,14 @@ export async function registerCampusRoutes(app: FastifyInstance, { pool }: Optio
         const points = z.array(GeoPoint).safeParse(zone.boundary); if (!points.success || points.data.length < 3) continue;
         const latitudes=points.data.map(p=>p.latitude), longitudes=points.data.map(p=>p.longitude);
         for(let i=0;i<input.data.countPerZone;i++) {
+          let latitude=0,longitude=0,located=false;
+          for(let attempt=0;attempt<500;attempt++) {
+            latitude=Math.min(...latitudes)+Math.random()*(Math.max(...latitudes)-Math.min(...latitudes));
+            longitude=Math.min(...longitudes)+Math.random()*(Math.max(...longitudes)-Math.min(...longitudes));
+            if(pointInPolygon(latitude,longitude,points.data)){located=true;break;}
+          }
+          if(!located)continue;
           const speciesId=species.rows[randomBytes(4).readUInt32BE(0)%species.rows.length]!.id;
-          const latitude=Math.min(...latitudes)+Math.random()*(Math.max(...latitudes)-Math.min(...latitudes));
-          const longitude=Math.min(...longitudes)+Math.random()*(Math.max(...longitudes)-Math.min(...longitudes));
           await client.query('INSERT INTO spawns(zone_id,species_id,latitude,longitude,level,active_from,active_until,spawn_seed,rules_version) VALUES($1,$2,$3,$4,$5,$6,$7,$8,1)',[zone.id,speciesId,latitude,longitude,1+Math.floor(Math.random()*10),now,until,randomBytes(24).toString('base64url')]); generated++;
         }
       }
