@@ -44,6 +44,8 @@ export function googleAuthErrorMessage(error: unknown): string | null {
       return 'Este endereço não está autorizado para login. Use o site publicado ou peça para adicionar o domínio no Firebase.';
     case 'auth/operation-not-allowed':
       return 'O login com Google ainda não foi ativado no Firebase (Authentication → Método de login → Google).';
+    case 'auth/configuration-not-found':
+      return 'O Firebase ainda não foi configurado para autenticação. Ative o Firebase Authentication e o login Google no Console do Firebase (Authentication → Método de login).';
     default:
       return 'Não foi possível entrar com o Google. Tente de novo.';
   }

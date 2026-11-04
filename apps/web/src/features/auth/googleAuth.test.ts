@@ -19,6 +19,7 @@ describe('googleAuthErrorMessage', () => {
   it('explica domínio não autorizado, provedor desativado e falta de rede', () => {
     expect(googleAuthErrorMessage({ code: 'auth/unauthorized-domain' })).toMatch(/não está autorizado/);
     expect(googleAuthErrorMessage({ code: 'auth/operation-not-allowed' })).toMatch(/ativado/);
+    expect(googleAuthErrorMessage({ code: 'auth/configuration-not-found' })).toMatch(/Firebase Authentication.*login Google/);
     expect(googleAuthErrorMessage({ code: 'auth/network-request-failed' })).toMatch(/internet/);
   });
 });
