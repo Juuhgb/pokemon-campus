@@ -10,7 +10,7 @@ Este documento é a referência comum para os quatro módulos. A proposta está 
 - Todo erro HTTP usa o formato ApiErrorSchema de packages/shared. Rejeições de eventos durante sync são respostas por item, não falhas HTTP da requisição inteira.
 - Endpoints de leitura do mapa, espécies, ranking e perfil público podem ser usados sem login. Perfil pessoal (`/players/me`), coleção, equipe, encontros e sync exigem `Authorization: Bearer <token>`.
 
-## Conceitos distribuídos da conversa
+## Requisitos distribuídos do Pokémon Campus
 
 | Conceito | Como aparece no contrato |
 | --- | --- |
@@ -100,17 +100,17 @@ A equipe pode consultar os campos completos em schemas executáveis no arquivo p
 - O Encounter congela battleSeed e rulesVersion ao começar. A versão 1 usa deterministicRollV1(seed, turnNumber, purpose) do game-engine; cliente e servidor compartilham o mesmo pacote puro, sem React, Dexie, Fastify ou PostgreSQL dentro das regras.
 - Uma mudança no algoritmo de combate gera uma nova rulesVersion. O servidor mantém as versões necessárias para resolver encontros já iniciados.
 
-## Padrões aproveitados do Segura e Balança
+## Decisões de arquitetura orientadas aos requisitos do Pokémon Campus
 
-- Zod valida modelos e dados de fronteira; os tipos TypeScript são inferidos dos mesmos schemas em @pokemon-campus/shared.
-- Regras de gameplay e cálculos determinísticos ficam em @pokemon-campus/game-engine, como o domínio puro do projeto de referência. Não importam UI, rede ou banco de dados.
-- A web separa páginas/componentes, mapa e sync. A sincronização depende de uma porta RemotePort; uma implementação HTTP e um mock podem ser conectados sem mudar as telas. A API separa routes, services e database.
-- O Dexie guarda snapshots e eventos de saída. Cada item local pode estar pendente, enviando ou rejeitado; erros transitórios usam backoff exponencial com jitter. Metadados locais não fazem parte do DTO enviado.
-- O PWA mantém uma alternativa de interface quando GPS ou sensores de movimento não estão disponíveis. A Vibration API não é suportada pelo Safari no iPhone; vibração é sempre opcional, com alternativa visual/sonora e controles acessíveis.
-- Coordenadas do celular servem para orientar a exploração, como no projeto de referência; não são prova antifraude. O servidor valida o spawnToken e as regras do jogo sem confiar em localização ou horário enviados pelo cliente.
-- Ao criar a suíte, seguir a separação da referência: Vitest para domínio e sync com IndexedDB simulado; Playwright para fluxos completos no navegador. Esses testes ainda não fazem parte do projeto atual.
+- Zod valida modelos e dados nas fronteiras da aplicação; @pokemon-campus/shared infere os tipos desses schemas para manter requests, respostas e eventos compatíveis entre web e API.
+- @pokemon-campus/game-engine concentra regras de gameplay e cálculos determinísticos sem dependência de interface, rede ou banco. Assim, cliente e servidor podem reproduzir uma batalha offline usando a mesma battleSeed e rulesVersion.
+- A web separa interface, mapa e sincronização. A porta RemotePort permite conectar a API HTTP ou um mock sem alterar as telas. Na API, rotas, serviços e acesso ao banco têm responsabilidades distintas.
+- O Dexie guarda snapshots e eventos de saída para que ações feitas sem conexão permaneçam no dispositivo até a sincronização. Cada evento pode estar pendente, sendo enviado ou rejeitado; erros transitórios usam backoff exponencial com jitter. Metadados locais não fazem parte do DTO enviado.
+- Explorar o campus depende de localização e pode usar sensores disponíveis no celular, mas esses recursos são opcionais. A interface oferece alternativas acessíveis quando o jogador não concede permissões ou o dispositivo não tem esses recursos.
+- Coordenadas ajudam a encontrar spawns no campus, mas não comprovam uma captura. Para proteger o estado compartilhado, a API valida o spawnToken e as regras do jogo sem tratar localização ou horário informados pelo cliente como autoridade.
+- Quando a suíte for ampliada, Vitest deve cobrir as regras determinísticas e a sincronização com IndexedDB simulado; Playwright deve percorrer no navegador os fluxos de exploração, batalha, uso offline e reconexão. Essa cobertura ainda não faz parte do projeto atual.
 
-O repositório de referência usa Firebase/Firestore para sua própria aplicação. Esses serviços não são copiados: neste jogo, os adaptadores remotos usam a API Fastify/PostgreSQL definida na conversa.
+Fastify e PostgreSQL atendem à necessidade de validar ações e persistir o progresso oficial do jogador. Transações atômicas mantêm encontro, consumo de item, captura, experiência e pontuação consistentes quando uma ação é aceita.
 
 ## Formato de evento
 
@@ -189,7 +189,7 @@ Para uma ação `CAPTURE`, o payload também inclui `expectedInventoryVersion`. 
 10. serverSequence é um cursor decimal opaco e crescente por jogador. O servidor bloqueia a linha de player_sync_cursors e incrementa o cursor dentro da transação aceita, serializando commits para esse jogador. Lacunas de migrações podem existir; clientes não incrementam o cursor por conta própria.
 11. Após perder os dados locais, o cliente chama GET /api/v1/players/me/state. A API lê jogador, coleção, equipe, inventário, encontros ativos e cursor em um snapshot consistente; o cliente substitui seus snapshots no Dexie e continua com GET /api/v1/sync/changes?after=<cursor>.
 
-O fluxo segue o padrão do projeto de referência: outbox local durável, retentativas com backoff e pull explícito. A ação só fica confirmada depois da resposta do servidor.
+Para preservar ações feitas sem internet e reconciliá-las sem repetir efeitos, o cliente grava eventos no outbox local, usa backoff para retentativas transitórias e consulta as mudanças do servidor pelo cursor. A interface marca a ação como confirmada somente após receber a resposta canônica.
 
 SyncResponse retorna results[] com status accepted, duplicate ou rejected. Eventos accepted e duplicate têm acceptedAt e serverSequence; accepted também pode trazer aggregateVersion e snapshot. Uma ação de batalha retorna aggregateType `battle` com encontro e inventário canônicos; em captura bem-sucedida, inclui também jogador e criatura criada. Eventos rejected trazem code, message e, quando aplicável, currentVersion e snapshot.
 

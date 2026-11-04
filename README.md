@@ -28,6 +28,16 @@ O app web abre em http://localhost:5173 e a API em http://localhost:3000. A rota
 
 O contrato compartilhado está em docs/CONTRACTS.md e em packages/shared/src/index.ts. Os quatro integrantes devem combinar mudanças nesses contratos antes de depender deles em seus módulos.
 
+## Decisões da arquitetura
+
+A estrutura atende ao requisito central do Pokémon Campus: explorar e registrar progresso pelo celular mesmo quando a conexão oscila, mantendo o servidor responsável pelo estado oficial quando o dispositivo voltar a ficar online.
+
+- apps/web concentra a experiência móvel e o armazenamento local; apps/api valida as ações e coordena a persistência no PostgreSQL.
+- packages/shared mantém schemas e formatos de eventos iguais entre cliente e servidor, reduzindo divergências durante a sincronização.
+- packages/game-engine reúne cálculos determinísticos para que uma ação iniciada offline possa ser reproduzida e validada pelo servidor com a mesma semente e versão das regras.
+
+Essa organização descreve o desenho do jogo; as rotas implementadas e as que ainda são especificações estão distinguidas em docs/CONTRACTS.md.
+
 ## Scripts
 
 - npm run dev inicia web e API juntos.
