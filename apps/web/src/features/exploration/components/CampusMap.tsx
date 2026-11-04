@@ -1,5 +1,5 @@
 import 'leaflet/dist/leaflet.css';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import { CAMPUS_BOUNDS, CAMPUS_CENTER, CAMPUS_DEFAULT_ZOOM } from '../data/campusZones.js';
 import { PERSONAL_AREA } from '../data/personalArea.js';
@@ -42,6 +42,8 @@ interface CampusMapProps {
   /** Quando definido, clicar no mapa chama esta função (GPS simulado). */
   onMapClick?: (point: GeoPoint) => void;
   onTilesUnavailable: (unavailable: boolean) => void;
+  /** Camadas extras dentro do mapa (ex.: alças do editor de zonas). */
+  children?: ReactNode;
 }
 
 function MapClickHandler({ onMapClick }: { onMapClick?: (point: GeoPoint) => void }) {
@@ -137,6 +139,8 @@ export function CampusMap(props: CampusMapProps) {
       ))}
 
       {props.player && <PlayerMarker position={props.player} />}
+
+      {props.children}
 
       <ResizeWatcher />
       <MapClickHandler onMapClick={props.onMapClick} />

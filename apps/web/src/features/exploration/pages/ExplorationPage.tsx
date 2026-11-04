@@ -4,24 +4,32 @@ import { DevLocationPanel } from '../components/DevLocationPanel.js';
 import { LocationNotice } from '../components/LocationNotice.js';
 import { NearbyRadar } from '../components/NearbyRadar.js';
 import { SpawnDetails } from '../components/SpawnDetails.js';
-import { useSpawns, useZones } from '../hooks/useExplorationData.js';
+import { ZoneEditorLayer } from '../components/ZoneEditorLayer.js';
+import { ZoneEditorPanel } from '../components/ZoneEditorPanel.js';
+import { createMockSpawns } from '../data/mockSpawns.js';
+import { useDebouncedValue } from '../hooks/useDebouncedValue.js';
+import { useEditableZones } from '../hooks/useEditableZones.js';
+import { useSpawns } from '../hooks/useExplorationData.js';
 import { useGeolocation } from '../hooks/useGeolocation.js';
 import { useNow } from '../hooks/useNow.js';
+import { useZoneEditor, ZONE_EDITOR_AVAILABLE } from '../hooks/useZoneEditor.js';
 import type { LocationProvider } from '../services/location.js';
 import { SIMULATED_LOCATION_AVAILABLE } from '../services/location.js';
 import { createIndexedDbSpawnCache } from '../services/spawnCache.js';
 import { createLocalFirstSpawnRepository, createMockSpawnRepository, type SpawnRepository } from '../services/spawnRepository.js';
-import { createStaticZoneRepository, type ZoneRepository } from '../services/zoneRepository.js';
+import { createEditableZoneRepository, type ZoneRepository } from '../services/zoneRepository.js';
+import { createIndexedDbZoneStore } from '../services/zoneStore.js';
 import type { EncounterStartHandler, EncounterStartRequest, ExplorationSpawn, GeoPoint } from '../types.js';
 import { ENCOUNTER_RADIUS_METERS, evaluateEncounter, isSpawnActive, nearbySpawns } from '../utils/encounter.js';
 import { findZoneAt } from '../utils/geofence.js';
 
-const defaultSpawnRepository = createLocalFirstSpawnRepository(createMockSpawnRepository(), createIndexedDbSpawnCache());
-const defaultZoneRepository = createStaticZoneRepository();
+const spawnCache = createIndexedDbSpawnCache();
+const defaultZoneRepository = createEditableZoneRepository(createIndexedDbZoneStore());
 
 interface ExplorationPageProps {
   /** Contrato de início de encontro; implementado pelo módulo de batalha/captura. */
   onStartEncounter?: EncounterStartHandler;
+  /** Padrão: spawns simulados gerados dentro das zonas atuais. */
   spawnRepository?: SpawnRepository;
   zoneRepository?: ZoneRepository;
   locationProvider?: LocationProvider;
@@ -31,15 +39,22 @@ interface ExplorationPageProps {
 
 export function ExplorationPage({
   onStartEncounter,
-  spawnRepository = defaultSpawnRepository,
+  spawnRepository,
   zoneRepository = defaultZoneRepository,
   locationProvider,
   headerAction,
 }: ExplorationPageProps) {
   const now = useNow();
   const geo = useGeolocation(locationProvider);
-  const zones = useZones(zoneRepository);
-  const { spawns, error: spawnsError } = useSpawns(spawnRepository);
+  const editableZones = useEditableZones(zoneRepository);
+  const { zones } = editableZones;
+  const editor = useZoneEditor(editableZones);
+  const settledZones = useDebouncedValue(zones, 400);
+  const effectiveSpawnRepository = useMemo(
+    () => spawnRepository ?? createLocalFirstSpawnRepository(createMockSpawnRepository((at) => createMockSpawns(at, settledZones)), spawnCache),
+    [spawnRepository, settledZones],
+  );
+  const { spawns, error: spawnsError } = useSpawns(effectiveSpawnRepository);
 
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [selectedSpawnId, setSelectedSpawnId] = useState<string | null>(null);
@@ -65,6 +80,11 @@ export function ExplorationPage({
     geo.simulateAt(point);
     setPickingLocation(false);
   }, [geo]);
+
+  const editorOpen = editor.state !== null;
+  const mapClickHandler = editor.state?.mode === 'draw'
+    ? editor.handleMapClick
+    : SIMULATED_LOCATION_AVAILABLE && pickingLocation && !editorOpen ? handleMapClick : undefined;
 
   const showToast = useCallback((message: string) => {
     setToast(message);
@@ -135,7 +155,7 @@ export function ExplorationPage({
             </button>
           </div>
         ) : (
-          <div className={`h-full w-full ${pickingLocation ? 'cursor-crosshair' : ''}`}>
+          <div className={`h-full w-full ${pickingLocation || editor.state?.mode === 'draw' ? 'cursor-crosshair' : ''}`}>
             <CampusMap
               zones={zones}
               spawns={activeSpawns}
@@ -145,18 +165,20 @@ export function ExplorationPage({
               selectedSpawnId={selectedSpawnId}
               inRangeSpawnIds={inRangeIds}
               recenterSignal={recenterSignal}
-              onSelectZone={setSelectedZoneId}
+              onSelectZone={editorOpen ? editor.handleZoneClick : setSelectedZoneId}
               onSelectSpawn={setSelectedSpawnId}
-              onMapClick={SIMULATED_LOCATION_AVAILABLE && pickingLocation ? handleMapClick : undefined}
+              onMapClick={mapClickHandler}
               onTilesUnavailable={setTilesUnavailable}
-            />
+            >
+              {editor.state && <ZoneEditorLayer state={editor.state} zones={zones} {...editor.layer} />}
+            </CampusMap>
           </div>
         )}
 
         <div className="pointer-events-none absolute inset-x-3 top-3 z-[1000] flex flex-col gap-2 [&>*]:pointer-events-auto">
           <LocationNotice status={geo.status} error={geo.error} simulationAvailable={geo.simulationAvailable} />
           {spawnsError && <p role="alert" className="rounded-2xl bg-rose-950/90 px-4 py-2 text-sm text-rose-100">{spawnsError}</p>}
-          {selectedZone && (
+          {selectedZone && !editorOpen && (
             <div className="flex items-center gap-2 self-start rounded-full bg-slate-900/90 px-3 py-1.5 text-sm shadow-lg">
               <span className="h-3 w-3 rounded-full" style={{ background: selectedZone.color }} aria-hidden="true" />
               <span>
@@ -166,7 +188,25 @@ export function ExplorationPage({
               <button type="button" onClick={() => setSelectedZoneId(null)} aria-label="Fechar zona selecionada" className="text-slate-400">✕</button>
             </div>
           )}
-          {SIMULATED_LOCATION_AVAILABLE && (
+          {ZONE_EDITOR_AVAILABLE && !editorOpen && (
+            <button
+              type="button"
+              onClick={() => {
+                setPickingLocation(false);
+                setSelectedSpawnId(null);
+                editor.open();
+              }}
+              className="self-start rounded-full border border-orange-400/40 bg-slate-900/90 px-3 py-1.5 text-xs font-medium text-orange-100 shadow-lg hover:bg-slate-800"
+            >
+              ✎ Editar zonas
+            </button>
+          )}
+          {editor.state?.mode === 'draw' && (
+            <p role="status" className="self-start rounded-2xl bg-orange-500/90 px-3 py-1.5 text-xs font-semibold text-slate-950 shadow-lg">
+              Desenhando: toque no mapa para marcar os cantos
+            </p>
+          )}
+          {SIMULATED_LOCATION_AVAILABLE && !editorOpen && (
             <div className="self-start">
               <DevLocationPanel
                 pickingEnabled={pickingLocation}
@@ -197,7 +237,9 @@ export function ExplorationPage({
       </div>
 
       <footer className="z-[1000] max-h-[45dvh] overflow-y-auto border-t border-slate-800 bg-slate-950 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        {selectedSpawn && selectedEligibility ? (
+        {editor.state ? (
+          <ZoneEditorPanel state={editor.state} zones={zones} actions={editor.actions} />
+        ) : selectedSpawn && selectedEligibility ? (
           <SpawnDetails
             spawn={selectedSpawn}
             eligibility={selectedEligibility}

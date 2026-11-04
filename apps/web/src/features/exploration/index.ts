@@ -25,4 +25,12 @@ export {
   type SpawnQuery,
   type SpawnRepository,
 } from './services/spawnRepository.js';
-export { createStaticZoneRepository, fromSharedZone, type ZoneRepository } from './services/zoneRepository.js';
+export {
+  createEditableZoneRepository,
+  createStaticZoneRepository,
+  fromSharedZone,
+  type EditableZoneRepository,
+  type ZoneRepository,
+  type ZoneStore,
+} from './services/zoneRepository.js';
+export { parseZones, serializeZones } from './utils/zoneEdits.js';

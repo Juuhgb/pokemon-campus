@@ -50,6 +50,17 @@ Código em `apps/web/src/features/exploration/`; a API pública fica em `index.t
 - Se os tiles não carregarem, a tela troca para um radar que funciona só com coordenadas.
 - **GPS simulado (apenas em `npm run dev`)**: toque em "GPS simulado" e depois no mapa. O código é removido do build de produção e a posição do cliente nunca serve como autorização.
 
+### Editor de zonas
+
+Em desenvolvimento (`npm run dev` ou `npm run dev:phone`), toque em **✎ Editar zonas** no mapa:
+
+- **+ Nova zona**: toque no mapa marcando os cantos na ordem do contorno (qualquer formato, mínimo 3 pontos), dê um nome e salve.
+- Selecione uma zona (na lista ou no mapa) para editar: arraste os quadrados para mover cantos, toque nos **+** para criar cantos, toque duas vezes (ou segure) num canto para removê-lo e arraste **✥** para mover a zona inteira. Nome e cor também são editáveis.
+- Os Pokémon simulados nascem dentro de cada zona e acompanham as mudanças de formato.
+- As edições são salvas automaticamente no IndexedDB deste navegador. Use **Exportar JSON** para compartilhar ou levar as zonas para o código/API, **Importar JSON** em outro dispositivo e **Restaurar padrão** para descartar.
+
+As edições valem só no dispositivo em que foram feitas até existir `GET /api/v1/zones`. Para liberar o editor num build publicado, defina `VITE_ENABLE_ZONE_EDITOR=true`.
+
 ### Jogar no celular
 
 O GPS do navegador só funciona em HTTPS (ou em `localhost`). Com o celular na mesma rede Wi-Fi do computador:

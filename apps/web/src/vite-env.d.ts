@@ -6,4 +6,6 @@ interface ImportMetaEnv {
   readonly VITE_PERSONAL_AREA_LNG?: string;
   readonly VITE_PERSONAL_AREA_RADIUS_METERS?: string;
   readonly VITE_PERSONAL_AREA_NAME?: string;
+  /** "true" libera o editor de zonas também em builds de produção. */
+  readonly VITE_ENABLE_ZONE_EDITOR?: string;
 }

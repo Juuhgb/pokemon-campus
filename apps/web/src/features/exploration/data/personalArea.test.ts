@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { haversineMeters } from '../utils/distance.js';
-import { findZoneAt } from '../utils/geofence.js';
+import { findZoneAt, isPointInPolygon } from '../utils/geofence.js';
 import { createMockSpawns } from './mockSpawns.js';
 import { parsePersonalArea, PERSONAL_ZONE_ID, personalAreaZone } from './personalArea.js';
 
@@ -35,12 +35,11 @@ describe('área pessoal no jogo', () => {
     expect(findZoneAt(area.center, [zone])?.id).toBe(PERSONAL_ZONE_ID);
   });
 
-  it('gera três spawns dentro do raio, um capturável perto do centro', () => {
+  it('gera spawns dentro da área, um capturável perto do centro', () => {
     const now = new Date('2026-11-04T15:10:00.000Z');
-    const home = createMockSpawns(now, area).filter((spawn) => spawn.zoneId === PERSONAL_ZONE_ID);
-    expect(home).toHaveLength(3);
-    const distances = home.map((spawn) => haversineMeters(area.center, spawn));
-    expect(distances.every((distance) => distance <= area.radiusMeters)).toBe(true);
-    expect(Math.min(...distances)).toBeLessThanOrEqual(30);
+    const home = createMockSpawns(now, [zone]).filter((spawn) => spawn.zoneId === PERSONAL_ZONE_ID);
+    expect(home.length).toBeGreaterThan(0);
+    expect(home.every((spawn) => isPointInPolygon(spawn, zone.boundary))).toBe(true);
+    expect(Math.min(...home.map((spawn) => haversineMeters(area.center, spawn)))).toBeLessThanOrEqual(30);
   });
 });

@@ -1,6 +1,5 @@
 import type { Spawn } from '@pokemon-campus/shared';
 import { createMockSpawns } from '../data/mockSpawns.js';
-import { PERSONAL_AREA } from '../data/personalArea.js';
 import type { ExplorationSpawn, Rarity } from '../types.js';
 
 export interface SpawnQuery {
@@ -26,7 +25,7 @@ export interface SpawnCache {
 const notExpired = (at: Date) => (spawn: ExplorationSpawn) => Date.parse(spawn.expiresAt) > at.getTime();
 
 export function createMockSpawnRepository(
-  factory: (now: Date) => ExplorationSpawn[] = (now) => createMockSpawns(now, PERSONAL_AREA),
+  factory: (now: Date) => ExplorationSpawn[] = (now) => createMockSpawns(now),
 ): SpawnRepository {
   return {
     async listSpawns({ at }) {

@@ -1,82 +1,98 @@
-import type { ExplorationSpawn, GeoPoint, Rarity } from '../types.js';
+import type { CampusZone, ExplorationSpawn, GeoPoint, Rarity } from '../types.js';
 import { offsetByMeters } from '../utils/distance.js';
-import { CAMPUS_CENTER, CAMPUS_ZONES } from './campusZones.js';
-import { polygonCentroid } from '../utils/geofence.js';
-import { PERSONAL_ZONE_ID, type PersonalArea } from './personalArea.js';
+import { interiorPoint, polygonAreaSquareMeters, randomPointInPolygon, seededRandom } from '../utils/zoneGeometry.js';
+import { DEFAULT_ZONES } from './defaultZones.js';
 
 /** Duração de cada "rodada" de spawns simulados. */
 export const MOCK_SLOT_MS = 30 * 60 * 1000;
 
-interface MockSpawnSeed {
-  key: string;
-  speciesId: string;
-  level: number;
-  rarity: Rarity;
-  anchor: GeoPoint;
-  northMeters: number;
-  eastMeters: number;
-  zoneId?: string;
-  /** Deslocamento da janela em relação à rodada atual. */
-  window?: 'current' | 'expired' | 'upcoming';
+/** Uma zona recebe 1 spawn a cada ~4.000 m², entre 1 e 4. */
+export function spawnCountForZone(zone: CampusZone): number {
+  return Math.min(4, Math.max(1, Math.round(polygonAreaSquareMeters(zone.boundary) / 4_000) + 1));
 }
 
-const zoneCenter = (slug: string): { anchor: GeoPoint; zoneId: string } => {
-  const zone = CAMPUS_ZONES.find((item) => item.slug === slug);
-  if (!zone) throw new Error(`Zona simulada não encontrada: ${slug}`);
-  return { anchor: polygonCentroid(zone.boundary), zoneId: zone.id };
+const SPECIES_BY_RARITY: Record<Rarity, string[]> = {
+  common: ['brotinho', 'gotinha', 'pedregulho'],
+  uncommon: ['faiscao', 'coruja'],
+  rare: ['brasinha'],
+  legendary: ['aurora'],
 };
 
-const SEEDS: MockSpawnSeed[] = [
-  { key: 'center-a', speciesId: 'brotinho', level: 4, rarity: 'common', anchor: CAMPUS_CENTER, northMeters: 18, eastMeters: 8 },
-  { key: 'center-b', speciesId: 'gotinha', level: 6, rarity: 'common', anchor: CAMPUS_CENTER, northMeters: -60, eastMeters: 45 },
-  { key: 'cc', speciesId: 'faiscao', level: 12, rarity: 'uncommon', ...zoneCenter('ciencia-da-computacao'), northMeters: 10, eastMeters: -15 },
-  { key: 'bio', speciesId: 'coruja', level: 9, rarity: 'uncommon', ...zoneCenter('biologia'), northMeters: -20, eastMeters: 5 },
-  { key: 'enf', speciesId: 'gotinha', level: 7, rarity: 'common', ...zoneCenter('enfermagem'), northMeters: 0, eastMeters: 0 },
-  { key: 'vet', speciesId: 'brasinha', level: 15, rarity: 'rare', ...zoneCenter('medicina-veterinaria'), northMeters: 15, eastMeters: 20 },
-  { key: 'agro', speciesId: 'pedregulho', level: 11, rarity: 'uncommon', ...zoneCenter('agronomia'), northMeters: -30, eastMeters: -20 },
-  { key: 'agro-legend', speciesId: 'aurora', level: 30, rarity: 'legendary', ...zoneCenter('agronomia'), northMeters: 40, eastMeters: 50 },
-  { key: 'expired', speciesId: 'brotinho', level: 3, rarity: 'common', anchor: CAMPUS_CENTER, northMeters: 5, eastMeters: -12, window: 'expired' },
-  { key: 'upcoming', speciesId: 'faiscao', level: 8, rarity: 'uncommon', anchor: CAMPUS_CENTER, northMeters: -10, eastMeters: -25, window: 'upcoming' },
-];
+const LEVEL_RANGE: Record<Rarity, [number, number]> = {
+  common: [2, 8],
+  uncommon: [6, 14],
+  rare: [12, 22],
+  legendary: [25, 35],
+};
 
-/** Três spawns espalhados dentro da área pessoal (um perto do centro, para dar para pegar de casa). */
-function personalAreaSeeds(area: PersonalArea): MockSpawnSeed[] {
-  const r = area.radiusMeters;
-  const base = { anchor: area.center, zoneId: PERSONAL_ZONE_ID };
-  return [
-    { key: 'home-a', speciesId: 'brotinho', level: 5, rarity: 'common', ...base, northMeters: Math.min(10, r * 0.2), eastMeters: Math.min(6, r * 0.1) },
-    { key: 'home-b', speciesId: 'coruja', level: 8, rarity: 'uncommon', ...base, northMeters: -r * 0.5, eastMeters: r * 0.4 },
-    { key: 'home-c', speciesId: 'brasinha', level: 14, rarity: 'rare', ...base, northMeters: r * 0.1, eastMeters: -r * 0.7 },
-  ];
+function pickRarity(roll: number): Rarity {
+  if (roll < 0.6) return 'common';
+  if (roll < 0.86) return 'uncommon';
+  if (roll < 0.97) return 'rare';
+  return 'legendary';
+}
+
+function buildSpawn(
+  spawnId: string,
+  position: GeoPoint,
+  random: () => number,
+  window: { startsAt: number; expiresAt: number },
+  zoneId?: string,
+): ExplorationSpawn {
+  const rarity = pickRarity(random());
+  const species = SPECIES_BY_RARITY[rarity];
+  const [minLevel, maxLevel] = LEVEL_RANGE[rarity];
+  const spawn: ExplorationSpawn = {
+    spawnId,
+    speciesId: species[Math.floor(random() * species.length)]!,
+    latitude: Number(position.latitude.toFixed(7)),
+    longitude: Number(position.longitude.toFixed(7)),
+    level: minLevel + Math.floor(random() * (maxLevel - minLevel + 1)),
+    rarity,
+    startsAt: new Date(window.startsAt).toISOString(),
+    expiresAt: new Date(window.expiresAt).toISOString(),
+  };
+  if (zoneId) spawn.zoneId = zoneId;
+  return spawn;
 }
 
 /**
- * Gera spawns simulados para o instante `now`.
- * As janelas são alinhadas a rodadas fixas de 30 min e os IDs derivam da rodada,
- * então dois jogadores (ou dispositivos) no mesmo horário veem exatamente os mesmos spawns.
+ * Gera spawns simulados dentro de cada zona para o instante `now`.
+ * - Posições, espécies e níveis derivam de (zona, rodada), então todos os jogadores
+ *   com as mesmas zonas veem os mesmos spawns.
+ * - O primeiro spawn de cada zona fica no seu ponto central (fácil de testar).
+ * - Dois spawns extras perto da primeira zona demonstram "expirado" e "ainda não começou".
+ * Se a zona mudar de formato no editor, os spawns acompanham.
  */
-export function createMockSpawns(now: Date = new Date(), personalArea: PersonalArea | null = null): ExplorationSpawn[] {
+export function createMockSpawns(now: Date = new Date(), zones: readonly CampusZone[] = DEFAULT_ZONES): ExplorationSpawn[] {
   const slot = Math.floor(now.getTime() / MOCK_SLOT_MS);
   const slotStart = slot * MOCK_SLOT_MS;
-  const seeds = personalArea ? [...SEEDS, ...personalAreaSeeds(personalArea)] : SEEDS;
+  const current = { startsAt: slotStart, expiresAt: slotStart + 2 * MOCK_SLOT_MS };
+  const spawns: ExplorationSpawn[] = [];
 
-  return seeds.map((seed) => {
-    const position = offsetByMeters(seed.anchor, seed.northMeters, seed.eastMeters);
-    const window = seed.window ?? 'current';
-    const startsAt = window === 'upcoming' ? slotStart + 2 * MOCK_SLOT_MS : window === 'expired' ? slotStart - 2 * MOCK_SLOT_MS : slotStart;
-    const expiresAt = window === 'expired' ? slotStart - 1 : startsAt + 2 * MOCK_SLOT_MS;
+  for (const zone of zones) {
+    if (zone.boundary.length < 3) continue;
+    const random = seededRandom(`${zone.id}:${slot}`);
+    const count = spawnCountForZone(zone);
+    for (let index = 0; index < count; index += 1) {
+      const position = index === 0 ? interiorPoint(zone.boundary) : randomPointInPolygon(zone.boundary, random);
+      spawns.push(buildSpawn(`mock-${slot}-${zone.id}-${index}`, position, random, current, zone.id));
+    }
+  }
 
-    const spawn: ExplorationSpawn = {
-      spawnId: `mock-${slot}-${seed.key}`,
-      speciesId: seed.speciesId,
-      latitude: Number(position.latitude.toFixed(7)),
-      longitude: Number(position.longitude.toFixed(7)),
-      level: seed.level,
-      rarity: seed.rarity,
-      startsAt: new Date(startsAt).toISOString(),
-      expiresAt: new Date(expiresAt).toISOString(),
-    };
-    if (seed.zoneId) spawn.zoneId = seed.zoneId;
-    return spawn;
-  });
+  const first = zones.find((zone) => zone.boundary.length >= 3);
+  if (first) {
+    const anchor = interiorPoint(first.boundary);
+    const random = seededRandom(`${first.id}:${slot}:rules`);
+    spawns.push(buildSpawn(`mock-${slot}-expired`, offsetByMeters(anchor, 12, -8), random, {
+      startsAt: slotStart - 2 * MOCK_SLOT_MS,
+      expiresAt: slotStart - 1,
+    }));
+    spawns.push(buildSpawn(`mock-${slot}-upcoming`, offsetByMeters(anchor, -12, 8), random, {
+      startsAt: slotStart + 2 * MOCK_SLOT_MS,
+      expiresAt: slotStart + 4 * MOCK_SLOT_MS,
+    }));
+  }
+
+  return spawns;
 }
