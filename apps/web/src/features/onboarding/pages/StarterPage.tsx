@@ -24,7 +24,7 @@ export function StarterPage() {
         <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
           <div className="relative grid h-60 w-60 place-items-center">
             <div aria-hidden="true" className="absolute inset-0 -rotate-4 rounded-[40px] sticker-lg" style={{ background: current.color }} />
-            <div className="relative"><CreatureBadge kind={current.kind} color="#ffffff" size={140} label={current.displayName} /></div>
+            <div className="relative"><CreatureBadge kind={current.kind} image={current.image} color="#ffffff" size={140} label={current.displayName} /></div>
           </div>
           <h1 className="mt-2 mb-0 font-display text-[32px] leading-tight font-bold">{current.displayName} agora é seu parceiro!</h1>
           <p className="m-0 max-w-[300px] text-[15px] leading-snug font-bold text-tinta-suave">Ele já está na vaga 1 da sua equipe. Saia pelo campus para achar os outros.</p>
@@ -62,7 +62,7 @@ export function StarterPage() {
               onClick={() => setPicked(id)}
               className={`flex flex-col items-center gap-2 rounded-[20px] px-1.5 pt-3.5 pb-3 ${on ? '-translate-y-1 sticker-lg bg-amarelo' : 'ink-border bg-white'}`}
             >
-              <CreatureBadge kind={species.kind} color={species.color} size={62} />
+              <CreatureBadge kind={species.kind} image={species.image} color={species.color} size={62} />
               <span className="font-display text-base font-semibold">{species.displayName}</span>
               <span className="rounded-full border-2 border-tinta bg-white px-2 py-0.5 text-[11px] font-extrabold">{species.type}</span>
             </button>

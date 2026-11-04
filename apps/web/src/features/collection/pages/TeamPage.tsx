@@ -33,7 +33,7 @@ export function TeamPage() {
           return (
             <article key={creature.id} className="relative flex flex-col items-center gap-1.5 rounded-[20px] sticker bg-white px-1.5 pt-3 pb-2.5 text-center">
               <span className="absolute -top-2 -left-2 grid h-[26px] w-[26px] place-items-center rounded-full ink-border bg-coral font-display text-sm font-bold">{index + 1}</span>
-              <CreatureBadge kind={species.kind} color={species.color} size={58} />
+              <CreatureBadge kind={species.kind} image={species.image} color={species.color} size={58} />
               <h2 className="mt-1 mb-0 font-display text-base leading-tight font-semibold">{species.displayName}</h2>
               <span className="text-xs font-extrabold text-tinta-suave">Nv. {creature.level}</span>
               <div className="w-full"><ProgressBar percent={percent} color={hpColor(percent)} height={10} label={`Vida de ${species.displayName}`} /></div>
@@ -60,7 +60,7 @@ export function TeamPage() {
           const species = getSpecies(creature.speciesId);
           return (
             <div key={creature.id} className="flex items-center gap-3 rounded-[18px] ink-border bg-white py-2 pr-2 pl-2.5">
-              <CreatureBadge kind={species.kind} color={species.color} size={40} />
+              <CreatureBadge kind={species.kind} image={species.image} color={species.color} size={40} />
               <span className="min-w-0 flex-1 text-[15px] font-extrabold">
                 {species.displayName} <span className="font-bold text-tinta-suave">Nv. {creature.level}</span>
               </span>

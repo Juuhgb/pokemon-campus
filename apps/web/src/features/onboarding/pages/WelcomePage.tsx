@@ -19,11 +19,11 @@ export function WelcomePage() {
       <div aria-hidden="true" className="relative -mx-1 h-[340px]">
         <div className="absolute inset-x-2.5 top-5 bottom-8 -rotate-3 rounded-[36px] sticker-lg bg-azul" />
         <div className="absolute inset-x-8 top-10 bottom-12 rotate-2 rounded-[30px] ink-border bg-amarelo" />
-        <div className="absolute top-[70px] left-[50px] -rotate-8"><CreatureBadge kind="leaf" color="#7ad88f" size={76} /></div>
-        <div className="absolute top-16 right-[52px] rotate-10"><CreatureBadge kind="drop" color="#6aa8ff" size={68} /></div>
-        <div className="absolute top-[136px] left-1/2 -translate-x-1/2"><CreatureBadge kind="bolt" color="#ffffff" size={96} /></div>
-        <div className="absolute bottom-16 left-[62px] rotate-6"><CreatureBadge kind="flame" color="#ff8a5c" size={64} /></div>
-        <div className="absolute right-[60px] bottom-[70px] -rotate-6"><CreatureBadge kind="wing" color="#c9b8ff" size={60} /></div>
+        <div className="absolute top-[70px] left-[50px] -rotate-8"><CreatureBadge kind="leaf" color="#7ad88f" image="/pokemon/bulbasaur.png" size={76} /></div>
+        <div className="absolute top-16 right-[52px] rotate-10"><CreatureBadge kind="drop" color="#6aa8ff" image="/pokemon/squirtle.png" size={68} /></div>
+        <div className="absolute top-[136px] left-1/2 -translate-x-1/2"><CreatureBadge kind="bolt" color="#ffffff" image="/pokemon/pikachu.png" size={96} /></div>
+        <div className="absolute bottom-16 left-[62px] rotate-6"><CreatureBadge kind="flame" color="#ff8a5c" image="/pokemon/charmander.png" size={64} /></div>
+        <div className="absolute right-[60px] bottom-[70px] -rotate-6"><CreatureBadge kind="leaf" color="#b6e388" image="/pokemon/chikorita.png" size={60} /></div>
       </div>
 
       <div className="flex flex-col items-center gap-2.5 text-center">

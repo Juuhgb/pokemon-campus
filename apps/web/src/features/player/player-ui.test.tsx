@@ -45,10 +45,10 @@ describe('SettingsPage', () => {
 describe('TeamPage', () => {
   it('adiciona da coleção e não deixa a equipe vazia', () => {
     render(<PlayerProvider initial={player}><TeamPage /></PlayerProvider>);
-    const removeBrasinha = screen.getByRole('button', { name: 'Tirar Brasinha da equipe' }) as HTMLButtonElement;
+    const removeBrasinha = screen.getByRole('button', { name: 'Tirar Charmander da equipe' }) as HTMLButtonElement;
     expect(removeBrasinha.disabled).toBe(true);
     fireEvent.click(screen.getByRole('button', { name: 'Adicionar' }));
-    expect(screen.getByRole('button', { name: 'Tirar Brotinho da equipe' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Tirar Bulbasaur da equipe' })).toBeTruthy();
     expect(removeBrasinha.disabled).toBe(false);
   });
 });

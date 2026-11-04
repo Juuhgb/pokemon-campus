@@ -13,7 +13,7 @@ export type {
   LocationSource,
   Rarity,
 } from './types.js';
-export { ENCOUNTER_RADIUS_METERS, evaluateEncounter, isSpawnActive, nearbySpawns, spawnTimeStatus } from './utils/encounter.js';
+export { ENCOUNTER_RADIUS_METERS, VISIBILITY_RADIUS_METERS, evaluateEncounter, isSpawnActive, nearbySpawns, spawnTimeStatus } from './utils/encounter.js';
 export { haversineMeters, bearingDegrees, formatDistance } from './utils/distance.js';
 export { findZoneAt, isPointInPolygon } from './utils/geofence.js';
 export { createBrowserLocationProvider, type LocationProvider } from './services/location.js';

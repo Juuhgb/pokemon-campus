@@ -69,16 +69,29 @@ function ResizeWatcher() {
 function Recenter({ player, signal }: { player: GeoPoint | null; signal: number }) {
   const map = useMap();
   const centeredOnce = useRef(false);
+  /** Segue o jogador enquanto ele anda; para quando ele arrasta o mapa e volta no botão de centralizar. */
+  const following = useRef(true);
 
-  // Centraliza automaticamente na primeira posição conhecida.
   useEffect(() => {
-    if (!player || centeredOnce.current) return;
-    centeredOnce.current = true;
-    map.setView([player.latitude, player.longitude], Math.max(map.getZoom(), CAMPUS_DEFAULT_ZOOM));
+    const stopFollowing = () => { following.current = false; };
+    map.on('dragstart', stopFollowing);
+    return () => { map.off('dragstart', stopFollowing); };
+  }, [map]);
+
+  // Centraliza na primeira posição conhecida e depois acompanha o movimento.
+  useEffect(() => {
+    if (!player) return;
+    if (!centeredOnce.current) {
+      centeredOnce.current = true;
+      map.setView([player.latitude, player.longitude], Math.max(map.getZoom(), CAMPUS_DEFAULT_ZOOM));
+      return;
+    }
+    if (following.current) map.panTo([player.latitude, player.longitude], { animate: true, duration: 1 });
   }, [map, player]);
 
   useEffect(() => {
     if (signal === 0 || !player) return;
+    following.current = true;
     map.flyTo([player.latitude, player.longitude], Math.max(map.getZoom(), CAMPUS_DEFAULT_ZOOM), { duration: 0.6 });
     // Só reage ao sinal, não a cada atualização de GPS.
     // eslint-disable-next-line react-hooks/exhaustive-deps

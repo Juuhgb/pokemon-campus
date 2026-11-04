@@ -79,29 +79,53 @@ button:disabled {
 .player-marker {
   position: relative;
   display: block;
-  width: 30px;
-  height: 30px;
+  width: 26px;
+  height: 26px;
 }
 
 .player-marker::before {
   content: '';
   position: absolute;
-  inset: 0;
+  inset: -4px;
   border-radius: 9999px;
   background: rgb(255 90 78 / 0.35);
   animation: var(--animate-player-pulse);
 }
 
-.player-marker > span {
+.player-marker__body {
   position: absolute;
-  inset: 5px;
+  inset: 0;
+  display: grid;
+  place-items: center;
   border-radius: 9999px;
-  background: var(--color-coral);
-  border: 3px solid var(--color-tinta);
+  background: #ffffff;
+  border: 2.5px solid var(--color-tinta);
   box-shadow: 2px 2px 0 var(--color-tinta);
 }
 
-.player-marker--simulated > span {
+/* Setinha que aponta para onde o jogador está andando. */
+.player-marker__arrow {
+  position: absolute;
+  inset: -9px;
+  transition: transform 0.4s ease;
+}
+
+.player-marker__arrow::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 8px solid var(--color-tinta);
+}
+
+.player-marker__arrow[hidden] {
+  display: none;
+}
+
+.player-marker--simulated .player-marker__body {
   background: var(--color-amarelo);
   border-style: dashed;
 }
@@ -118,6 +142,11 @@ button:disabled {
 
 .creature-marker--in-range > span {
   outline: 4px solid rgb(255 194 61 / 0.9);
+}
+
+/* Pokémon com imagem: brilho amarelo seguindo o contorno. */
+.creature-marker--in-range > img {
+  filter: drop-shadow(0 0 3px rgb(255 194 61)) drop-shadow(0 0 3px rgb(255 194 61)) !important;
 }
 
 .creature-marker--selected {

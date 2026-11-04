@@ -60,7 +60,7 @@ export function EncounterSheet({ spawn, eligibility, now, zoneName, pending = fa
           <span className="absolute top-5 right-4 rounded-full ink-border bg-white px-3 py-1.5 text-[13px] font-extrabold">Some em {formatRemaining(remainingMs)}</span>
         )}
         <div className="absolute top-[120px] left-1/2 -translate-x-1/2">
-          <CreatureBadge kind={species.kind} color={species.color} size={140} label={species.displayName} />
+          <CreatureBadge kind={species.kind} image={species.image} color={species.color} size={140} label={species.displayName} />
         </div>
       </div>
 

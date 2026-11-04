@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { CampusMap } from '../components/CampusMap.js';
 import { DevLocationPanel } from '../components/DevLocationPanel.js';
 import { EncounterSheet } from '../components/EncounterSheet.js';
@@ -16,8 +16,11 @@ import { createLocalFirstSpawnRepository, createMockSpawnRepository, type SpawnR
 import type { ZoneRepository } from '../services/zoneRepository.js';
 import { localZoneRepository } from '../services/zoneStore.js';
 import type { EncounterStartHandler, EncounterStartRequest, ExplorationSpawn, GeoPoint } from '../types.js';
-import { ENCOUNTER_RADIUS_METERS, evaluateEncounter, isSpawnActive, nearbySpawns } from '../utils/encounter.js';
+import { ENCOUNTER_RADIUS_METERS, evaluateEncounter, nearbySpawns, VISIBILITY_RADIUS_METERS } from '../utils/encounter.js';
 import { findZoneAt } from '../utils/geofence.js';
+
+/** Por quanto tempo o aviso de localização fica visível depois do toque. */
+const LOCATION_HELP_MS = 5000;
 
 const spawnCache = createIndexedDbSpawnCache();
 
@@ -65,12 +68,23 @@ export function ExplorationPage({
   const [recenterSignal, setRecenterSignal] = useState(0);
   const [encounterPending, setEncounterPending] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  /** O aviso de localização com erro só aparece depois de um toque no cabeçalho, e some sozinho. */
+  const [locationHelpOpen, setLocationHelpOpen] = useState(false);
+  useEffect(() => {
+    if (!locationHelpOpen) return undefined;
+    const timer = window.setTimeout(() => setLocationHelpOpen(false), LOCATION_HELP_MS);
+    return () => window.clearTimeout(timer);
+  }, [locationHelpOpen]);
 
   const player: GeoPoint | null = geo.position;
   const activeZone = useMemo(() => (player ? findZoneAt(player, zones) : null), [player, zones]);
   const selectedZone = zones.find((zone) => zone.id === selectedZoneId) ?? null;
-  const activeSpawns = useMemo(() => spawns.filter((spawn) => isSpawnActive(spawn, now)), [spawns, now]);
-  const nearby = useMemo(() => (player ? nearbySpawns(spawns, player, now) : []), [spawns, player, now]);
+  // Só os Pokémon perto do jogador aparecem (mapa e lista); sem localização, nenhum.
+  const nearby = useMemo(
+    () => (player ? nearbySpawns(spawns, player, now, VISIBILITY_RADIUS_METERS) : []),
+    [spawns, player, now],
+  );
+  const visibleSpawns = useMemo(() => nearby.map((item) => item.spawn), [nearby]);
   const inRangeIds = useMemo(
     () => new Set(nearby.filter((item) => item.distanceMeters <= ENCOUNTER_RADIUS_METERS).map((item) => item.spawn.spawnId)),
     [nearby],
@@ -135,7 +149,7 @@ export function ExplorationPage({
               O mapa não pôde ser carregado (sem conexão ou servidor de mapas indisponível). A lista abaixo usa só o GPS e funciona offline.
             </p>
             {player ? (
-              <NearbyCards player={player} nearby={nearby} onSelect={setSelectedSpawnId} layout="list" />
+              <NearbyCards player={player} nearby={nearby} rangeMeters={VISIBILITY_RADIUS_METERS} onSelect={setSelectedSpawnId} layout="list" />
             ) : (
               <p className="m-0 text-sm font-bold text-tinta-suave">A lista precisa da sua localização.</p>
             )}
@@ -147,7 +161,7 @@ export function ExplorationPage({
           <div className={`h-full w-full ${pickingLocation ? 'cursor-crosshair' : ''}`}>
             <CampusMap
               zones={zones}
-              spawns={activeSpawns}
+              spawns={visibleSpawns}
               player={geo.position}
               activeZoneId={activeZone?.id ?? null}
               selectedZoneId={selectedZoneId}
@@ -164,7 +178,13 @@ export function ExplorationPage({
 
         <div className="pointer-events-none absolute inset-x-4 top-4 z-[1000] flex flex-col gap-2 [&>*]:pointer-events-auto">
           <div className="flex items-start justify-between gap-2.5">
-            <div className="flex min-w-0 items-center gap-2.5 rounded-[18px] sticker bg-white py-2 pr-3.5 pl-2">
+            {geo.error ? (
+              <button
+                type="button"
+                onClick={() => setLocationHelpOpen(true)}
+                aria-expanded={locationHelpOpen}
+                className="flex min-w-0 items-center gap-2.5 rounded-[18px] sticker bg-white py-2 pr-3.5 pl-2 text-left"
+              >
               <span aria-hidden="true" className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-xl ink-border" style={{ background: activeZone?.color ?? '#ece9f5' }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d1b3a" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M4 10l8-6 8 6v10H4z" /><path d="M10 20v-5h4v5" /></svg>
               </span>
@@ -172,13 +192,26 @@ export function ExplorationPage({
                 <span className="text-xs font-extrabold text-tinta-suave">{player && activeZone ? 'Você está em' : 'Exploração'}</span>
                 <span className="truncate font-display text-[17px] leading-tight font-semibold">{zoneLabel}</span>
               </span>
-            </div>
+              </button>
+            ) : (
+              <div className="flex min-w-0 items-center gap-2.5 rounded-[18px] sticker bg-white py-2 pr-3.5 pl-2">
+              <span aria-hidden="true" className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-xl ink-border" style={{ background: activeZone?.color ?? '#ece9f5' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d1b3a" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M4 10l8-6 8 6v10H4z" /><path d="M10 20v-5h4v5" /></svg>
+              </span>
+              <span className="flex min-w-0 flex-col">
+                <span className="text-xs font-extrabold text-tinta-suave">{player && activeZone ? 'Você está em' : 'Exploração'}</span>
+                <span className="truncate font-display text-[17px] leading-tight font-semibold">{zoneLabel}</span>
+              </span>
+              </div>
+            )}
             <div className="flex shrink-0 flex-col items-end gap-1.5">
               {headerAction}
               {geo.isSimulated && <span className="rounded-full border-2 border-tinta bg-amarelo px-2.5 py-0.5 text-xs font-extrabold">GPS simulado</span>}
             </div>
           </div>
-          <LocationNotice status={geo.status} error={geo.error} simulationAvailable={geo.simulationAvailable} />
+          {(!geo.error || locationHelpOpen) && (
+            <LocationNotice status={geo.status} error={geo.error} simulationAvailable={geo.simulationAvailable} />
+          )}
           {spawnsError && <p role="alert" className="m-0 rounded-2xl ink-border bg-[#ffd9cf] px-4 py-2 text-sm font-bold">{spawnsError}</p>}
           {selectedZone && (
             <div className="flex items-center gap-2 self-start rounded-full ink-border bg-white px-3 py-1.5 text-sm font-bold">
@@ -216,9 +249,9 @@ export function ExplorationPage({
             )}
             <div className="pl-4">
               {player ? (
-                <NearbyCards player={player} nearby={nearby} onSelect={setSelectedSpawnId} />
+                <NearbyCards player={player} nearby={nearby} rangeMeters={VISIBILITY_RADIUS_METERS} onSelect={setSelectedSpawnId} />
               ) : (
-                <p className="m-0 mr-4 rounded-2xl ink-border bg-white px-4 py-3 text-sm font-bold">{activeSpawns.length} Pokémon ativos no campus. Toque em um para ver detalhes.</p>
+                <p className="m-0 mr-4 rounded-2xl ink-border bg-white px-4 py-3 text-sm font-bold">Ative a localização para ver os Pokémon perto de você.</p>
               )}
             </div>
           </div>

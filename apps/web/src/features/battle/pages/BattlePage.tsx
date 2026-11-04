@@ -94,7 +94,7 @@ export function BattlePage() {
         <div className="absolute top-[92px] right-[54px]">
           <div key={`foe-${turnKey}`} className={foeOuter} style={delay(counterAt)}>
             <div className={foeInner} style={delay(foeInnerDelay)}>
-              <CreatureBadge kind={foeSpecies.kind} color={foeSpecies.color} size={108} label={foeSpecies.displayName} />
+              <CreatureBadge kind={foeSpecies.kind} image={foeSpecies.image} color={foeSpecies.color} size={108} label={foeSpecies.displayName} />
             </div>
           </div>
           {anim && <DamagePop key={`dmg-foe-${anim.key}`} amount={anim.foeDamage} at={TURN_TIMING.hitDelay} className="-top-6 left-8" />}
@@ -103,7 +103,7 @@ export function BattlePage() {
         <div className="absolute top-[222px] left-11">
           <div key={`me-${turnKey}`} className={meOuter}>
             <div className={meInner} style={delay(meInnerDelay)}>
-              <CreatureBadge kind={mySpecies.kind} color={mySpecies.color} size={124} label={mySpecies.displayName} />
+              <CreatureBadge kind={mySpecies.kind} image={mySpecies.image} color={mySpecies.color} size={124} label={mySpecies.displayName} />
             </div>
           </div>
           {anim && <DamagePop key={`dmg-me-${anim.key}`} amount={anim.playerDamage} at={counterAt + TURN_TIMING.hitDelay} className="-top-6 left-10" />}
@@ -181,7 +181,7 @@ export function BattlePage() {
                   onClick={() => act((state) => switchTo(state, index), false)}
                   className={`flex min-h-[60px] items-center gap-3 rounded-[18px] ink-border px-3 py-1.5 text-left ${unavailable ? 'bg-lilas' : 'bg-white'}`}
                 >
-                  <CreatureBadge kind={species.kind} color={species.color} size={40} />
+                  <CreatureBadge kind={species.kind} image={species.image} color={species.color} size={40} />
                   <span className="flex-1 text-[15px] font-extrabold">{species.displayName} <span className="text-tinta-suave">Nv. {member.level}</span></span>
                   <span className="text-xs font-extrabold text-tinta-suave">
                     {index === battle.activeIndex ? 'Em campo' : member.hp <= 0 ? 'Desmaiado' : `PV ${member.hp}/${member.maxHp}`}

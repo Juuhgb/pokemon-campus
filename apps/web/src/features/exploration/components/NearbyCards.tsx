@@ -46,7 +46,7 @@ export function NearbyCards({ player, nearby, onSelect, rangeMeters = 300, layou
                   className={`flex w-full flex-col gap-2 rounded-[20px] sticker p-3 text-left text-tinta ${inRange ? 'bg-amarelo' : 'bg-white'}`}
                 >
                   <span className="flex items-center justify-between">
-                    <CreatureBadge kind={species.kind} color={species.color} size={44} />
+                    <CreatureBadge kind={species.kind} image={species.image} color={species.color} size={44} />
                     <span
                       aria-label={`Direção ${directionName(bearing)}`}
                       className="grid h-8 w-8 place-items-center rounded-full border-2 border-tinta bg-white"
