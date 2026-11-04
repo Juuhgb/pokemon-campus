@@ -10,35 +10,28 @@ Monorepo TypeScript para um jogo de exploração no campus, com interface web of
 
 ## Começar
 
-```bash
-npm install
-npm run dev
-```
+    npm install
+    npm run dev
 
-O app web abre em `http://localhost:5173` e a API em `http://localhost:3000`. A rota `GET /health` confirma que a API está ativa. Para usar a conexão com PostgreSQL, defina `DATABASE_URL` antes de iniciar a API.
+O app web abre em http://localhost:5173 e a API em http://localhost:3000. A rota GET /health confirma que a API está ativa. Para usar a conexão com PostgreSQL, defina DATABASE_URL antes de iniciar a API.
 
-Também é possível iniciar cada app separadamente com `npm run dev:web` e `npm run dev:api`.
+## Estrutura
 
-## Workspaces
+    apps/
+      web/                 React, Vite, Leaflet, PWA e armazenamento offline
+      api/                 Fastify, rotas, serviços e PostgreSQL
+    packages/
+      shared/              Contratos TypeScript e schemas Zod
+      game-engine/         Regras de jogo puras e determinísticas
+    docs/
+      CONTRACTS.md         Contratos HTTP, modelos, eventos e sincronização
 
-```text
-apps/
-  web/                 React, Vite, Leaflet, PWA e armazenamento offline
-  api/                 Fastify, rotas, serviços e acesso a PostgreSQL
-packages/
-  shared/              Contratos TypeScript e schemas de validação
-  game-engine/         Regras de jogo puras e determinísticas
-```
-
-Os pacotes internos são ligados pelo npm workspaces. O motor de jogo permanece independente de React, banco de dados e rede, seguindo a separação de domínio usada pelo projeto de referência. A camada web mantém sincronização e IndexedDB em `apps/web/src/sync/`; a API concentra rotas, serviços e banco em `apps/api/src/`.
+O contrato compartilhado está em docs/CONTRACTS.md e em packages/shared/src/index.ts. Os quatro integrantes devem combinar mudanças nesses contratos antes de depender deles em seus módulos.
 
 ## Scripts
 
-- `npm run dev` inicia web e API juntos.
-- `npm run build` compila os pacotes compartilhados, a API e o app web.
-- `npm run typecheck` verifica os quatro workspaces.
-- `npm run lint` executa ESLint.
-- `npm run test:unit` executa os testes Vitest que forem adicionados.
-
-O setup segue os padrões observados em `segura-e-balanca`: Vite, TypeScript estrito, ESLint flat config, Vitest, PWA com atualização controlada e Dexie para dados offline. A configuração Firebase e os emuladores específicos daquele projeto não foram trazidos para esta arquitetura Fastify/PostgreSQL.
-
+- npm run dev inicia web e API juntos.
+- npm run build compila os pacotes compartilhados, a API e o app web.
+- npm run typecheck verifica os quatro workspaces.
+- npm run lint executa ESLint.
+- npm run test:unit executa os testes Vitest que forem adicionados.
