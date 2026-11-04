@@ -14,7 +14,7 @@ interface PlayerMarkerProps {
 /** Deslocamento mínimo para atualizar a direção (evita a seta "tremer" com o ruído do GPS). */
 const MIN_HEADING_STEP_METERS = 3;
 
-const ICON_SIZE = 26;
+const ICON_SIZE = 34;
 
 /** Duração do deslize entre duas leituras do GPS. */
 const GLIDE_MS = 900;
@@ -22,16 +22,22 @@ const GLIDE_MS = 900;
 /** Saltos maiores que isso (ex.: GPS simulado em outro lugar) não são animados. */
 const MAX_GLIDE_METERS = 300;
 
-/** Silhueta de treinador (boné + corpo), viewBox 24×24. */
-const TRAINER_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M6.5 9.2a5.5 5.5 0 0 1 11 0z" fill="#ff5a4e"/><path d="M5 9.2h14" stroke="#1d1b3a" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12.6" r="2.6" fill="#1d1b3a"/><path d="M7 21c0-3 2.2-5 5-5s5 2 5 5z" fill="#1d1b3a"/></svg>';
+/** Seta com ponta para cima (viewBox 24×24); gira para a direção em que o jogador anda. */
+const POINTER_SVG = '<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M12 2.5 L20 20.5 L12 16.2 L4 20.5 Z"/></svg>';
 
 function playerIcon(simulated: boolean) {
   return L.divIcon({
     className: '',
     iconSize: [ICON_SIZE, ICON_SIZE],
     iconAnchor: [ICON_SIZE / 2, ICON_SIZE / 2],
-    html: `<span class="player-marker${simulated ? ' player-marker--simulated' : ''}"><span class="player-marker__arrow" hidden></span><span class="player-marker__body">${TRAINER_SVG}</span></span>`,
+    html: `<span class="player-marker player-marker--no-heading${simulated ? ' player-marker--simulated' : ''}"><span class="player-marker__pointer">${POINTER_SVG}</span></span>`,
   });
+}
+
+/** Gira para o caminho mais curto (ex.: de 350° para 10° passa por 360°, não volta 340°). */
+export function unwrapAngle(previous: number, next: number): number {
+  const delta = ((((next - previous) % 360) + 540) % 360) - 180;
+  return previous + delta;
 }
 
 /** Posição exibida: desliza da anterior até a nova, para o ícone e os círculos andarem juntos. */
@@ -84,15 +90,19 @@ export function PlayerMarker({ position, showEncounterRadius = true }: PlayerMar
   const icon = useMemo(() => playerIcon(simulated), [simulated]);
   const shown = useGlidingPosition(position);
   const center: [number, number] = [shown.latitude, shown.longitude];
+  // A seta aponta para onde o jogador está andando (calculado pelas últimas posições do GPS).
   const heading = useHeading(position);
   const markerRef = useRef<L.Marker | null>(null);
+  const shownAngle = useRef(0);
 
   // Gira a seta direto no DOM: trocar o ícone recriaria o elemento e cortaria a animação.
   useEffect(() => {
-    const arrow = markerRef.current?.getElement()?.querySelector<HTMLElement>('.player-marker__arrow');
-    if (!arrow) return;
-    arrow.hidden = heading === null;
-    if (heading !== null) arrow.style.transform = `rotate(${heading}deg)`;
+    const root = markerRef.current?.getElement()?.querySelector<HTMLElement>('.player-marker');
+    const pointer = root?.querySelector<HTMLElement>('.player-marker__pointer');
+    if (!root || !pointer) return;
+    root.classList.toggle('player-marker--no-heading', heading === null);
+    shownAngle.current = unwrapAngle(shownAngle.current, heading ?? 0);
+    pointer.style.transform = `rotate(${shownAngle.current}deg)`;
   }, [heading, icon]);
 
   return (

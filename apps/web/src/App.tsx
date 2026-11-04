@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from 'react';
-import { useRegisterSW } from 'virtual:pwa-register/react';
+import { AppUpdateProvider, UpdateBanner } from './app/AppUpdate.js';
 import { navigate, ROUTES, usePath } from './app/router.js';
 import { ConnectionStatus } from './components/ConnectionStatus.js';
 import { BottomNav } from './components/ui/BottomNav.js';
@@ -72,16 +72,20 @@ function PlayerRoutes() {
 }
 
 export default function App() {
-  useRegisterSW({ immediate: true });
   const path = usePath();
 
-  if (isAdminPath(path)) return <AdminPage headerAction={<ConnectionStatus />} />;
-
   return (
-    <PlayerProvider>
-      <BattleProvider>
-        <PlayerRoutes />
-      </BattleProvider>
-    </PlayerProvider>
+    <AppUpdateProvider>
+      <UpdateBanner />
+      {isAdminPath(path) ? (
+        <AdminPage headerAction={<ConnectionStatus />} />
+      ) : (
+        <PlayerProvider>
+          <BattleProvider>
+            <PlayerRoutes />
+          </BattleProvider>
+        </PlayerProvider>
+      )}
+    </AppUpdateProvider>
   );
 }

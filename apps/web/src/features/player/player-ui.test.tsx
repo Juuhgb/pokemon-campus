@@ -87,6 +87,7 @@ it('shows owned species details in the Pokedex and keeps unknown species hidden'
   expect(screen.getByText(/Tipo: Fogo/)).toBeTruthy();
   expect(screen.getByText(/Nv. 15 · PV/)).toBeTruthy();
   expect(screen.getAllByText('???').length).toBeGreaterThan(0);
-  fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'Brasinha' } });
+  // A espécie de id "brasinha" é exibida como Charmander no catálogo atual.
+  fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'Charmander' } });
   expect(screen.getAllByText('Ver na Pokédex')).toHaveLength(1);
 });

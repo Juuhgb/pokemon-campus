@@ -15,6 +15,7 @@
     "@pokemon-campus/shared": "0.1.0",
     "dexie": "^4.4.7",
     "dexie-react-hooks": "^1.1.7",
+    "firebase": "^12.19.0",
     "leaflet": "1.9",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",

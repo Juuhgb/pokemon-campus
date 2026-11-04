@@ -54,11 +54,32 @@
   color: var(--color-tinta);
 }
 
+/*
+ * O app ocupa exatamente a área visível do celular.
+ * - `100vh` no celular é maior que a tela (conta a barra de endereço escondida) e deixava sobra
+ *   ao arrastar; `100dvh` acompanha a barra.
+ * - A página em si não rola nem "estica" (efeito elástico); quem rola é o #root ou cada tela.
+ */
+html,
 body {
+  height: 100%;
   margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
+  overflow: hidden;
+  overscroll-behavior: none;
   background: var(--color-creme);
+}
+
+body {
+  min-width: 320px;
+}
+
+#root {
+  height: 100vh;
+  height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 button:disabled {
@@ -79,55 +100,49 @@ button:disabled {
 .player-marker {
   position: relative;
   display: block;
-  width: 26px;
-  height: 26px;
+  width: 34px;
+  height: 34px;
 }
 
+/* Pulso em volta da posição. */
 .player-marker::before {
   content: '';
   position: absolute;
-  inset: -4px;
+  inset: 3px;
   border-radius: 9999px;
   background: rgb(255 90 78 / 0.35);
   animation: var(--animate-player-pulse);
 }
 
-.player-marker__body {
+/* Seta com ponta: gira para a direção em que o jogador anda. */
+.player-marker__pointer {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
-  border-radius: 9999px;
-  background: #ffffff;
-  border: 2.5px solid var(--color-tinta);
-  box-shadow: 2px 2px 0 var(--color-tinta);
+  transition: transform 0.25s ease-out;
+  filter: drop-shadow(2px 2px 0 var(--color-tinta));
 }
 
-/* Setinha que aponta para onde o jogador está andando. */
-.player-marker__arrow {
-  position: absolute;
-  inset: -9px;
-  transition: transform 0.4s ease;
+.player-marker__pointer svg {
+  display: block;
 }
 
-.player-marker__arrow::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  border-left: 6px solid transparent;
-  border-right: 6px solid transparent;
-  border-bottom: 8px solid var(--color-tinta);
+.player-marker__pointer path {
+  fill: var(--color-coral);
+  stroke: var(--color-tinta);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
 }
 
-.player-marker__arrow[hidden] {
-  display: none;
+/* Sem direção conhecida: aponta para o norte, mais apagada. */
+.player-marker--no-heading .player-marker__pointer {
+  opacity: 0.75;
 }
 
-.player-marker--simulated .player-marker__body {
-  background: var(--color-amarelo);
-  border-style: dashed;
+.player-marker--simulated .player-marker__pointer path {
+  fill: var(--color-amarelo);
+  stroke-dasharray: 3 2;
 }
 
 .creature-marker {

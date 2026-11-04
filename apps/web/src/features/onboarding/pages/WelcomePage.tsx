@@ -1,18 +1,12 @@
+import { useCallback } from 'react';
 import { navigate, ROUTES } from '../../../app/router.js';
 import { CreatureBadge } from '../../../components/ui/CreatureBadge.js';
 import { StepDots } from '../../../components/ui/ui.js';
-import { usePlayer } from '../../player/PlayerProvider.js';
-
-/** Conta usada enquanto o login real com Google (módulo de autenticação) não existe. */
-export const SIMULATED_GOOGLE_ACCOUNT = 'Conta Google (simulada)';
+import { useGoogleLink } from '../../auth/useGoogleLink.js';
 
 export function WelcomePage() {
-  const { dispatch } = usePlayer();
-
-  const continueWithGoogle = () => {
-    dispatch({ type: 'linkGoogle', email: SIMULATED_GOOGLE_ACCOUNT });
-    navigate(ROUTES.starter);
-  };
+  const goToStarter = useCallback(() => navigate(ROUTES.starter), []);
+  const google = useGoogleLink(goToStarter);
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-creme px-6 pt-6 pb-8 text-tinta">
@@ -36,14 +30,18 @@ export function WelcomePage() {
       <div className="mt-auto flex flex-col gap-3.5 pt-8">
         <button
           type="button"
-          onClick={continueWithGoogle}
-          className="flex h-[60px] items-center justify-center gap-3 rounded-[18px] sticker-lg bg-white font-display text-[19px] font-semibold"
+          onClick={() => void google.link()}
+          disabled={google.busy}
+          className="flex h-[60px] items-center justify-center gap-3 rounded-[18px] sticker-lg bg-white font-display text-[19px] font-semibold disabled:opacity-60"
         >
           <span aria-hidden="true" className="grid h-7 w-7 place-items-center rounded-full ink-border text-[15px] font-bold">G</span>
-          Continuar com Google
+          {google.busy ? 'Conectando ao Google…' : 'Continuar com Google'}
         </button>
+        {google.error && (
+          <p role="alert" className="m-0 rounded-2xl ink-border bg-[#ffd9cf] px-3.5 py-2.5 text-center text-[13px] font-extrabold">{google.error}</p>
+        )}
         <p className="m-0 text-center text-[13px] leading-normal font-semibold text-tinta-suave">
-          Login simulado nesta versão. Ao continuar, você concorda com os Termos de uso e a Política de privacidade.
+          Ao continuar, você concorda com os Termos de uso e a Política de privacidade.
         </p>
         <StepDots step={1} />
       </div>

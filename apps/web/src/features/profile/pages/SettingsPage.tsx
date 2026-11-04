@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ROUTES } from '../../../app/router.js';
 import { TabScreen } from '../../../components/ui/BottomNav.js';
 import { BackLink, buttonStyles } from '../../../components/ui/ui.js';
-import { SIMULATED_GOOGLE_ACCOUNT } from '../../onboarding/pages/WelcomePage.js';
+import { useGoogleLink } from '../../auth/useGoogleLink.js';
 import { usePlayer } from '../../player/PlayerProvider.js';
 import { COURSES, MAX_NAME_LENGTH, type CourseSlug } from '../../player/playerState.js';
 
@@ -11,6 +11,7 @@ export function SettingsPage() {
   const [name, setName] = useState(player.displayName);
   const [course, setCourse] = useState<CourseSlug>(player.course);
   const [saved, setSaved] = useState(false);
+  const google = useGoogleLink();
 
   const trimmed = name.trim();
   const nameValid = trimmed.length >= 1 && trimmed.length <= MAX_NAME_LENGTH;
@@ -43,8 +44,8 @@ export function SettingsPage() {
               </span>
               <span className="rounded-full border-2 border-tinta bg-verde px-2.5 py-0.5 text-xs font-extrabold">Ativa</span>
             </div>
-            <button type="button" onClick={() => dispatch({ type: 'unlinkGoogle' })} className={`${buttonStyles.secondary} text-perigo`}>
-              Desvincular conta Google
+            <button type="button" disabled={google.busy} onClick={() => void google.unlink()} className={`${buttonStyles.secondary} text-perigo`}>
+              {google.busy ? 'Saindo…' : 'Desvincular conta Google'}
             </button>
           </>
         ) : (
@@ -52,15 +53,17 @@ export function SettingsPage() {
             <p className="m-0 text-sm leading-snug font-bold text-tinta-suave">Vincule para não perder seu progresso se trocar de celular.</p>
             <button
               type="button"
-              onClick={() => dispatch({ type: 'linkGoogle', email: SIMULATED_GOOGLE_ACCOUNT })}
-              className="flex h-[52px] items-center justify-center gap-2.5 rounded-2xl sticker bg-white font-display text-[17px] font-semibold"
+              disabled={google.busy}
+              onClick={() => void google.link()}
+              className="flex h-[52px] items-center justify-center gap-2.5 rounded-2xl sticker bg-white font-display text-[17px] font-semibold disabled:opacity-60"
             >
               <span aria-hidden="true" className="grid h-[26px] w-[26px] place-items-center rounded-full ink-border text-[13px] font-bold">G</span>
-              Vincular conta Google
+              {google.busy ? 'Conectando ao Google…' : 'Vincular conta Google'}
             </button>
           </>
         )}
-        <p className="m-0 text-xs font-bold text-tinta-suave">O login real com Google entra quando o módulo de autenticação estiver pronto.</p>
+        {google.error && <p role="alert" className="m-0 rounded-xl ink-border bg-[#ffd9cf] px-3 py-2 text-xs font-extrabold">{google.error}</p>}
+        <p className="m-0 text-xs font-bold text-tinta-suave">Login com Firebase Authentication. O progresso ainda fica neste aparelho até a API de sincronização existir.</p>
       </section>
 
       <section className="mt-3.5 flex flex-col gap-2 rounded-[22px] ink-border bg-white px-4 py-3.5">

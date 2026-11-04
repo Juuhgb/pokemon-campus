@@ -36,6 +36,8 @@ export interface PlayerState {
   version: 1;
   onboarded: boolean;
   googleEmail: string | null;
+  /** UID do Firebase Authentication quando a conta Google está vinculada de verdade. */
+  googleUid?: string | null;
   displayName: string;
   course: CourseSlug;
   score: number;
@@ -63,7 +65,7 @@ export const INITIAL_PLAYER: PlayerState = {
 
 export type PlayerAction =
   | { type: 'onboard'; starterSpeciesId: string; creatureId: string; at: string }
-  | { type: 'linkGoogle'; email: string }
+  | { type: 'linkGoogle'; email: string; uid?: string; displayName?: string | null }
   | { type: 'unlinkGoogle' }
   | { type: 'updateProfile'; displayName: string; course: CourseSlug }
   | { type: 'addToTeam'; creatureId: string }
@@ -94,10 +96,14 @@ export function playerReducer(state: PlayerState, action: PlayerAction): PlayerS
       const starter = newCreature(action.creatureId, action.starterSpeciesId, 5, action.at);
       return { ...state, onboarded: true, creatures: [starter], team: [starter.id] };
     }
-    case 'linkGoogle':
-      return { ...state, googleEmail: action.email };
+    case 'linkGoogle': {
+      // Usa o nome da conta Google se o jogador ainda está com o nome padrão.
+      const googleName = action.displayName?.trim().slice(0, MAX_NAME_LENGTH);
+      const displayName = state.displayName === INITIAL_PLAYER.displayName && googleName ? googleName : state.displayName;
+      return { ...state, googleEmail: action.email, googleUid: action.uid ?? null, displayName };
+    }
     case 'unlinkGoogle':
-      return { ...state, googleEmail: null };
+      return { ...state, googleEmail: null, googleUid: null };
     case 'updateProfile': {
       const displayName = action.displayName.trim().slice(0, MAX_NAME_LENGTH);
       if (!displayName) return state;
@@ -145,7 +151,10 @@ export function parseStoredPlayer(raw: string | null): PlayerState {
   try {
     const value = JSON.parse(raw) as Partial<PlayerState>;
     if (value.version !== 1 || !Array.isArray(value.creatures) || !Array.isArray(value.team)) return INITIAL_PLAYER;
-    return { ...INITIAL_PLAYER, ...value, inventory: { ...INITIAL_PLAYER.inventory, ...value.inventory } } as PlayerState;
+    const player = { ...INITIAL_PLAYER, ...value, inventory: { ...INITIAL_PLAYER.inventory, ...value.inventory } } as PlayerState;
+    // Vínculo da versão antiga (login simulado, sem UID): passa a contar como não vinculado.
+    if (player.googleEmail && !player.googleUid) player.googleEmail = null;
+    return player;
   } catch {
     return INITIAL_PLAYER;
   }
