@@ -11,6 +11,7 @@ import { useGeolocation } from '../hooks/useGeolocation.js';
 import { useNow } from '../hooks/useNow.js';
 import type { LocationProvider } from '../services/location.js';
 import { SIMULATED_LOCATION_AVAILABLE } from '../services/location.js';
+import { combineSpawnRepositories, createAdminSpawnRepository, localAdminSpawnStore } from '../services/adminSpawns.js';
 import { createIndexedDbSpawnCache } from '../services/spawnCache.js';
 import { createLocalFirstSpawnRepository, createMockSpawnRepository, type SpawnRepository } from '../services/spawnRepository.js';
 import type { ZoneRepository } from '../services/zoneRepository.js';
@@ -55,7 +56,11 @@ export function ExplorationPage({
   const zones = useZones(zoneRepository);
   const settledZones = useDebouncedValue(zones, 400);
   const effectiveSpawnRepository = useMemo(
-    () => spawnRepository ?? createLocalFirstSpawnRepository(createMockSpawnRepository((at) => createMockSpawns(at, settledZones)), spawnCache),
+    // Gerados nas zonas + colocados à mão pelo admin neste aparelho.
+    () => spawnRepository ?? createLocalFirstSpawnRepository(
+      combineSpawnRepositories(createMockSpawnRepository((at) => createMockSpawns(at, settledZones)), createAdminSpawnRepository(localAdminSpawnStore)),
+      spawnCache,
+    ),
     [spawnRepository, settledZones],
   );
   const { spawns: allSpawns, error: spawnsError } = useSpawns(effectiveSpawnRepository);
