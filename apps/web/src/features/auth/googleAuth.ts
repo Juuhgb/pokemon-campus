@@ -51,34 +51,51 @@ export function googleAuthErrorMessage(error: unknown): string | null {
   }
 }
 
-const NEEDS_REDIRECT = new Set(['auth/popup-blocked', 'auth/operation-not-supported-in-environment']);
+const NEEDS_REDIRECT = new Set(['auth/popup-blocked', 'auth/operation-not-supported-in-this-environment']);
+
+function preferGoogleRedirect(): boolean {
+  const userAgent = navigator.userAgent;
+  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent)
+    || (/Macintosh/i.test(userAgent) && navigator.maxTouchPoints > 1);
+  const isInstalled = window.matchMedia('(display-mode: standalone)').matches
+    || (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  return isMobile || isInstalled;
+}
+
+function markGoogleRedirectPending(): void {
+  try {
+    window.sessionStorage.setItem(REDIRECT_FLAG, '1');
+  } catch {
+    // sem sessionStorage: o resultado ainda pode ser lido na próxima abertura
+  }
+}
 
 /**
- * Abre o login do Google. Usa janela pop-up e, se o navegador bloquear, troca para redirecionamento
- * (nesse caso a página recarrega e o resultado chega por `completeGoogleRedirect`).
+ * No celular/PWA, usa redirecionamento na mesma aba; no computador, tenta popup e segue para
+ * redirecionamento se o navegador bloquear. O retorno é concluído por `completeGoogleRedirect`.
  */
 export async function signInWithGoogle(): Promise<GoogleAccount | null> {
   const auth = await getFirebaseAuth();
   const { GoogleAuthProvider, signInWithPopup, signInWithRedirect } = await import('firebase/auth');
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
+  if (preferGoogleRedirect()) {
+    markGoogleRedirectPending();
+    await signInWithRedirect(auth, provider);
+    return null;
+  }
   try {
     const result = await signInWithPopup(auth, provider);
     return toAccount(result.user);
   } catch (error) {
     if (NEEDS_REDIRECT.has((error as AuthError).code)) {
-      try {
-        window.sessionStorage.setItem(REDIRECT_FLAG, '1');
-      } catch {
-        // sem sessionStorage: o resultado ainda pode ser lido na próxima abertura
-      }
+      markGoogleRedirectPending();
       await signInWithRedirect(auth, provider);
       return null;
     }
     throw error;
   }
 }
-
 const REDIRECT_FLAG = 'pokemon-campus:google-redirect';
 
 /** Há um login por redirecionamento esperando resultado? (evita carregar o Firebase sem necessidade) */
