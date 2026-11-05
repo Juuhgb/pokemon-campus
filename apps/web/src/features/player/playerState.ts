@@ -3,9 +3,9 @@ export { xpToNextLevel } from '@pokemon-campus/game-engine';
 import { getSpecies, statsAtLevel } from '../catalog/species.js';
 
 /**
- * Estado local do jogador para o protótipo jogável.
- * Fica só neste navegador até existirem as rotas da API (perfil, coleção, equipe, inventário).
- * O servidor continua sendo a autoridade; nada aqui é enviado para a sincronização.
+ * Estado do jogador e as regras de cada jogada (reducer puro).
+ * O estado não é salvo direto: cada jogada vira um evento (playerEvents.ts), guardado no
+ * aparelho e sincronizado com o servidor; o estado é recalculado a partir dos eventos.
  */
 
 export const COURSES = [
@@ -73,10 +73,8 @@ export type PlayerAction =
   | { type: 'useBall'; item: BallItem }
   | { type: 'capture'; creatureId: string; speciesId: string; level: number; at: string }
   | { type: 'battleFinished'; xpByCreature: Record<string, number>; points: number }
-  | { type: 'settleBattle'; battleId: string; xpByCreature: Record<string, number>; points: number; captured?: { creatureId: string; speciesId: string; level: number; at: string } }
+  | { type: 'settleBattle'; battleId: string; spawnId?: string; xpByCreature: Record<string, number>; points: number; captured?: { creatureId: string; speciesId: string; level: number; at: string } }
   | { type: 'reset' };
-
-
 
 export function newCreature(id: string, speciesId: string, level: number, at: string): OwnedCreature {
   const { maxHp } = statsAtLevel(getSpecies(speciesId), level);

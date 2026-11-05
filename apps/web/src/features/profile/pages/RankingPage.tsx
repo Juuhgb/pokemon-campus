@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ROUTES } from '../../../app/router.js';
 import { TabScreen } from '../../../components/ui/BottomNav.js';
 import { BackLink } from '../../../components/ui/ui.js';
-import { usePlayer } from '../../player/PlayerProvider.js';
+import { usePlayer, useSync } from '../../player/PlayerProvider.js';
 import { COURSES, initials } from '../../player/playerState.js';
 import { rankingFor } from '../ranking.js';
 
@@ -11,8 +11,14 @@ const courseLabel = (slug: string) => COURSES.find((course) => course.slug === s
 
 export function RankingPage() {
   const { player } = usePlayer();
+  const { ranking, refreshRanking, connection } = useSync();
   const [scope, setScope] = useState<'all' | 'course'>('all');
-  const rows = rankingFor(player, scope);
+  const others = ranking ? { entries: ranking, myUid: player.googleUid ?? null } : null;
+  const rows = rankingFor(player, scope, others);
+
+  useEffect(() => {
+    if (connection === 'online') void refreshRanking();
+  }, [connection, refreshRanking]);
   const podium = [rows[1], rows[0], rows[2]].filter((row) => row !== undefined);
   const rest = rows.slice(3);
 
@@ -78,7 +84,11 @@ export function RankingPage() {
           </li>
         ))}
       </ol>
-      <p className="mt-4 mb-0 text-xs font-bold text-tinta-suave">Outros jogadores são de exemplo até o ranking da API ficar pronto.</p>
+      <p className="mt-4 mb-0 text-xs font-bold text-tinta-suave">
+        {!ranking
+          ? 'Outros jogadores são de exemplo até o ranking ser baixado do servidor.'
+          : connection === 'online' ? 'Ranking do servidor, atualizado agora.' : 'Último ranking baixado do servidor (você está offline).'}
+      </p>
     </TabScreen>
   );
 }

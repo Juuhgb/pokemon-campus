@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { AppUpdateProvider, UpdateBanner } from './app/AppUpdate.js';
 import { navigate, ROUTES, usePath } from './app/router.js';
-import { ConnectionStatus } from './components/ConnectionStatus.js';
+import { ConnectionStatus, OfflineBanner } from './components/ConnectionStatus.js';
 import { BottomNav } from './components/ui/BottomNav.js';
 import { AdminPage, isAdminPath } from './features/admin/index.js';
 import { BattleProvider, useBattle } from './features/battle/BattleProvider.js';
@@ -82,6 +82,7 @@ export default function App() {
       ) : (
         <PlayerProvider>
           <BattleProvider>
+            <OfflineBanner />
             <PlayerRoutes />
           </BattleProvider>
         </PlayerProvider>

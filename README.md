@@ -25,6 +25,7 @@ O app web abre em http://localhost:5173 e a API em http://localhost:3000. A rota
       game-engine/         Regras de jogo puras e determinísticas
     docs/
       CONTRACTS.md         Contratos HTTP, modelos, eventos e sincronização
+      SINCRONIZACAO.md     Online/offline: armazenamento local, sincronização, conflitos e falhas
 
 O contrato compartilhado está em docs/CONTRACTS.md e em packages/shared/src/index.ts. Os quatro integrantes devem combinar mudanças nesses contratos antes de depender deles em seus módulos.
 
@@ -37,6 +38,10 @@ A estrutura atende ao requisito central do Pokémon Campus: explorar e registrar
 - packages/game-engine reúne cálculos determinísticos para que uma ação iniciada offline possa ser reproduzida e validada pelo servidor com a mesma semente e versão das regras.
 
 Essa organização descreve o desenho do jogo; as rotas implementadas e as que ainda são especificações estão distinguidas em docs/CONTRACTS.md.
+
+## Online, offline e sincronização
+
+O progresso do jogador é um registro de eventos guardado no IndexedDB e enviado ao Cloud Firestore quando há conexão, com fila de saída, idempotência, backoff, detecção de "sem rede" e de "servidor fora" e uma política de conflitos determinística. Detalhes, política de conflitos e roteiro dos testes da apresentação: [docs/SINCRONIZACAO.md](docs/SINCRONIZACAO.md).
 
 ## Módulo de exploração (mapa, GPS e spawns)
 
@@ -100,7 +105,9 @@ Publicar manualmente (do computador):
 
     npx firebase-tools login
     npm run build
-    npx firebase-tools deploy --only hosting
+    npx firebase-tools deploy --only hosting,firestore
+
+`--only firestore` publica as regras (`firestore.rules`). Antes do primeiro deploy, crie o banco uma vez em Firebase Console → Firestore Database → Criar banco de dados (modo produção, região `southamerica-east1`).
 
 Publicação automática pelo workflow `.github/workflows/ci.yml`:
 
@@ -110,7 +117,7 @@ Publicação automática pelo workflow `.github/workflows/ci.yml`:
 
 Para ativar a automática, rode uma vez `npx firebase-tools init hosting:github`, informe o repositório `Juuhgb/pokemon-campus` e **não** sobrescreva `firebase.json` nem os workflows. Ele cria o secret `FIREBASE_SERVICE_ACCOUNT_POKECAMPUS_UENP` no GitHub. Enquanto o secret não existir, os deploys são pulados sem falhar.
 
-O Firebase Hosting serve apenas o front-end. A API Fastify/PostgreSQL precisa de outra hospedagem (ex.: Cloud Run, Render ou Railway) quando o módulo de sincronização for integrado.
+O servidor remoto do jogo é o próprio Firebase (Authentication + Cloud Firestore, plano gratuito). A API Fastify/PostgreSQL continua no repositório, mas não é usada pela sincronização.
 
 ## Scripts
 

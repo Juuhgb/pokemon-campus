@@ -1,3 +1,4 @@
+import type { FirebaseApp } from 'firebase/app';
 import type { Auth, AuthError } from 'firebase/auth';
 import { firebaseConfig } from './firebaseConfig.js';
 
@@ -8,16 +9,18 @@ export interface GoogleAccount {
   displayName: string | null;
 }
 
+let appPromise: Promise<FirebaseApp> | null = null;
 let authPromise: Promise<Auth> | null = null;
 
 /** Carrega o Firebase só quando precisa (o jogo abre e funciona offline sem ele). */
-async function getFirebaseAuth(): Promise<Auth> {
+export function getFirebaseApp(): Promise<FirebaseApp> {
+  appPromise ??= import('firebase/app').then(({ initializeApp, getApps }) => getApps()[0] ?? initializeApp(firebaseConfig));
+  return appPromise;
+}
+
+export async function getFirebaseAuth(): Promise<Auth> {
   authPromise ??= (async () => {
-    const [{ initializeApp, getApps }, { getAuth, browserLocalPersistence, setPersistence }] = await Promise.all([
-      import('firebase/app'),
-      import('firebase/auth'),
-    ]);
-    const app = getApps()[0] ?? initializeApp(firebaseConfig);
+    const [app, { getAuth, browserLocalPersistence, setPersistence }] = await Promise.all([getFirebaseApp(), import('firebase/auth')]);
     const auth = getAuth(app);
     auth.languageCode = 'pt-BR';
     await setPersistence(auth, browserLocalPersistence);

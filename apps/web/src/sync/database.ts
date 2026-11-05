@@ -1,5 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie';
 import { PendingSyncEventSchema, type PendingSyncEvent } from '@pokemon-campus/shared';
+import type { StoredEvent } from './eventStore.js';
 
 export type OutboxStatus = 'pending' | 'sending' | 'rejected';
 
@@ -19,12 +20,17 @@ export interface LocalSnapshot {
 class CampusDatabase extends Dexie {
   outbox!: EntityTable<OutboxItem, 'idempotencyKey'>;
   snapshots!: EntityTable<LocalSnapshot, 'key'>;
+  /** Eventos do jogador: fila de saída (pending/sending) e o que o servidor já confirmou. */
+  playerEvents!: EntityTable<StoredEvent, 'id'>;
 
   constructor() {
     super('pokemon-campus');
     this.version(1).stores({
       outbox: 'idempotencyKey, playerId, occurredAt',
       snapshots: 'key, updatedAt',
+    });
+    this.version(2).stores({
+      playerEvents: 'id, status, at',
     });
   }
 }

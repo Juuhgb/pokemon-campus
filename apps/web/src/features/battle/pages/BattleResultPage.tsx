@@ -32,7 +32,7 @@ export function BattleResultPage() {
     if (!battle || battle.status === 'active' || !rewards || rewarded.current) return;
     rewarded.current = true;
     dispatch({
-      type: 'settleBattle', battleId: battle.id,
+      type: 'settleBattle', battleId: battle.id, spawnId: battle.spawnId,
       xpByCreature: rewards.xpByCreature, points: rewards.points,
       captured: battle.status === 'captured' ? {
         creatureId: crypto.randomUUID(), speciesId: battle.foe.speciesId,

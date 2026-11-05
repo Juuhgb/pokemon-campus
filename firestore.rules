@@ -1,0 +1,55 @@
+rules_version = '2';
+
+// Servidor do Pokémon Campus. Cada jogador só lê e cria os próprios eventos; eventos são
+// imutáveis (sem update/delete), o que torna o reenvio idempotente: regravar um evento que já
+// existe é recusado e o cliente confere que ele está lá. Horário e GPS vêm do aparelho e não
+// são garantidos pelo servidor (risco aceito).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function validEvent(eventId) {
+      let e = request.resource.data;
+      return e.keys().hasAll(['id', 'deviceId', 'at', 'action', 'recebidoEm'])
+        && e.keys().hasOnly(['id', 'deviceId', 'at', 'action', 'basis', 'recebidoEm'])
+        && e.id == eventId
+        && e.deviceId is string && e.deviceId.size() <= 64
+        && e.at is number
+        && e.action is map
+        && e.action.type in ['onboard', 'updateProfile', 'addToTeam', 'removeFromTeam', 'useBall', 'settleBattle', 'importLegacy']
+        && (!('basis' in e) || e.basis == null || e.basis is string)
+        && e.recebidoEm == request.time;
+    }
+
+    // Lido pelo heartbeat (o documento não precisa existir).
+    match /config/{id} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /jogadores/{uid}/eventos/{eventId} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid) && validEvent(eventId);
+      allow update, delete: if false;
+    }
+
+    // Pontuação atual, derivada dos eventos: o dono sobrescreve, todos os logados leem.
+    match /ranking/{uid} {
+      allow read: if signedIn();
+      allow write: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(['displayName', 'course', 'score', 'captures', 'atualizadoEm'])
+        && request.resource.data.displayName is string && request.resource.data.displayName.size() <= 40
+        && request.resource.data.course is string
+        && request.resource.data.score is int && request.resource.data.score >= 0
+        && request.resource.data.captures is int && request.resource.data.captures >= 0
+        && request.resource.data.atualizadoEm == request.time;
+    }
+  }
+}

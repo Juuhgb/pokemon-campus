@@ -1,22 +1,26 @@
-import { useLiveQuery } from 'dexie-react-hooks';
 import { Link, navigate, ROUTES } from '../../../app/router.js';
 import { BallIcon, BALL_NAME } from '../../../components/ui/BallIcon.js';
 import { TabScreen } from '../../../components/ui/BottomNav.js';
-import { database } from '../../../sync/database.js';
+import { SyncPanel } from '../../../components/SyncPanel.js';
 import { SPECIES } from '../../catalog/species.js';
-import { usePlayer } from '../../player/PlayerProvider.js';
+import { signOutGoogle } from '../../auth/googleAuth.js';
+import { usePlayer, useSync } from '../../player/PlayerProvider.js';
 import { COURSES, countBySpecies, initials, type BallItem } from '../../player/playerState.js';
 import { rankingFor } from '../ranking.js';
 
 export function ProfilePage() {
   const { player, dispatch } = usePlayer();
-  const pendingEvents = useLiveQuery(() => database.outbox.count(), [], 0) ?? 0;
+  const sync = useSync();
   const course = COURSES.find((item) => item.slug === player.course);
   const discovered = countBySpecies(player.creatures).size;
-  const position = rankingFor(player, 'all').find((row) => row.me)?.rank;
+  const position = rankingFor(player, 'all', sync.ranking ? { entries: sync.ranking, myUid: player.googleUid ?? null } : null).find((row) => row.me)?.rank;
 
   const signOut = () => {
-    if (!window.confirm('Sair da conta e apagar o progresso salvo neste aparelho?')) return;
+    const warning = sync.pending > 0
+      ? `Ainda há ${sync.pending} jogada(s) que não chegaram ao servidor e serão perdidas. Sair mesmo assim?`
+      : 'Sair da conta neste aparelho? O progresso sincronizado continua salvo na sua conta Google.';
+    if (!window.confirm(warning)) return;
+    void signOutGoogle().catch(() => {});
     dispatch({ type: 'reset' });
     navigate(ROUTES.welcome, { replace: true });
   };
@@ -71,13 +75,7 @@ export function ProfilePage() {
         ))}
       </section>
 
-      <section aria-labelledby="sync-title" className="mt-3.5 flex flex-col gap-2 rounded-[22px] ink-border bg-amarelo px-4 py-3.5">
-        <h2 id="sync-title" className="m-0 font-display text-[21px] font-semibold">Sincronização</h2>
-        <p className="m-0 text-sm leading-snug font-bold">
-          {pendingEvents === 0 ? 'Nenhuma ação esperando para enviar.' : `${pendingEvents} ${pendingEvents === 1 ? 'ação esperando' : 'ações esperando'} para enviar.`}{' '}
-          O progresso deste protótipo fica salvo neste aparelho.
-        </p>
-      </section>
+      <SyncPanel />
 
       <button type="button" onClick={signOut} className="mt-3 min-h-11 w-full text-[15px] font-extrabold text-perigo underline underline-offset-4">
         Sair da conta

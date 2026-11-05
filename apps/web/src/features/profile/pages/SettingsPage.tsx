@@ -63,7 +63,7 @@ export function SettingsPage() {
           </>
         )}
         {google.error && <p role="alert" className="m-0 rounded-xl ink-border bg-[#ffd9cf] px-3 py-2 text-xs font-extrabold">{google.error}</p>}
-        <p className="m-0 text-xs font-bold text-tinta-suave">Login com Firebase Authentication. O progresso ainda fica neste aparelho até a API de sincronização existir.</p>
+        <p className="m-0 text-xs font-bold text-tinta-suave">Com a conta vinculada, o progresso é salvo no servidor e pode ser recuperado em outro aparelho.</p>
       </section>
 
       <section className="mt-3.5 flex flex-col gap-2 rounded-[22px] ink-border bg-white px-4 py-3.5">
@@ -117,7 +117,7 @@ export function SettingsPage() {
       <div className="mt-5 flex flex-col gap-2">
         {saved && (
           <p role="status" className="m-0 rounded-[14px] ink-border bg-verde px-3.5 py-2.5 text-center text-[13px] font-extrabold">
-            Salvo neste aparelho! Vai para o servidor quando a API de perfil estiver pronta.
+            Salvo! Vai para o servidor agora ou, se estiver offline, quando a conexão voltar.
           </p>
         )}
         <button type="button" onClick={save} disabled={!canSave} className={`${buttonStyles.primary} h-[58px]`}>Salvar alterações</button>

@@ -1,12 +1,24 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { navigate, ROUTES } from '../../../app/router.js';
 import { CreatureBadge } from '../../../components/ui/CreatureBadge.js';
 import { StepDots } from '../../../components/ui/ui.js';
+import type { GoogleAccount } from '../../auth/googleAuth.js';
 import { useGoogleLink } from '../../auth/useGoogleLink.js';
+import { useSync } from '../../player/PlayerProvider.js';
 
 export function WelcomePage() {
-  const goToStarter = useCallback(() => navigate(ROUTES.starter), []);
-  const google = useGoogleLink(goToStarter);
+  const { restore } = useSync();
+  const [restoring, setRestoring] = useState(false);
+  // Conta que já jogou em outro aparelho: baixa o progresso antes de pedir o inicial.
+  // Se a conta já tem progresso, o roteador leva direto para o mapa.
+  const afterLogin = useCallback((account: GoogleAccount) => {
+    setRestoring(true);
+    void restore(account.uid).finally(() => {
+      setRestoring(false);
+      navigate(ROUTES.starter);
+    });
+  }, [restore]);
+  const google = useGoogleLink(afterLogin);
 
   return (
     <main className="mx-auto flex min-h-full w-full max-w-md flex-col bg-creme px-6 pt-6 pb-8 text-tinta">
@@ -31,11 +43,11 @@ export function WelcomePage() {
         <button
           type="button"
           onClick={() => void google.link()}
-          disabled={google.busy}
+          disabled={google.busy || restoring}
           className="flex h-[60px] items-center justify-center gap-3 rounded-[18px] sticker-lg bg-white font-display text-[19px] font-semibold disabled:opacity-60"
         >
           <GoogleMark />
-          {google.busy ? 'Conectando ao Google…' : 'Continuar com Google'}
+          {restoring ? 'Buscando seu progresso…' : google.busy ? 'Conectando ao Google…' : 'Continuar com Google'}
         </button>
         {google.error && (
           <p role="alert" className="m-0 rounded-2xl ink-border bg-[#ffd9cf] px-3.5 py-2.5 text-center text-[13px] font-extrabold">{google.error}</p>
