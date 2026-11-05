@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ranking</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Nunito:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#fff6e5}
+a{color:#1d1b3a}a:hover{color:#ff5a4e}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #fff6e5; font-family: 'Nunito', system-ui, sans-serif; color: #1d1b3a; display: flex; flex-direction: column; gap: 16px; padding: 20px 20px 100px; box-sizing: border-box">
+
+  <header style="display: flex; align-items: center; gap: 12px">
+    <a href="Profile.dc.html" aria-label="Voltar ao perfil" style="width: 46px; height: 46px; flex-shrink: 0; box-sizing: border-box; border-radius: 14px; border: 2.5px solid #1d1b3a; background: #ffffff; box-shadow: 3px 3px 0 #1d1b3a; color: #1d1b3a; display: flex; align-items: center; justify-content: center">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+    </a>
+    <h1 style="margin: 0; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 32px; font-weight: 700; line-height: 1">Ranking</h1>
+  </header>
+
+  <div role="group" aria-label="Escopo do ranking" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+    <sc-for list="{{scopes}}" as="s" hint-placeholder-count="2">
+      <button type="button" aria-pressed="{{s.pressed}}" onClick="{{s.pick}}" style="height: 44px; border-radius: 14px; border: 2.5px solid #1d1b3a; font-family: inherit; font-size: 14px; font-weight: 800; color: #1d1b3a; cursor: pointer; background: {{s.bg}}; box-shadow: {{s.shadow}}">{{s.label}}</button>
+    </sc-for>
+  </div>
+
+  <section aria-label="Pódio" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: end; padding-top: 6px">
+    <sc-for list="{{podium}}" as="p" hint-placeholder-count="3">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 6px">
+        <span aria-hidden="true" style="width: {{p.avatar}}px; height: {{p.avatar}}px; box-sizing: border-box; border-radius: 18px; background: {{p.avatarBg}}; border: 2.5px solid #1d1b3a; box-shadow: 3px 3px 0 #1d1b3a; display: flex; align-items: center; justify-content: center; font-family: 'Fredoka', 'Nunito', sans-serif; font-weight: 700; font-size: 18px">{{p.initials}}</span>
+        <span style="font-size: 14px; font-weight: 800; text-align: center">{{p.name}}</span>
+        <span style="font-size: 12px; font-weight: 800; color: #5b587a">{{p.points}} pts</span>
+        <div style="width: 100%; height: {{p.height}}px; box-sizing: border-box; border-radius: 14px 14px 6px 6px; background: {{p.medal}}; border: 2.5px solid #1d1b3a; display: flex; align-items: flex-start; justify-content: center; padding-top: 6px; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 28px; font-weight: 700">{{p.rank}}º</div>
+      </div>
+    </sc-for>
+  </section>
+
+  <ol aria-label="Classificação" style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px">
+    <sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+      <li style="display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 6px 14px; border-radius: 16px; border: 2.5px solid #1d1b3a; background: {{r.bg}}; box-shadow: {{r.shadow}}">
+        <span style="width: 22px; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 18px; font-weight: 700">{{r.rank}}</span>
+        <span aria-hidden="true" style="width: 36px; height: 36px; box-sizing: border-box; border-radius: 12px; background: #ece9f5; border: 2px solid #1d1b3a; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px">{{r.initials}}</span>
+        <span style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+          <span style="font-weight: 800; font-size: 15px">{{r.name}}</span>
+          <span style="font-size: 12px; font-weight: 700; color: #5b587a">{{r.course}}</span>
+        </span>
+        <span style="font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 18px; font-weight: 700">{{r.points}}</span>
+      </li>
+    </sc-for>
+  </ol>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 0">
+    <dc-import name="Nav" active="profile" hint-size="390px,84px"></dc-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  state = { scope: 'all' };
+
+  renderVals() {
+    const players = [
+      { initials: 'BR', name: 'Bruno Rocha', course: 'Agronomia', points: 2310 },
+      { initials: 'CM', name: 'Carla Melo', course: 'Ciência da Computação', points: 1985 },
+      { initials: 'DS', name: 'Diego Silva', course: 'Medicina Veterinária', points: 1710 },
+      { initials: 'AL', name: 'Ana Lima', course: 'Ciência da Computação', points: 1240, me: true },
+      { initials: 'EF', name: 'Elisa Faria', course: 'Biologia', points: 1105 },
+      { initials: 'GP', name: 'Gabriel Pires', course: 'Ciência da Computação', points: 980 },
+      { initials: 'HN', name: 'Helena Nunes', course: 'Enfermagem', points: 870 },
+      { initials: 'IT', name: 'Igor Teixeira', course: 'Ciência da Computação', points: 640 },
+    ];
+    const scope = this.state.scope;
+    const list = (scope === 'course' ? players.filter((p) => p.course === 'Ciência da Computação') : players)
+      .map((p, index) => ({ ...p, rank: index + 1 }));
+    const fmt = (n) => n.toLocaleString('pt-BR');
+    const medals = ['#ffc23d', '#ece9f5', '#ff8a5c'];
+    const podium = [1, 0, 2]
+      .filter((i) => list[i])
+      .map((i) => ({
+        ...list[i],
+        points: fmt(list[i].points),
+        medal: medals[i],
+        avatarBg: list[i].me ? '#6aa8ff' : '#ffffff',
+        height: i === 0 ? 100 : i === 1 ? 74 : 58,
+        avatar: i === 0 ? 62 : 52,
+        name: list[i].me ? 'Você' : list[i].name.split(' ')[0],
+      }));
+    const rows = list.slice(3, 8).map((p) => ({
+      ...p,
+      name: p.me ? p.name + ' (você)' : p.name,
+      points: fmt(p.points),
+      bg: p.me ? '#6aa8ff' : '#ffffff',
+      shadow: p.me ? '4px 4px 0 #1d1b3a' : 'none',
+    }));
+    const scopes = [
+      { id: 'all', label: 'Geral' },
+      { id: 'course', label: 'Meu curso' },
+    ].map((s) => {
+      const on = s.id === scope;
+      return {
+        ...s,
+        pressed: on ? 'true' : 'false',
+        bg: on ? '#ffc23d' : '#ffffff',
+        shadow: on ? '3px 3px 0 #1d1b3a' : 'none',
+        pick: () => this.setState({ scope: s.id }),
+      };
+    });
+    return { scopes, podium, rows };
+  }
+}
+</script>
+</body>
+</html>

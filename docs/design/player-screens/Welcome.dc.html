@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Boas-vindas e entrada com Google</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Nunito:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#fff6e5}
+a{color:#1d1b3a}a:hover{color:#ff5a4e}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #fff6e5; font-family: 'Nunito', system-ui, sans-serif; color: #1d1b3a; display: flex; flex-direction: column; padding: 24px 24px 30px; box-sizing: border-box">
+
+  <div aria-hidden="true" style="position: relative; height: 340px; margin: 0 -4px">
+    <div style="position: absolute; inset: 20px 10px 30px; border-radius: 36px; background: #6aa8ff; border: 2.5px solid #1d1b3a; box-shadow: 6px 6px 0 #1d1b3a; transform: rotate(-3deg)"></div>
+    <div style="position: absolute; inset: 40px 30px 50px; border-radius: 30px; background: #ffc23d; border: 2.5px solid #1d1b3a; transform: rotate(2deg)"></div>
+    <div style="position: absolute; left: 50px; top: 70px; transform: rotate(-8deg)">
+      <dc-import name="Creature" kind="leaf" color="#7ad88f" size="76" hint-size="76px,76px"></dc-import>
+    </div>
+    <div style="position: absolute; right: 52px; top: 64px; transform: rotate(10deg)">
+      <dc-import name="Creature" kind="drop" color="#6aa8ff" size="68" hint-size="68px,68px"></dc-import>
+    </div>
+    <div style="position: absolute; left: 140px; top: 136px">
+      <dc-import name="Creature" kind="bolt" color="#ffffff" size="96" hint-size="96px,96px"></dc-import>
+    </div>
+    <div style="position: absolute; left: 62px; bottom: 66px; transform: rotate(6deg)">
+      <dc-import name="Creature" kind="flame" color="#ff8a5c" size="64" hint-size="64px,64px"></dc-import>
+    </div>
+    <div style="position: absolute; right: 60px; bottom: 70px; transform: rotate(-6deg)">
+      <dc-import name="Creature" kind="wing" color="#c9b8ff" size="60" hint-size="60px,60px"></dc-import>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 10px; text-align: center; align-items: center">
+    <h1 style="margin: 0; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 46px; font-weight: 700; line-height: 0.95">Pokémon<br>Campus</h1>
+    <p style="margin: 0; max-width: 300px; font-size: 16px; font-weight: 700; line-height: 1.45; color: #5b587a">Caminhe pelo campus, encontre Pokémon e complete seu álbum — mesmo sem internet.</p>
+  </div>
+
+  <div style="margin-top: auto; display: flex; flex-direction: column; gap: 14px">
+    <a href="Starter.dc.html" style="display: flex; align-items: center; justify-content: center; gap: 12px; height: 60px; box-sizing: border-box; border-radius: 18px; background: #ffffff; border: 2.5px solid #1d1b3a; box-shadow: 5px 5px 0 #1d1b3a; text-decoration: none; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 19px; font-weight: 600; color: #1d1b3a">
+      <span aria-hidden="true" style="width: 28px; height: 28px; border-radius: 999px; border: 2.5px solid #1d1b3a; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; box-sizing: border-box">G</span>
+      Continuar com Google
+    </a>
+    <p style="margin: 0; font-size: 13px; font-weight: 600; line-height: 1.5; text-align: center; color: #5b587a">
+      Ao continuar, você concorda com os <a href="#termos" style="font-weight: 800">Termos de uso</a> e a <a href="#privacidade" style="font-weight: 800">Política de privacidade</a>.
+    </p>
+    <div aria-label="Passo 1 de 3" style="display: flex; justify-content: center; gap: 6px">
+      <span style="width: 24px; height: 10px; border-radius: 999px; background: #ff5a4e; border: 2px solid #1d1b3a; box-sizing: border-box"></span>
+      <span style="width: 10px; height: 10px; border-radius: 999px; background: #ffffff; border: 2px solid #1d1b3a; box-sizing: border-box"></span>
+      <span style="width: 10px; height: 10px; border-radius: 999px; background: #ffffff; border: 2px solid #1d1b3a; box-sizing: border-box"></span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

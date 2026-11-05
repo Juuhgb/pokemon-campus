@@ -1,16 +1,271 @@
 @import 'tailwindcss';
 
+/* Guia de estilo "Aventura colorida" (docs/design/README.md). */
+@theme {
+  --font-sans: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Fredoka', 'Nunito', ui-sans-serif, sans-serif;
+
+  --color-creme: #fff6e5;
+  --color-papel: #f7f1e3;
+  --color-tinta: #1d1b3a;
+  --color-tinta-suave: #5b587a;
+  --color-tinta-media: #3a3760;
+  --color-coral: #ff5a4e;
+  --color-amarelo: #ffc23d;
+  --color-azul: #6aa8ff;
+  --color-azul-forte: #3b82f6;
+  --color-ceu: #bfe3ff;
+  --color-verde: #7ad88f;
+  --color-verde-forte: #2fb36b;
+  --color-grama: #9fd477;
+  --color-grama-escura: #7cc35c;
+  --color-lilas: #ece9f5;
+  --color-perigo: #b42318;
+
+  --animate-player-pulse: player-pulse 1.8s ease-out infinite;
+}
+
+/* Contorno de figurinha: borda escura + sombra sólida deslocada. */
+@utility sticker {
+  border: 2.5px solid var(--color-tinta);
+  box-shadow: 4px 4px 0 var(--color-tinta);
+}
+
+@utility sticker-sm {
+  border: 2.5px solid var(--color-tinta);
+  box-shadow: 3px 3px 0 var(--color-tinta);
+}
+
+@utility sticker-lg {
+  border: 2.5px solid var(--color-tinta);
+  box-shadow: 5px 5px 0 var(--color-tinta);
+}
+
+@utility ink-border {
+  border: 2.5px solid var(--color-tinta);
+}
+
 :root {
-  color-scheme: dark;
-  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  color-scheme: light;
+  font-family: var(--font-sans);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  background: #020617;
+  background: var(--color-creme);
+  color: var(--color-tinta);
+}
+
+/*
+ * O app ocupa exatamente a área visível do celular.
+ * - `100vh` no celular é maior que a tela (conta a barra de endereço escondida) e deixava sobra
+ *   ao arrastar; `100dvh` acompanha a barra.
+ * - A página em si não rola nem "estica" (efeito elástico); quem rola é o #root ou cada tela.
+ */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: var(--color-creme);
 }
 
 body {
-  margin: 0;
   min-width: 320px;
-  min-height: 100vh;
 }
 
+/*
+ * Preso à janela inteira (inclusive atrás da barra de gestos do Android com viewport-fit=cover);
+ * em alguns aparelhos `100dvh` termina antes do fim real da tela e sobrava uma faixa embaixo.
+ * As barras usam env(safe-area-inset-*) para o conteúdo não ficar sob os gestos do sistema.
+ */
+#root {
+  position: fixed;
+  inset: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* Mapa de exploração */
+.leaflet-container {
+  background: #dff0c8;
+  font-family: inherit;
+}
+
+.leaflet-control-attribution {
+  border-radius: 8px 0 0 0;
+  font-size: 11px;
+}
+
+.player-marker {
+  position: relative;
+  display: block;
+  width: 34px;
+  height: 34px;
+}
+
+/* Pulso em volta da posição. */
+.player-marker::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 9999px;
+  background: rgb(255 90 78 / 0.35);
+  animation: var(--animate-player-pulse);
+}
+
+/* Seta com ponta: gira para a direção em que o jogador anda. */
+.player-marker__pointer {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  transition: transform 0.25s ease-out;
+  filter: drop-shadow(2px 2px 0 var(--color-tinta));
+}
+
+.player-marker__pointer svg {
+  display: block;
+}
+
+.player-marker__pointer path {
+  fill: var(--color-coral);
+  stroke: var(--color-tinta);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+
+/* Sem direção conhecida: aponta para o norte, mais apagada. */
+.player-marker--no-heading .player-marker__pointer {
+  opacity: 0.75;
+}
+
+.player-marker--simulated .player-marker__pointer path {
+  fill: var(--color-amarelo);
+  stroke-dasharray: 3 2;
+}
+
+.creature-marker {
+  display: block;
+  transition: transform 150ms ease;
+}
+
+.creature-marker--in-range {
+  filter: drop-shadow(0 0 0 transparent);
+  transform: scale(1.08);
+}
+
+.creature-marker--in-range > span {
+  outline: 4px solid rgb(255 194 61 / 0.9);
+}
+
+/* Pokémon com imagem: brilho amarelo seguindo o contorno. */
+.creature-marker--in-range > img {
+  filter: drop-shadow(0 0 3px rgb(255 194 61)) drop-shadow(0 0 3px rgb(255 194 61)) !important;
+}
+
+.creature-marker--selected {
+  transform: scale(1.2);
+}
+
+/* Editor de zonas (admin) */
+.zone-handle {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.6);
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+}
+
+.zone-handle--vertex {
+  background: #fff;
+  border: 3px solid #f97316;
+  border-radius: 4px;
+  cursor: grab;
+}
+
+.zone-handle--midpoint {
+  background: rgb(15 23 42 / 0.85);
+  border: 2px solid #fdba74;
+  border-radius: 9999px;
+  color: #fdba74;
+  font-size: 13px;
+  cursor: copy;
+}
+
+.zone-handle--move {
+  background: #f97316;
+  border: 2px solid #fff;
+  border-radius: 9999px;
+  color: #0f172a;
+  font-size: 20px;
+  cursor: move;
+}
+
+.zone-handle--draft {
+  background: #f97316;
+  border: 2px solid #fff;
+  border-radius: 9999px;
+}
+
+/* Captura: chacoalhadas da bola */
+@keyframes pc-absorb { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(0.05); opacity: 0; } }
+@keyframes pc-appear { 0% { transform: scale(0.2); opacity: 0; } 60% { transform: scale(1.12); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes pc-shake-a { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-22deg); } 45% { transform: rotate(16deg); } 70% { transform: rotate(-8deg); } 85% { transform: rotate(3deg); } }
+@keyframes pc-shake-b { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(22deg); } 45% { transform: rotate(-16deg); } 70% { transform: rotate(8deg); } 85% { transform: rotate(-3deg); } }
+@keyframes pc-click { 0% { transform: scale(1); } 30% { transform: scale(1.08, 0.9); } 60% { transform: scale(0.96, 1.05); } 100% { transform: scale(1); } }
+@keyframes pc-burst { 0% { transform: translateY(0) rotate(0); opacity: 1; } 40% { transform: translateY(-26px) rotate(-25deg); opacity: 1; } 100% { transform: translateY(0) rotate(-90deg); opacity: 0.45; } }
+@keyframes pc-out { 0% { transform: scale(0.1) translateY(60px); opacity: 0; } 70% { transform: scale(1.1) translateY(-6px); opacity: 1; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
+@keyframes pc-spin { to { transform: rotate(360deg); } }
+@keyframes pc-dot { 0% { transform: scale(0.6); } 60% { transform: scale(1.3); } 100% { transform: scale(1); } }
+
+.pc-absorb { animation: pc-absorb 0.6s ease-in both; }
+.pc-appear { animation: pc-appear 0.45s 0.35s ease-out both; }
+.pc-shake-a { animation: pc-shake-a 0.65s ease-in-out both; transform-origin: 50% 92%; }
+.pc-shake-b { animation: pc-shake-b 0.65s ease-in-out both; transform-origin: 50% 92%; }
+.pc-click { animation: pc-click 0.4s ease-out both; }
+.pc-burst { animation: pc-burst 0.6s ease-out both; }
+.pc-out { animation: pc-out 0.5s 0.15s ease-out both; }
+.pc-spin { animation: pc-spin 6s linear infinite; }
+.pc-dot { animation: pc-dot 0.35s ease-out both; }
+
+/* Batalha: ataque, golpe recebido, dano e desmaio */
+@keyframes atk-lunge-player { 0%, 100% { transform: translate(0, 0); } 40% { transform: translate(46px, -34px) scale(1.06); } }
+@keyframes atk-lunge-foe { 0%, 100% { transform: translate(0, 0); } 40% { transform: translate(-46px, 34px) scale(1.06); } }
+@keyframes hit-shake {
+  0%, 100% { transform: translateX(0); opacity: 1; }
+  15% { transform: translateX(-10px); opacity: 0.35; }
+  30% { transform: translateX(9px); opacity: 1; }
+  45% { transform: translateX(-7px); opacity: 0.35; }
+  60% { transform: translateX(5px); opacity: 1; }
+  80% { transform: translateX(-2px); }
+}
+@keyframes dmg-pop { 0% { transform: translateY(6px) scale(0.6); opacity: 0; } 20% { transform: translateY(-6px) scale(1.15); opacity: 1; } 80% { opacity: 1; } 100% { transform: translateY(-34px) scale(1); opacity: 0; } }
+@keyframes faint { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(40px) scale(0.7); opacity: 0; } }
+
+.atk-lunge-player { animation: atk-lunge-player 0.45s ease-in-out both; }
+.atk-lunge-foe { animation: atk-lunge-foe 0.45s ease-in-out both; }
+.hit-shake { animation: hit-shake 0.5s ease-out both; }
+.dmg-pop { animation: dmg-pop 0.9s ease-out both; }
+.faint { animation: faint 0.7s ease-in both; }
+
+@keyframes player-pulse {
+  from { transform: scale(0.6); opacity: 1; }
+  to { transform: scale(1.8); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .player-marker::before,
+  .pc-absorb, .pc-appear, .pc-shake-a, .pc-shake-b, .pc-click, .pc-burst, .pc-out, .pc-spin, .pc-dot,
+  .atk-lunge-player, .atk-lunge-foe, .hit-shake, .dmg-pop {
+    animation: none;
+  }
+}

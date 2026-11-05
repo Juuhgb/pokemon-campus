@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Captura</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Nunito:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#fff6e5}
+a{color:#1d1b3a}a:hover{color:#ff5a4e}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #fff6e5; font-family: 'Nunito', system-ui, sans-serif; color: #1d1b3a">
+
+  <sc-if value="{{choosing}}" hint-placeholder-val="{{ true }}">
+    <div style="display: flex; flex-direction: column; height: 100%">
+      <section aria-label="Arena" style="position: relative; height: 400px; flex-shrink: 0; background: #bfe3ff; border-bottom: 2.5px solid #1d1b3a; overflow: hidden">
+        <svg width="390" height="400" viewBox="0 0 390 400" aria-hidden="true" style="position: absolute; inset: 0">
+          <path d="M-10 250 Q 120 220 220 240 T 400 232 V 410 H -10 Z" fill="#9fd477" stroke="#1d1b3a" stroke-width="2.5"></path>
+          <ellipse cx="195" cy="296" rx="100" ry="22" fill="#7cc35c" stroke="#1d1b3a" stroke-width="2.5"></ellipse>
+          <path d="M260 60 q18-20 40-6 q13-15 31 0 q15 4 9 17 h-84 q-9-6 4-11z" fill="#ffffff" stroke="#1d1b3a" stroke-width="2.5"></path>
+        </svg>
+        <a href="Battle.dc.html" aria-label="Voltar à batalha" style="position: absolute; left: 14px; top: 14px; width: 46px; height: 46px; box-sizing: border-box; border-radius: 14px; background: #ffffff; border: 2.5px solid #1d1b3a; box-shadow: 3px 3px 0 #1d1b3a; display: flex; align-items: center; justify-content: center; color: #1d1b3a">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+        </a>
+        <span style="position: absolute; right: 14px; top: 18px; padding: 5px 12px; border-radius: 999px; background: #ffffff; border: 2.5px solid #1d1b3a; font-size: 12px; font-weight: 800">Faiscão · PV 9/48</span>
+        <div style="position: absolute; left: 50%; top: 150px; transform: translateX(-50%)">
+          <dc-import name="Creature" kind="bolt" color="#ffc23d" size="140" hint-size="140px,140px"></dc-import>
+        </div>
+      </section>
+
+      <section style="flex: 1; min-height: 0; padding: 18px 16px 24px; display: flex; flex-direction: column; gap: 12px">
+        <h1 style="margin: 0; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 28px; font-weight: 700; line-height: 1.1">{{heading}}</h1>
+        <p style="margin: 0; font-size: 15px; font-weight: 700; line-height: 1.45; color: #5b587a">Escolha a bola. Ela precisa chacoalhar 3 vezes para capturar.</p>
+
+        <div role="radiogroup" aria-label="Escolha a bola" style="display: flex; flex-direction: column; gap: 10px">
+          <sc-for list="{{balls}}" as="b" hint-placeholder-count="2">
+            <button type="button" role="radio" aria-checked="{{b.checked}}" onClick="{{b.pick}}" disabled="{{b.empty}}" style="display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 14px; border-radius: 18px; border: 2.5px solid #1d1b3a; font-family: inherit; color: #1d1b3a; cursor: pointer; text-align: left; background: {{b.bg}}; box-shadow: {{b.shadow}}">
+              <dc-import name="Ball" type="{{b.id}}" size="44" hint-size="44px,44px"></dc-import>
+              <span style="flex: 1; display: flex; flex-direction: column">
+                <span style="font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 18px; font-weight: 600">{{b.name}}</span>
+                <span style="font-size: 12px; font-weight: 800; color: #5b587a">Chance {{b.chance}}</span>
+              </span>
+              <span style="font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 20px; font-weight: 700">×{{b.qty}}</span>
+            </button>
+          </sc-for>
+        </div>
+        <button type="button" onClick="{{throwBall}}" disabled="{{cannotThrow}}" style="margin-top: auto; height: 60px; border-radius: 18px; border: 2.5px solid #1d1b3a; background: #ff5a4e; box-shadow: 5px 5px 0 #1d1b3a; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 21px; font-weight: 700; color: #1d1b3a; cursor: pointer">Lançar {{selectedName}}</button>
+      </section>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{throwing}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0">
+      <dc-import name="CaptureThrow" ball="{{selectedId}}" outcome="{{throwOutcome}}" escape-after="{{escapeAfter}}" on-retry="{{retry}}" hint-size="390px,844px"></dc-import>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"outcome":{"editor":"enum","options":["alternate","caught","escaped"],"default":"alternate"},"escapeAfter":{"editor":"enum","options":["0","1","2"],"default":"2"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  state = { ball: 'poke', phase: 'choose', qty: { poke: 12, great: 3 }, attempts: 0 };
+
+  renderVals() {
+    const mode = this.props.outcome ?? 'alternate';
+    const defs = [
+      { id: 'poke', name: 'Pokébola', chance: 'boa' },
+      { id: 'great', name: 'Grande bola', chance: 'ótima' },
+    ];
+    const qty = this.state.qty;
+    const selected = defs.find((b) => b.id === this.state.ball) ?? defs[0];
+    const balls = defs.map((b) => {
+      const on = b.id === selected.id;
+      return {
+        ...b,
+        qty: qty[b.id],
+        empty: qty[b.id] <= 0,
+        checked: on ? 'true' : 'false',
+        bg: on ? '#ffc23d' : '#ffffff',
+        shadow: on ? '4px 4px 0 #1d1b3a' : 'none',
+        pick: () => this.setState({ ball: b.id }),
+      };
+    });
+    const attempts = this.state.attempts;
+    // "alternate": a primeira tentativa escapa e a segunda captura, para mostrar os dois casos.
+    const throwOutcome = mode === 'alternate' ? (attempts <= 1 ? 'escaped' : 'caught') : mode;
+    return {
+      heading: attempts === 0 ? 'Hora de capturar!' : 'Tente de novo!',
+      balls,
+      selectedId: selected.id,
+      selectedName: selected.name,
+      cannotThrow: qty[selected.id] <= 0,
+      choosing: this.state.phase === 'choose',
+      throwing: this.state.phase === 'throwing',
+      throwOutcome,
+      escapeAfter: this.props.escapeAfter ?? '2',
+      throwBall: () => {
+        if (qty[selected.id] <= 0) return;
+        this.setState({
+          phase: 'throwing',
+          attempts: attempts + 1,
+          qty: { ...qty, [selected.id]: qty[selected.id] - 1 },
+        });
+      },
+      retry: () => this.setState({ phase: 'choose' }),
+    };
+  }
+}
+</script>
+</body>
+</html>

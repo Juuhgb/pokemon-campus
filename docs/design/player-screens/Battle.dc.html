@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Batalha</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Nunito:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#fff6e5}
+a{color:#1d1b3a}a:hover{color:#ff5a4e}
+@keyframes lungePa{0%,100%{transform:translate(0,0)}40%{transform:translate(46px,-34px) scale(1.06)}}
+@keyframes lungePb{0%,100%{transform:translate(0,0)}40%{transform:translate(46px,-34px) scale(1.06)}}
+@keyframes lungeFa{0%,100%{transform:translate(0,0)}40%{transform:translate(-46px,34px) scale(1.06)}}
+@keyframes lungeFb{0%,100%{transform:translate(0,0)}40%{transform:translate(-46px,34px) scale(1.06)}}
+@keyframes hita{0%,100%{transform:translateX(0);opacity:1}15%{transform:translateX(-10px);opacity:.35}30%{transform:translateX(9px);opacity:1}45%{transform:translateX(-7px);opacity:.35}60%{transform:translateX(5px);opacity:1}80%{transform:translateX(-2px)}}
+@keyframes hitb{0%,100%{transform:translateX(0);opacity:1}15%{transform:translateX(-10px);opacity:.35}30%{transform:translateX(9px);opacity:1}45%{transform:translateX(-7px);opacity:.35}60%{transform:translateX(5px);opacity:1}80%{transform:translateX(-2px)}}
+@keyframes popa{0%{transform:translateY(6px) scale(.6);opacity:0}20%{transform:translateY(-6px) scale(1.15);opacity:1}80%{opacity:1}100%{transform:translateY(-34px);opacity:0}}
+@keyframes popb{0%{transform:translateY(6px) scale(.6);opacity:0}20%{transform:translateY(-6px) scale(1.15);opacity:1}80%{opacity:1}100%{transform:translateY(-34px);opacity:0}}
+@keyframes faint{0%{transform:translateY(0);opacity:1}100%{transform:translateY(40px) scale(.7);opacity:0}}
+.lunge-p-a{animation:lungePa .45s ease-in-out both}.lunge-p-b{animation:lungePb .45s ease-in-out both}
+.lunge-f-a{animation:lungeFa .45s ease-in-out both}.lunge-f-b{animation:lungeFb .45s ease-in-out both}
+.hit-a{animation:hita .5s ease-out both}.hit-b{animation:hitb .5s ease-out both}
+.pop-a{animation:popa .9s ease-out both}.pop-b{animation:popb .9s ease-out both}
+.faint{animation:faint .7s ease-in both}
+@media (prefers-reduced-motion: reduce){.lunge-p-a,.lunge-p-b,.lunge-f-a,.lunge-f-b,.hit-a,.hit-b,.pop-a,.pop-b{animation:none}}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #fff6e5; font-family: 'Nunito', system-ui, sans-serif; color: #1d1b3a; display: flex; flex-direction: column">
+
+  <section aria-label="Arena" style="position: relative; height: 420px; flex-shrink: 0; background: #bfe3ff; border-bottom: 2.5px solid #1d1b3a; overflow: hidden">
+    <svg width="390" height="420" viewBox="0 0 390 420" aria-hidden="true" style="position: absolute; inset: 0">
+      <path d="M-10 230 Q 120 200 220 222 T 400 214 V 430 H -10 Z" fill="#9fd477" stroke="#1d1b3a" stroke-width="2.5"></path>
+      <ellipse cx="282" cy="196" rx="78" ry="17" fill="#7cc35c" stroke="#1d1b3a" stroke-width="2.5"></ellipse>
+      <ellipse cx="108" cy="356" rx="88" ry="20" fill="#7cc35c" stroke="#1d1b3a" stroke-width="2.5"></ellipse>
+      <path d="M30 70 q18-20 40-6 q13-15 31 0 q15 4 9 17 h-84 q-9-6 4-11z" fill="#ffffff" stroke="#1d1b3a" stroke-width="2.5"></path>
+    </svg>
+
+    <div style="position: absolute; left: 14px; right: 14px; top: 14px; display: flex; justify-content: space-between; gap: 8px">
+      <span style="padding: 5px 12px; border-radius: 999px; background: #1d1b3a; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 15px; font-weight: 600; color: #ffc23d">Turno {{turn}}</span>
+      <span role="status" style="display: flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; border: 2.5px solid #1d1b3a; font-size: 12px; font-weight: 800; background: {{syncBg}}">
+        <span style="width: 8px; height: 8px; border-radius: 999px; border: 2px solid #1d1b3a; background: {{syncDot}}"></span>
+        {{syncText}}
+      </span>
+    </div>
+
+    <div style="position: absolute; left: 14px; top: 62px; width: 180px; padding: 10px 12px; box-sizing: border-box; border-radius: 16px; background: #ffffff; border: 2.5px solid #1d1b3a; box-shadow: 4px 4px 0 #1d1b3a">
+      <div style="display: flex; align-items: baseline; justify-content: space-between">
+        <span style="font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 17px; font-weight: 600">Faiscão</span>
+        <span style="font-size: 12px; font-weight: 800">Nv. 12</span>
+      </div>
+      <div style="margin-top: 6px; height: 12px; border-radius: 999px; background: #ece9f5; border: 2px solid #1d1b3a; overflow: hidden; box-sizing: border-box">
+        <div style="width: {{foePercent}}%; height: 100%; background: {{foeColor}}"></div>
+      </div>
+      <span style="font-size: 11px; font-weight: 800; color: #5b587a">PV {{foeHp}}/48 · selvagem</span>
+    </div>
+
+    <div style="position: absolute; left: 228px; top: 92px">
+      <div class="{{foeOuter}}" style="animation-delay: 0.85s">
+        <div class="{{foeInner}}" style="animation-delay: {{foeInnerDelay}}s">
+          <dc-import name="Creature" kind="bolt" color="#ffc23d" size="108" hint-size="108px,108px"></dc-import>
+        </div>
+      </div>
+      <span aria-hidden="true" class="{{foePop}}" style="position: absolute; left: 30px; top: -24px; opacity: 0; padding: 2px 10px; border-radius: 12px; background: #ffffff; border: 2.5px solid #1d1b3a; box-shadow: 3px 3px 0 #1d1b3a; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 24px; font-weight: 700; color: #ff5a4e; animation-delay: 0.25s">−{{foeDamage}}</span>
+    </div>
+
+    <div style="position: absolute; left: 44px; top: 222px">
+      <div class="{{meOuter}}">
+        <div class="{{meInner}}" style="animation-delay: 1.1s">
+          <dc-import name="Creature" kind="flame" color="#ff8a5c" size="124" hint-size="124px,124px"></dc-import>
+        </div>
+      </div>
+      <span aria-hidden="true" class="{{mePop}}" style="position: absolute; left: 40px; top: -24px; opacity: 0; padding: 2px 10px; border-radius: 12px; background: #ffffff; border: 2.5px solid #1d1b3a; box-shadow: 3px 3px 0 #1d1b3a; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 24px; font-weight: 700; color: #ff5a4e; animation-delay: 1.1s">−{{myDamage}}</span>
+    </div>
+
+    <div style="position: absolute; right: 14px; top: 262px; width: 180px; padding: 10px 12px; box-sizing: border-box; border-radius: 16px; background: #ffffff; border: 2.5px solid #1d1b3a; box-shadow: 4px 4px 0 #1d1b3a">
+      <div style="display: flex; align-items: baseline; justify-content: space-between">
+        <span style="font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 17px; font-weight: 600">Brasinha</span>
+        <span style="font-size: 12px; font-weight: 800">Nv. 15</span>
+      </div>
+      <div style="margin-top: 6px; height: 12px; border-radius: 999px; background: #ece9f5; border: 2px solid #1d1b3a; overflow: hidden; box-sizing: border-box">
+        <div style="width: {{myPercent}}%; height: 100%; background: {{myColor}}"></div>
+      </div>
+      <span style="font-size: 11px; font-weight: 800; color: #5b587a">PV {{myHp}}/51</span>
+    </div>
+  </section>
+
+  <div style="padding: 14px 16px 0">
+    <p role="log" aria-live="polite" style="margin: 0; padding: 12px 14px; border-radius: 16px; background: #ffffff; border: 2.5px solid #1d1b3a; font-size: 15px; font-weight: 700; line-height: 1.4; min-height: 46px">{{log}}</p>
+  </div>
+
+  <section aria-label="Ações" style="flex: 1; min-height: 0; padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 10px">
+    <sc-if value="{{isMain}}" hint-placeholder-val="{{ true }}">
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; flex: 1">
+        <button type="button" onClick="{{openAttack}}" disabled="{{locked}}" style="border-radius: 20px; border: 2.5px solid #1d1b3a; background: #ff5a4e; box-shadow: 4px 4px 0 #1d1b3a; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 22px; font-weight: 700; color: #1d1b3a; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; opacity: {{lockedOpacity}}">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4l6 6-9 9H5v-6z"></path><path d="M12 6l6 6"></path></svg>
+          Atacar
+        </button>
+        <a href="Capture.dc.html" style="border-radius: 20px; border: 2.5px solid #1d1b3a; background: #ffc23d; box-shadow: 4px 4px 0 #1d1b3a; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 22px; font-weight: 700; text-decoration: none; color: #1d1b3a; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="2.5"></circle><path d="M4 12h5.5M14.5 12H20"></path></svg>
+          Capturar
+          <span style="font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 800">Escolher a bola</span>
+        </a>
+        <button type="button" onClick="{{openSwitch}}" disabled="{{locked}}" style="border-radius: 20px; border: 2.5px solid #1d1b3a; background: #6aa8ff; box-shadow: 4px 4px 0 #1d1b3a; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 22px; font-weight: 700; color: #1d1b3a; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; opacity: {{lockedOpacity}}">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h11l-3-3M17 17H6l3 3"></path></svg>
+          Trocar
+        </button>
+        <a href="Main.dc.html" style="border-radius: 20px; border: 2.5px solid #1d1b3a; background: #ffffff; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 22px; font-weight: 700; text-decoration: none; color: #1d1b3a; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 5l7 7-7 7M20 12H6"></path><path d="M4 5v14"></path></svg>
+          Fugir
+        </a>
+      </div>
+      <sc-if value="{{showResult}}" hint-placeholder-val="{{ false }}">
+        <a href="BattleResult.dc.html" style="display: flex; align-items: center; justify-content: center; height: 52px; border-radius: 16px; border: 2.5px solid #1d1b3a; background: #7ad88f; box-shadow: 4px 4px 0 #1d1b3a; text-decoration: none; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 18px; font-weight: 700">Ver resultado</a>
+      </sc-if>
+      <sc-if value="{{showTip}}" hint-placeholder-val="{{ true }}">
+        <p style="margin: 0; text-align: center; font-size: 12px; font-weight: 700; color: #5b587a">Dica: enfraqueça sem derrotar. Derrotar dá XP; capturar exige a bola.</p>
+      </sc-if>
+    </sc-if>
+
+    <sc-if value="{{isAttack}}" hint-placeholder-val="{{ false }}">
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+        <sc-for list="{{moves}}" as="m" hint-placeholder-count="4">
+          <button type="button" onClick="{{m.use}}" style="min-height: 76px; padding: 10px 12px; border-radius: 18px; border: 2.5px solid #1d1b3a; background: #ffffff; box-shadow: 3px 3px 0 #1d1b3a; font-family: inherit; color: #1d1b3a; cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; text-align: left">
+            <span style="font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 18px; font-weight: 600">{{m.name}}</span>
+            <span style="display: flex; gap: 6px; align-items: center">
+              <span style="padding: 1px 8px; border-radius: 999px; border: 2px solid #1d1b3a; font-size: 11px; font-weight: 800; background: {{m.typeBg}}">{{m.type}}</span>
+              <span style="font-size: 12px; font-weight: 800; color: #5b587a">Poder {{m.power}}</span>
+            </span>
+          </button>
+        </sc-for>
+      </div>
+      <button type="button" onClick="{{backToMain}}" style="min-height: 44px; border: 0; background: transparent; font-family: inherit; font-size: 15px; font-weight: 800; color: #1d1b3a; text-decoration: underline; text-underline-offset: 3px; cursor: pointer">Voltar</button>
+    </sc-if>
+
+    <sc-if value="{{isSwitch}}" hint-placeholder-val="{{ false }}">
+      <sc-for list="{{team}}" as="t" hint-placeholder-count="3">
+        <button type="button" onClick="{{t.choose}}" disabled="{{t.active}}" style="display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 6px 12px; border-radius: 18px; border: 2.5px solid #1d1b3a; background: {{t.bg}}; font-family: inherit; color: #1d1b3a; cursor: pointer; text-align: left">
+          <dc-import name="Creature" kind="{{t.kind}}" color="{{t.color}}" size="40" hint-size="40px,40px"></dc-import>
+          <span style="flex: 1; font-weight: 800; font-size: 15px">{{t.name}} <span style="color: #5b587a">Nv. {{t.level}}</span></span>
+          <span style="font-size: 12px; font-weight: 800; color: #5b587a">{{t.status}}</span>
+        </button>
+      </sc-for>
+      <button type="button" onClick="{{backToMain}}" style="min-height: 44px; border: 0; background: transparent; font-family: inherit; font-size: 15px; font-weight: 800; color: #1d1b3a; text-decoration: underline; text-underline-offset: 3px; cursor: pointer">Voltar</button>
+    </sc-if>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"offline":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  // anim: 0 = nenhuma; cada turno troca entre as variantes "a" e "b" para reiniciar as animações CSS.
+  state = { mode: 'main', foeHp: 30, myHp: 43, turn: 3, log: 'O que Brasinha vai fazer?', anim: 0, foeDamage: 0, myDamage: 0, busy: false };
+
+  componentWillUnmount() {
+    if (this.timer) clearTimeout(this.timer);
+  }
+
+  renderVals() {
+    const s = this.state;
+    const offline = this.props.offline ?? false;
+    const fainted = s.foeHp <= 0;
+    const percent = Math.round((s.foeHp / 48) * 100);
+    const myPercent = Math.round((s.myHp / 51) * 100);
+    const color = (p) => (p > 50 ? '#2fb36b' : p > 25 ? '#ffc23d' : '#ff5a4e');
+    const typeBg = { Fogo: '#ff8a5c', Normal: '#ece9f5' };
+    const counters = [5, 7, 4, 6];
+
+    const moves = [
+      { name: 'Brasa', type: 'Fogo', power: 40, damage: 9 },
+      { name: 'Labareda', type: 'Fogo', power: 55, damage: 12 },
+      { name: 'Investida', type: 'Normal', power: 50, damage: 11 },
+      { name: 'Arranhão', type: 'Normal', power: 35, damage: 7 },
+    ].map((m) => ({
+      ...m,
+      typeBg: typeBg[m.type],
+      use: () => {
+        if (s.busy) return;
+        const foeHp = Math.max(0, s.foeHp - m.damage);
+        const foeDown = foeHp === 0;
+        const myDamage = foeDown ? 0 : counters[s.turn % counters.length];
+        const myHp = Math.max(1, s.myHp - myDamage);
+        const log = 'Brasinha usou ' + m.name + '! Faiscão perdeu ' + m.damage + ' PV.'
+          + (foeDown ? ' Faiscão desmaiou!' : ' Faiscão usou Choque! Brasinha perdeu ' + myDamage + ' PV.');
+        this.setState({ foeHp, myHp, foeDamage: m.damage, myDamage, turn: s.turn + 1, mode: 'main', log, anim: s.anim + 1, busy: true });
+        if (this.timer) clearTimeout(this.timer);
+        this.timer = setTimeout(() => this.setState({ busy: false }), foeDown ? 1500 : 1700);
+      },
+    }));
+
+    const team = [
+      { name: 'Brasinha', kind: 'flame', color: '#ff8a5c', level: 15, status: 'Em campo', active: true },
+      { name: 'Faiscão', kind: 'bolt', color: '#ffc23d', level: 12, status: 'PV 42/48', active: false },
+      { name: 'Brotinho', kind: 'leaf', color: '#7ad88f', level: 6, status: 'PV 18/24', active: false },
+    ].map((t) => ({
+      ...t,
+      bg: t.active ? '#ece9f5' : '#ffffff',
+      choose: () => this.setState({ mode: 'main', turn: s.turn + 1, log: 'Volte, Brasinha! Vai, ' + t.name + '!' }),
+    }));
+
+    const v = s.anim === 0 ? '' : s.anim % 2 === 1 ? 'a' : 'b';
+    const countered = s.anim > 0 && s.myDamage > 0;
+    return {
+      turn: s.turn,
+      log: s.log,
+      foeHp: s.foeHp,
+      foePercent: percent,
+      foeColor: color(percent),
+      myHp: s.myHp,
+      myPercent,
+      myColor: color(myPercent),
+      foeDamage: s.foeDamage,
+      myDamage: s.myDamage,
+      meOuter: v ? 'lunge-p-' + v : '',
+      foeInner: fainted ? 'faint' : v ? 'hit-' + v : '',
+      foeInnerDelay: fainted ? 0.7 : 0.25,
+      foeOuter: countered ? 'lunge-f-' + v : '',
+      meInner: countered ? 'hit-' + v : '',
+      foePop: v ? 'pop-' + v : '',
+      mePop: countered ? 'pop-' + v : '',
+      locked: s.busy || fainted,
+      lockedOpacity: s.busy || fainted ? 0.6 : 1,
+      showResult: fainted && !s.busy,
+      showTip: !fainted,
+      isMain: s.mode === 'main',
+      isAttack: s.mode === 'attack',
+      isSwitch: s.mode === 'switch',
+      openAttack: () => this.setState({ mode: 'attack', log: 'Escolha um golpe.' }),
+      openSwitch: () => this.setState({ mode: 'switch', log: 'Quem entra na batalha?' }),
+      backToMain: () => this.setState({ mode: 'main', log: 'O que Brasinha vai fazer?' }),
+      moves,
+      team,
+      syncBg: offline ? '#ffc23d' : '#ffffff',
+      syncDot: offline ? '#ff5a4e' : '#2fb36b',
+      syncText: offline ? 'Offline · salvo no aparelho' : 'Online',
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -38,6 +38,80 @@ A estrutura atende ao requisito central do Pokémon Campus: explorar e registrar
 
 Essa organização descreve o desenho do jogo; as rotas implementadas e as que ainda são especificações estão distinguidas em docs/CONTRACTS.md.
 
+## Módulo de exploração (mapa, GPS e spawns)
+
+Código em `apps/web/src/features/exploration/`; a API pública fica em `index.ts`.
+
+- Mapa com React Leaflet e tiles do OpenStreetMap (atribuição exibida no canto do mapa), centralizado no Campus Luiz Meneghel da UENP.
+- **As cinco zonas dos cursos são polígonos de demonstração** (`data/campusZones.ts`, `isDemo: true`). Não representam limites oficiais; substitua as coordenadas por dados verificados ou carregue-as de `GET /api/v1/zones`.
+- GPS real com `watchPosition` (`services/location.ts`); distâncias com Haversine e detecção de zona feitas no próprio dispositivo, sem rede.
+- Spawns simulados em `data/mockSpawns.ts`, acessados pela interface `SpawnRepository`. O repositório local-first guarda os últimos spawns no IndexedDB para uso offline.
+- O botão "Batalhar / Capturar" só é habilitado a até 30 m de um spawn ativo e apenas emite um `EncounterStartRequest`; a validação definitiva é do backend.
+- Se os tiles não carregarem, a tela troca para um radar que funciona só com coordenadas.
+- **GPS simulado (apenas em `npm run dev`)**: toque em "GPS simulado" e depois no mapa. O código é removido do build de produção e a posição do cliente nunca serve como autorização.
+
+### Telas do jogador
+
+Seguem o design em `docs/design/` (estilo "Aventura colorida": Fredoka + Nunito, creme, contorno escuro e sombra sólida).
+
+| Rota | Tela |
+| --- | --- |
+| `/boas-vindas`, `/inicial`, `/localizacao` | Onboarding: entrar com Google (simulado), escolher o inicial, permitir GPS |
+| `/` | Mapa com as zonas, Pokémon por perto (cartas com distância e direção) e encontro |
+| `/batalha`, `/captura`, `/resultado` | Batalha (atacar, capturar, trocar, fugir), captura com 3 chacoalhadas e recompensas |
+| `/colecao`, `/equipe` | Álbum por raridade e equipe de até 3 |
+| `/perfil`, `/ranking`, `/configuracoes` | Pontuação, mochila, ranking geral/por curso, nome, curso e conta Google |
+
+O que ainda é protótipo local:
+
+- **Login com Google** é simulado; o real vem do módulo de autenticação.
+- **Perfil, coleção, equipe, mochila e pontos** ficam no `localStorage` deste navegador (`features/player/`) até existirem as rotas da API. "Sair da conta" apaga esse progresso.
+- **Batalha e captura** rodam no cliente com as regras do `game-engine` (`calculateDamage`, `captureChance`, `deterministicRollV1`), mas não enviam eventos de sincronização: o resultado oficial continua sendo do servidor quando o módulo de batalha/sync for integrado.
+- **Ranking** usa jogadores de exemplo além do próprio jogador.
+
+### Painel de admin (`/admin`)
+
+Abra `http://localhost:5173/admin` (ou `https://<IP>:5173/admin` com `npm run dev:phone`). O código fica em `apps/web/src/features/admin/`. A tela do jogo não mostra ferramentas de edição.
+
+- **+ Nova zona**: toque no mapa marcando os cantos na ordem do contorno (qualquer formato, mínimo 3 pontos), dê um nome e salve.
+- Selecione uma zona (na lista ou no mapa) para editar: arraste os quadrados para mover cantos, toque nos **+** para criar cantos, toque duas vezes (ou segure) num canto para removê-lo e arraste **✥** para mover a zona inteira. Nome e cor também são editáveis.
+- "Mostrar Pokémon gerados" exibe uma prévia dos spawns simulados, que nascem dentro de cada zona e acompanham as mudanças de formato.
+- As edições são salvas automaticamente no IndexedDB deste navegador e o jogo do mesmo dispositivo passa a usá-las. Use **Exportar JSON** para compartilhar ou levar as zonas para o código/API, **Importar JSON** em outro dispositivo e **Restaurar padrão** para descartar.
+
+O painel abre em desenvolvimento. Num build publicado, só com `VITE_ENABLE_ADMIN=true`. Ainda não há login de administrador nem gravação no servidor: isso depende dos módulos de autenticação e da API (ex.: `PUT /api/v1/zones`, que a API deve proteger).
+
+### Jogar no celular
+
+O GPS do navegador só funciona em HTTPS (ou em `localhost`). Com o celular na mesma rede Wi-Fi do computador:
+
+    npm run dev:phone
+
+Abra no celular o endereço `https://<IP-do-computador>:5173` mostrado em "Network". O certificado é autoassinado: aceite o aviso ("Avançado → Continuar") e permita a localização. Se o celular não conectar, libere a porta 5173 no firewall do Windows para redes privadas. Também é possível usar o link de preview/staging do Firebase Hosting, que já é HTTPS.
+
+### Área de spawn pessoal (ex.: sua casa)
+
+Para jogar fora do campus, crie `apps/web/.env.local` a partir de `apps/web/.env.example` com a latitude e a longitude do local. O jogo cria uma zona circular com três Pokémon simulados (um perto do centro, dentro do raio de captura). O arquivo é ignorado pelo git, então as coordenadas não vão para o repositório. Não use essas variáveis em builds públicos: o valor fica embutido no JavaScript publicado.
+
+## Hospedagem
+
+O app web (PWA estático em `apps/web/dist`) é publicado no Firebase Hosting, projeto **`pokecampus-uenp`**: **https://pokecampus-uenp.web.app**.
+
+Publicar manualmente (do computador):
+
+    npx firebase-tools login
+    npm run build
+    npx firebase-tools deploy --only hosting
+
+Publicação automática pelo workflow `.github/workflows/ci.yml`:
+
+- todo PR e push na main: lint, typecheck, testes e build;
+- PR → link de preview temporário (7 dias);
+- push/merge na main → publica em `https://pokecampus-uenp.web.app`.
+
+Para ativar a automática, rode uma vez `npx firebase-tools init hosting:github`, informe o repositório `Juuhgb/pokemon-campus` e **não** sobrescreva `firebase.json` nem os workflows. Ele cria o secret `FIREBASE_SERVICE_ACCOUNT_POKECAMPUS_UENP` no GitHub. Enquanto o secret não existir, os deploys são pulados sem falhar.
+
+O Firebase Hosting serve apenas o front-end. A API Fastify/PostgreSQL precisa de outra hospedagem (ex.: Cloud Run, Render ou Railway) quando o módulo de sincronização for integrado.
+
 ## Scripts
 
 - npm run dev inicia web e API juntos.
