@@ -1,5 +1,5 @@
 import type { Auth, AuthError } from 'firebase/auth';
-import { authDomainFor, firebaseConfig } from './firebaseConfig.js';
+import { firebaseConfig } from './firebaseConfig.js';
 
 /** Conta Google vinculada ao jogador. */
 export interface GoogleAccount {
@@ -17,7 +17,7 @@ async function getFirebaseAuth(): Promise<Auth> {
       import('firebase/app'),
       import('firebase/auth'),
     ]);
-    const app = getApps()[0] ?? initializeApp({ ...firebaseConfig, authDomain: authDomainFor(window.location.hostname) });
+    const app = getApps()[0] ?? initializeApp(firebaseConfig);
     const auth = getAuth(app);
     auth.languageCode = 'pt-BR';
     await setPersistence(auth, browserLocalPersistence);
@@ -53,15 +53,6 @@ export function googleAuthErrorMessage(error: unknown): string | null {
 
 const NEEDS_REDIRECT = new Set(['auth/popup-blocked', 'auth/operation-not-supported-in-this-environment']);
 
-function preferGoogleRedirect(): boolean {
-  const userAgent = navigator.userAgent;
-  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent)
-    || (/Macintosh/i.test(userAgent) && navigator.maxTouchPoints > 1);
-  const isInstalled = window.matchMedia('(display-mode: standalone)').matches
-    || (navigator as Navigator & { standalone?: boolean }).standalone === true;
-  return isMobile || isInstalled;
-}
-
 function markGoogleRedirectPending(): void {
   try {
     window.sessionStorage.setItem(REDIRECT_FLAG, '1');
@@ -71,19 +62,16 @@ function markGoogleRedirectPending(): void {
 }
 
 /**
- * No celular/PWA, usa redirecionamento na mesma aba; no computador, tenta popup e segue para
- * redirecionamento se o navegador bloquear. O retorno é concluído por `completeGoogleRedirect`.
+ * Abre a janela do Google (popup) usando o domínio fixo de login do Firebase
+ * (pokecampus-uenp.firebaseapp.com), que não é controlado pelo service worker do jogo.
+ * Só usa redirecionamento se o navegador bloquear o popup; o retorno é concluído por
+ * `completeGoogleRedirect`.
  */
 export async function signInWithGoogle(): Promise<GoogleAccount | null> {
   const auth = await getFirebaseAuth();
   const { GoogleAuthProvider, signInWithPopup, signInWithRedirect } = await import('firebase/auth');
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
-  if (preferGoogleRedirect()) {
-    markGoogleRedirectPending();
-    await signInWithRedirect(auth, provider);
-    return null;
-  }
   try {
     const result = await signInWithPopup(auth, provider);
     return toAccount(result.user);
@@ -96,6 +84,7 @@ export async function signInWithGoogle(): Promise<GoogleAccount | null> {
     throw error;
   }
 }
+
 const REDIRECT_FLAG = 'pokemon-campus:google-redirect';
 
 /** Há um login por redirecionamento esperando resultado? (evita carregar o Firebase sem necessidade) */

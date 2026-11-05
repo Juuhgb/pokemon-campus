@@ -13,10 +13,3 @@ export const firebaseConfig = {
   storageBucket: 'pokecampus-uenp.firebasestorage.app',
 };
 
-/**
- * No site publicado (web.app / firebaseapp.com), o login usa o próprio domínio da página.
- * Isso evita bloqueios de cookies de terceiros no fluxo por redirecionamento.
- */
-export function authDomainFor(hostname: string, fallback: string = firebaseConfig.authDomain): string {
-  return hostname.endsWith('.web.app') || hostname.endsWith('.firebaseapp.com') ? hostname : fallback;
-}

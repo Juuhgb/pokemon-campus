@@ -1,13 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { INITIAL_PLAYER, parseStoredPlayer, playerReducer } from '../player/playerState.js';
-import { authDomainFor } from './firebaseConfig.js';
+import { firebaseConfig } from './firebaseConfig.js';
 import { googleAuthErrorMessage } from './googleAuth.js';
 
-describe('authDomainFor', () => {
-  it('usa o próprio domínio no site publicado e o padrão fora dele', () => {
-    expect(authDomainFor('pokecampus-uenp.web.app')).toBe('pokecampus-uenp.web.app');
-    expect(authDomainFor('pokecampus-uenp.firebaseapp.com')).toBe('pokecampus-uenp.firebaseapp.com');
-    expect(authDomainFor('localhost', 'x.firebaseapp.com')).toBe('x.firebaseapp.com');
+describe('firebaseConfig', () => {
+  it('login sempre pelo domínio fixo do Firebase, fora do alcance do service worker do jogo', () => {
+    expect(firebaseConfig.authDomain).toMatch(/\.firebaseapp\.com$/);
   });
 });
 
