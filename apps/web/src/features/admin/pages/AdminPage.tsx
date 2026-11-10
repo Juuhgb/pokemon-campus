@@ -4,20 +4,22 @@ import { createMockSpawns } from '../../exploration/data/mockSpawns.js';
 import { useDebouncedValue } from '../../exploration/hooks/useDebouncedValue.js';
 import { useGeolocation } from '../../exploration/hooks/useGeolocation.js';
 import { useNow } from '../../exploration/hooks/useNow.js';
-import { localAdminSpawnStore } from '../../exploration/services/adminSpawns.js';
-import type { ZoneRepository } from '../../exploration/services/zoneRepository.js';
-import { localZoneRepository } from '../../exploration/services/zoneStore.js';
+import type { AdminSpawnStore } from '../../exploration/services/adminSpawns.js';
+import type { EditableZoneRepository, ZoneRepository } from '../../exploration/services/zoneRepository.js';
 import { isSpawnActive } from '../../exploration/utils/encounter.js';
 import { ADMIN_AVAILABLE } from '../access.js';
+import { AdminAccount } from '../components/AdminAccount.js';
 import { AdminSpawnPanel, DEFAULT_SPAWN_FORM, type SpawnForm } from '../components/AdminSpawnPanel.js';
 import { ZoneEditorLayer } from '../components/ZoneEditorLayer.js';
 import { ZoneEditorPanel } from '../components/ZoneEditorPanel.js';
 import { useAdminSpawns } from '../hooks/useAdminSpawns.js';
 import { useEditableZones } from '../hooks/useEditableZones.js';
 import { useZoneEditor } from '../hooks/useZoneEditor.js';
+import { adminPublishTracker, adminSpawnStore, adminZoneRepository } from '../services/adminWorld.js';
 
 interface AdminPageProps {
   zoneRepository?: ZoneRepository;
+  spawnStore?: AdminSpawnStore;
   /** Conteúdo extra no cabeçalho (ex.: indicador de conexão). */
   headerAction?: ReactNode;
 }
@@ -37,12 +39,12 @@ function AdminUnavailable() {
   );
 }
 
-export function AdminPage({ zoneRepository = localZoneRepository, headerAction }: AdminPageProps) {
+export function AdminPage({ zoneRepository = adminZoneRepository, spawnStore = adminSpawnStore, headerAction }: AdminPageProps) {
   if (!ADMIN_AVAILABLE) return <AdminUnavailable />;
-  return <AdminZonesScreen zoneRepository={zoneRepository} headerAction={headerAction} />;
+  return <AdminZonesScreen zoneRepository={zoneRepository} spawnStore={spawnStore} headerAction={headerAction} />;
 }
 
-function AdminZonesScreen({ zoneRepository, headerAction }: Required<Pick<AdminPageProps, 'zoneRepository'>> & Pick<AdminPageProps, 'headerAction'>) {
+function AdminZonesScreen({ zoneRepository, spawnStore, headerAction }: Required<Pick<AdminPageProps, 'zoneRepository' | 'spawnStore'>> & Pick<AdminPageProps, 'headerAction'>) {
   const editableZones = useEditableZones(zoneRepository);
   const { zones } = editableZones;
   const editor = useZoneEditor(editableZones);
@@ -50,7 +52,7 @@ function AdminZonesScreen({ zoneRepository, headerAction }: Required<Pick<AdminP
   const [tilesUnavailable, setTilesUnavailable] = useState(false);
   const [tab, setTab] = useState<'zones' | 'pokemon'>('zones');
   const geo = useGeolocation();
-  const adminSpawns = useAdminSpawns(localAdminSpawnStore);
+  const adminSpawns = useAdminSpawns(spawnStore);
   const [spawnForm, setSpawnForm] = useState<SpawnForm>(DEFAULT_SPAWN_FORM);
   const [pickingSpawn, setPickingSpawn] = useState(false);
 
@@ -67,6 +69,12 @@ function AdminZonesScreen({ zoneRepository, headerAction }: Required<Pick<AdminP
     void adminSpawns.add({ ...spawnForm, point });
     setPickingSpawn(false);
   }, [adminSpawns, spawnForm]);
+
+  // Publica de novo a versão atual (depois de um erro: sem internet, sem permissão…).
+  const republish = useCallback(() => {
+    if ('saveZones' in zoneRepository) void (zoneRepository as EditableZoneRepository).saveZones(zones);
+    void spawnStore.save(adminSpawns.spawns);
+  }, [zoneRepository, spawnStore, zones, adminSpawns.spawns]);
 
   const drawing = editor.state.mode === 'draw';
   const picking = tab === 'pokemon' && pickingSpawn;
@@ -130,7 +138,8 @@ function AdminZonesScreen({ zoneRepository, headerAction }: Required<Pick<AdminP
         </section>
 
         <aside className="max-h-[45dvh] overflow-y-auto border-t border-slate-800 bg-slate-950 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:max-h-none md:w-96 md:border-l md:border-t-0">
-          <div role="tablist" aria-label="Seções do admin" className="mb-4 grid grid-cols-2 gap-1 rounded-full bg-slate-900 p-1">
+          <AdminAccount tracker={adminPublishTracker} onRepublish={republish} />
+          <div role="tablist" aria-label="Seções do admin" className="my-4 grid grid-cols-2 gap-1 rounded-full bg-slate-900 p-1">
             {([['zones', 'Zonas'], ['pokemon', 'Pokémon']] as const).map(([id, label]) => (
               <button
                 key={id}
@@ -151,7 +160,7 @@ function AdminZonesScreen({ zoneRepository, headerAction }: Required<Pick<AdminP
             <>
               <ZoneEditorPanel state={editor.state} zones={zones} actions={editor.actions} />
               <p className="mt-4 border-t border-slate-800 pt-3 text-xs leading-5 text-slate-500">
-                As zonas são salvas neste navegador e aparecem no jogo deste dispositivo. Para todos os jogadores, exporte o JSON e publique as zonas pela API.
+                Cada mudança é publicada no servidor e aplicada sozinha no jogo de todos os jogadores (e fica salva neste aparelho, para editar offline). Os Pokémon das zonas são gerados do mesmo jeito em todos os aparelhos.
               </p>
             </>
           ) : (

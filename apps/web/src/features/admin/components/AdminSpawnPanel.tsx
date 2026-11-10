@@ -144,7 +144,7 @@ export function AdminSpawnPanel({ admin, geo, now, picking, onTogglePicking, for
       </ul>
       {expired > 0 && <p className="m-0 text-xs text-slate-500">{expired} já expirado(s) — “Remover todos” limpa a lista.</p>}
       <p className="m-0 text-xs leading-5 text-slate-500">
-        Os Pokémon colocados aparecem no jogo deste aparelho (pode levar até 1 minuto). Para todos os jogadores verem, isso precisa ir para a API.
+        Os Pokémon colocados são publicados e aparecem no jogo de todos os jogadores (na hora, para quem está online).
       </p>
     </section>
   );

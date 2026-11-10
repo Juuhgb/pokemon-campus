@@ -15,7 +15,9 @@ import { combineSpawnRepositories, createAdminSpawnRepository, localAdminSpawnSt
 import { createIndexedDbSpawnCache } from '../services/spawnCache.js';
 import { createLocalFirstSpawnRepository, createMockSpawnRepository, type SpawnRepository } from '../services/spawnRepository.js';
 import type { ZoneRepository } from '../services/zoneRepository.js';
-import { localZoneRepository } from '../services/zoneStore.js';
+import { gameZoneRepository } from '../services/zoneStore.js';
+import { indexedDbWorldCache, createWorldSpawnStore } from '../services/world.js';
+import { useWorldVersion } from '../hooks/useWorldVersion.js';
 import type { EncounterStartHandler, EncounterStartRequest, ExplorationSpawn, GeoPoint } from '../types.js';
 import { ENCOUNTER_RADIUS_METERS, evaluateEncounter, nearbySpawns, VISIBILITY_RADIUS_METERS } from '../utils/encounter.js';
 import { findZoneAt } from '../utils/geofence.js';
@@ -45,7 +47,7 @@ const NO_HIDDEN: ReadonlySet<string> = new Set();
 export function ExplorationPage({
   onStartEncounter,
   spawnRepository,
-  zoneRepository = localZoneRepository,
+  zoneRepository,
   locationProvider,
   headerAction,
   footer,
@@ -53,17 +55,22 @@ export function ExplorationPage({
 }: ExplorationPageProps) {
   const now = useNow();
   const geo = useGeolocation(locationProvider);
-  const zones = useZones(zoneRepository);
+  // Zonas e Pokémon publicados pelo admin: a versão nova é aplicada assim que chega.
+  const worldVersion = useWorldVersion(!zoneRepository);
+  const zones = useZones(zoneRepository ?? gameZoneRepository, worldVersion);
   const settledZones = useDebouncedValue(zones, 400);
   const effectiveSpawnRepository = useMemo(
-    // Gerados nas zonas + colocados à mão pelo admin neste aparelho.
+    // Gerados nas zonas + colocados à mão pelo admin (publicados e deste aparelho).
     () => spawnRepository ?? createLocalFirstSpawnRepository(
-      combineSpawnRepositories(createMockSpawnRepository((at) => createMockSpawns(at, settledZones)), createAdminSpawnRepository(localAdminSpawnStore)),
+      combineSpawnRepositories(
+        createMockSpawnRepository((at) => createMockSpawns(at, settledZones)),
+        createAdminSpawnRepository(createWorldSpawnStore(indexedDbWorldCache, localAdminSpawnStore)),
+      ),
       spawnCache,
     ),
     [spawnRepository, settledZones],
   );
-  const { spawns: allSpawns, error: spawnsError } = useSpawns(effectiveSpawnRepository);
+  const { spawns: allSpawns, error: spawnsError } = useSpawns(effectiveSpawnRepository, undefined, worldVersion);
   const spawns = useMemo(() => allSpawns.filter((spawn) => !hiddenSpawnIds.has(spawn.spawnId)), [allSpawns, hiddenSpawnIds]);
 
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);

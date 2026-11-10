@@ -15,6 +15,11 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == uid;
     }
 
+    // Admin = existe o documento admins/{uid}, criado à mão no Console do Firebase.
+    function isAdmin() {
+      return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
     function validEvent(eventId) {
       let e = request.resource.data;
       return e.keys().hasAll(['id', 'deviceId', 'at', 'action', 'recebidoEm'])
@@ -32,6 +37,31 @@ service cloud.firestore {
     match /config/{id} {
       allow read: if signedIn();
       allow write: if false;
+    }
+
+    match /admins/{uid} {
+      allow get: if isOwner(uid);
+      allow list, write: if false;
+    }
+
+    // Mundo publicado pelo admin: zonas de spawn e Pokémon colocados.
+    // Leitura pública (o jogo aplica mesmo antes do login); escrita só de admin.
+    match /mundo/zonas {
+      allow read: if true;
+      allow write: if isAdmin()
+        && request.resource.data.keys().hasOnly(['version', 'zones', 'atualizadoEm', 'atualizadoPor'])
+        && request.resource.data.zones is list && request.resource.data.zones.size() <= 100
+        && request.resource.data.atualizadoPor == request.auth.uid
+        && request.resource.data.atualizadoEm == request.time;
+    }
+
+    match /mundo/pokemon {
+      allow read: if true;
+      allow write: if isAdmin()
+        && request.resource.data.keys().hasOnly(['spawns', 'atualizadoEm', 'atualizadoPor'])
+        && request.resource.data.spawns is list && request.resource.data.spawns.size() <= 500
+        && request.resource.data.atualizadoPor == request.auth.uid
+        && request.resource.data.atualizadoEm == request.time;
     }
 
     match /jogadores/{uid}/eventos/{eventId} {

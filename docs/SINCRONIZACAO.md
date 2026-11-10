@@ -55,6 +55,8 @@ No servidor:
     jogadores/{uid}/eventos/{id}   eventos (só criação; as regras proíbem alterar ou apagar)
     ranking/{uid}                  pontuação atual (valor derivado, sobrescrito pelo dono)
     config/jogo                    documento lido pelo heartbeat
+    mundo/zonas, mundo/pokemon     zonas de spawn e Pokémon publicados pelo admin (leitura pública)
+    admins/{uid}                   quem pode publicar o mundo
 
 Os eventos cobrem o que o enunciado pede:
 

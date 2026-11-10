@@ -19,7 +19,8 @@ type FirestoreModule = typeof import('firebase/firestore');
 
 let firestorePromise: Promise<{ fs: Firestore; sdk: FirestoreModule }> | null = null;
 
-function getFirestore(): Promise<{ fs: Firestore; sdk: FirestoreModule }> {
+/** Firestore compartilhado (eventos do jogador, mundo publicado pelo admin). */
+export function getFirestore(): Promise<{ fs: Firestore; sdk: FirestoreModule }> {
   firestorePromise ??= Promise.all([getFirebaseApp(), import('firebase/firestore')]).then(([app, sdk]) => ({
     fs: sdk.initializeFirestore(app, { localCache: sdk.memoryLocalCache() }),
     sdk,
@@ -27,7 +28,7 @@ function getFirestore(): Promise<{ fs: Firestore; sdk: FirestoreModule }> {
   return firestorePromise;
 }
 
-function translate(error: unknown): RemoteError {
+export function translate(error: unknown): RemoteError {
   if (error instanceof RemoteError) return error;
   const code = (error as { code?: string } | null)?.code ?? '';
   const message = error instanceof Error ? error.message : String(error);

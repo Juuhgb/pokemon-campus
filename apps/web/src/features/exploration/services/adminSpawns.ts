@@ -5,8 +5,8 @@ import type { SpawnQuery, SpawnRepository } from './spawnRepository.js';
 
 /**
  * Pokémon colocados à mão pelo painel de admin (ex.: "colocar onde eu estou").
- * Ficam salvos neste navegador e aparecem no jogo deste aparelho, somados aos gerados nas zonas.
- * Para todos os jogadores verem, isso precisa ir para a API (POST /api/v1/spawns, a combinar).
+ * O admin publica a lista no servidor (world.ts) e todos os aparelhos a recebem,
+ * somada aos Pokémon gerados nas zonas.
  */
 export interface AdminSpawnStore {
   list(): Promise<ExplorationSpawn[]>;

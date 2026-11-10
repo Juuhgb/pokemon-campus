@@ -81,9 +81,16 @@ Abra `http://localhost:5173/admin` (ou `https://<IP>:5173/admin` com `npm run de
 - **+ Nova zona**: toque no mapa marcando os cantos na ordem do contorno (qualquer formato, mínimo 3 pontos), dê um nome e salve.
 - Selecione uma zona (na lista ou no mapa) para editar: arraste os quadrados para mover cantos, toque nos **+** para criar cantos, toque duas vezes (ou segure) num canto para removê-lo e arraste **✥** para mover a zona inteira. Nome e cor também são editáveis.
 - "Mostrar Pokémon gerados" exibe uma prévia dos spawns simulados, que nascem dentro de cada zona e acompanham as mudanças de formato.
-- As edições são salvas automaticamente no IndexedDB deste navegador e o jogo do mesmo dispositivo passa a usá-las. Use **Exportar JSON** para compartilhar ou levar as zonas para o código/API, **Importar JSON** em outro dispositivo e **Restaurar padrão** para descartar.
+- **Cada mudança é publicada para todos os jogadores**: zonas vão para o Firestore em `mundo/zonas` e Pokémon colocados em `mundo/pokemon`. O jogo escuta esses documentos e aplica a versão nova sozinho, sem o jogador fazer nada. Cada aparelho guarda a última versão recebida, então ela continua valendo offline. Os Pokémon das zonas são gerados de forma determinística, então todos os jogadores veem os mesmos.
+- **Exportar JSON** e **Importar JSON** continuam disponíveis para backup. **Restaurar padrão** publica as zonas padrão para todos.
 
-O painel abre em desenvolvimento. Num build publicado, só com `VITE_ENABLE_ADMIN=true`. Ainda não há login de administrador nem gravação no servidor: isso depende dos módulos de autenticação e da API (ex.: `PUT /api/v1/zones`, que a API deve proteger).
+Quem pode publicar: o painel abre para qualquer um, mas só grava no servidor quem entrar com uma conta Google que tenha o documento `admins/{uid}` no Firestore. Para virar admin:
+
+1. Abra `/admin` e toque em **Entrar com Google**. O painel mostra o seu UID.
+2. Em Firebase Console → Firestore Database → **Iniciar coleção** `admins`, crie um documento com o ID igual a esse UID. Pode ficar sem campos; se o Console exigir um, use `nome` = seu nome.
+3. Recarregue o painel. Ele passa a mostrar "admin" e a publicar.
+
+As regras (`firestore.rules`) garantem que só admins escrevem em `mundo/` e que ninguém consegue se tornar admin pelo app. `VITE_ENABLE_ADMIN=false` esconde o painel num build.
 
 ### Jogar no celular
 
