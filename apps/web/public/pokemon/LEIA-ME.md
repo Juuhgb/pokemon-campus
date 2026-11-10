@@ -20,6 +20,24 @@ Coloque aqui um PNG (de preferência com fundo transparente) para cada espécie,
 | `lucario.png`    | Lucario    |
 | `mew.png`        | Mew        |
 | `mewtwo.png`     | Mewtwo     |
+| `caterpie.png`  | Caterpie   |
+| `metapod.png`   | Metapod    |
+| `magikarp.png`  | Magikarp   |
+| `psyduck.png`   | Psyduck    |
+| `gastly.png`    | Gastly     |
+| `eevee.png`     | Eevee      |
+| `cubone.png`    | Cubone     |
+| `riolu.png`     | Riolu      |
+| `charmeleon.png` | Charmeleon |
+| `wartortle.png` | Wartortle  |
+| `butterfree.png` | Butterfree |
+| `haunter.png`   | Haunter    |
+| `blastoise.png` | Blastoise  |
+| `gengar.png`    | Gengar     |
+| `espeon.png`    | Espeon     |
+| `umbreon.png`   | Umbreon    |
+| `leafeon.png`   | Leafeon    |
+| `sylveon.png`   | Sylveon    |
 
 Enquanto um arquivo não existir, o jogo mostra o ícone redondo antigo daquela espécie.
 Os caminhos ficam em `apps/web/src/features/catalog/species.ts` (campo `image`). Para um Pokémon novo, adicione o PNG aqui e uma entrada em `SPECIES`: ele passa a aparecer nas zonas conforme a raridade.
