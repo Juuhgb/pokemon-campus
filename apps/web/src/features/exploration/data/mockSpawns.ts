@@ -1,4 +1,5 @@
 import type { CampusZone, ExplorationSpawn, GeoPoint, Rarity } from '../types.js';
+import { SPECIES } from '../../catalog/species.js';
 import { offsetByMeters } from '../utils/distance.js';
 import { interiorPoint, polygonAreaSquareMeters, randomPointInPolygon, seededRandom } from '../utils/zoneGeometry.js';
 import { DEFAULT_ZONES } from './defaultZones.js';
@@ -11,11 +12,12 @@ export function spawnCountForZone(zone: CampusZone): number {
   return Math.min(4, Math.max(1, Math.round(polygonAreaSquareMeters(zone.boundary) / 4_000) + 1));
 }
 
+/** Espécies que podem aparecer em cada raridade (todas as do catálogo, na ordem dele). */
 const SPECIES_BY_RARITY: Record<Rarity, string[]> = {
-  common: ['brotinho', 'gotinha', 'pedregulho'],
-  uncommon: ['faiscao', 'coruja'],
-  rare: ['brasinha'],
-  legendary: ['aurora'],
+  common: SPECIES.filter((species) => species.rarity === 'common').map((species) => species.id),
+  uncommon: SPECIES.filter((species) => species.rarity === 'uncommon').map((species) => species.id),
+  rare: SPECIES.filter((species) => species.rarity === 'rare').map((species) => species.id),
+  legendary: SPECIES.filter((species) => species.rarity === 'legendary').map((species) => species.id),
 };
 
 const LEVEL_RANGE: Record<Rarity, [number, number]> = {

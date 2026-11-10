@@ -35,6 +35,16 @@ export default defineConfig(({ mode }) => ({
         // Guarda apenas os tiles já vistos pelo jogador (sem pré-download em massa, conforme a política do OSM).
         runtimeCaching: [
           {
+            // Imagens dos Pokémon: guardadas na primeira vez que aparecem, para funcionar offline.
+            urlPattern: ({ url }) => url.pathname.startsWith('/pokemon/') && url.pathname.endsWith('.png'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'pokemon-images',
+              expiration: { maxEntries: 60, maxAgeSeconds: 30 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
             urlPattern: ({ url }) => url.hostname === 'tile.openstreetmap.org',
             handler: 'StaleWhileRevalidate',
             options: {
