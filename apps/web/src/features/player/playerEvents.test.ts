@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { foldPlayerEvents, lastProfileEventId, legacyImportEvent, type EventAction, type PlayerEvent } from './playerEvents.js';
+import { keepsLocalProgress } from './PlayerProvider.js';
 import { INITIAL_PLAYER, newCreature } from './playerState.js';
 
 const AT = '2026-11-04T15:00:00.000Z';
@@ -23,12 +24,12 @@ const battle = (deviceId: string, at: number, spawnId: string, points = 100) =>
 
 describe('foldPlayerEvents', () => {
   it('qualquer ordem de chegada dá o mesmo estado (ordem por horário e id)', () => {
-    const events = [starter('a', 1), battle('a', 2, 's1'), ev('a', 3, { type: 'useBall', item: 'POKE_BALL' })];
+    const events = [starter('a', 1), battle('a', 2, 's1'), ev('a', 3, { type: 'useBall', item: 'GREAT_BALL' })];
     const forward = foldPlayerEvents(INITIAL_PLAYER, events).player;
     const backward = foldPlayerEvents(INITIAL_PLAYER, [...events].reverse()).player;
     expect(backward).toEqual(forward);
     expect(forward).toMatchObject({ onboarded: true, captures: 1, score: 100 });
-    expect(forward.inventory.POKE_BALL).toBe(INITIAL_PLAYER.inventory.POKE_BALL - 1);
+    expect(forward.inventory.GREAT_BALL).toBe(3 - 1); // ganhou 3 na captura e usou 1
   });
 
   it('evento repetido (mesmo id) conta uma vez só', () => {
@@ -52,13 +53,13 @@ describe('foldPlayerEvents', () => {
     expect(conflicts).toMatchObject([{ kind: 'duplicate-capture' }]);
   });
 
-  it('bolas gastas além do estoque em dois aparelhos: o excedente é descartado', () => {
-    const base = { ...INITIAL_PLAYER, onboarded: true, inventory: { POKE_BALL: 1, GREAT_BALL: 0 } };
+  it('Grandes bolas gastas além do estoque em dois aparelhos: o excedente é descartado', () => {
+    const base = { ...INITIAL_PLAYER, onboarded: true, inventory: { POKE_BALL: 10, GREAT_BALL: 1 } };
     const { player, conflicts } = foldPlayerEvents(base, [
-      ev('a', 1, { type: 'useBall', item: 'POKE_BALL' }),
-      ev('b', 2, { type: 'useBall', item: 'POKE_BALL' }),
+      ev('a', 1, { type: 'useBall', item: 'GREAT_BALL' }),
+      ev('b', 2, { type: 'useBall', item: 'GREAT_BALL' }),
     ]);
-    expect(player.inventory.POKE_BALL).toBe(0);
+    expect(player.inventory.GREAT_BALL).toBe(0);
     expect(conflicts).toMatchObject([{ kind: 'no-balls' }]);
   });
 
@@ -86,5 +87,13 @@ describe('foldPlayerEvents', () => {
     const { player } = foldPlayerEvents(INITIAL_PLAYER, [legacy, battle('a', 2, 's1')]);
     expect(player).toMatchObject({ onboarded: true, score: 150, team: ['c', 'a-s1-caught'] });
     expect(legacyImportEvent(INITIAL_PLAYER, 'a', 1, 'x')).toBeNull();
+  });
+});
+
+describe('progresso por conta', () => {
+  it('só a mesma conta continua o progresso guardado no aparelho', () => {
+    expect(keepsLocalProgress('conta-a', 'conta-a')).toBe(true);
+    expect(keepsLocalProgress('conta-a', 'conta-b')).toBe(false);
+    expect(keepsLocalProgress(null, 'conta-b')).toBe(false); // jogado sem conta: não passa para a conta
   });
 });

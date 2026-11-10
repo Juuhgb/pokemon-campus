@@ -20,6 +20,9 @@ export type CourseSlug = (typeof COURSES)[number]['slug'];
 export type BallItem = 'POKE_BALL' | 'GREAT_BALL';
 
 export const MAX_TEAM_SIZE = 3;
+/** A Pokébola clássica é infinita; a Grande bola só se ganha capturando (3 por captura). */
+export const UNLIMITED_BALL: BallItem = 'POKE_BALL';
+export const GREAT_BALLS_PER_CAPTURE = 3;
 export const MAX_NAME_LENGTH = 40;
 
 export interface OwnedCreature {
@@ -60,7 +63,7 @@ export const INITIAL_PLAYER: PlayerState = {
   captures: 0,
   creatures: [],
   team: [],
-  inventory: { POKE_BALL: 10, GREAT_BALL: 3 },
+  inventory: { POKE_BALL: 10, GREAT_BALL: 0 },
 };
 
 export type PlayerAction =
@@ -116,12 +119,15 @@ export function playerReducer(state: PlayerState, action: PlayerAction): PlayerS
       if (state.team.length <= 1) return state;
       return { ...state, team: state.team.filter((id) => id !== action.creatureId) };
     case 'useBall':
-      if (state.inventory[action.item] <= 0) return state;
+      // Pokébola clássica: infinita, não gasta.
+      if (action.item === UNLIMITED_BALL || state.inventory[action.item] <= 0) return state;
       return { ...state, inventory: { ...state.inventory, [action.item]: state.inventory[action.item] - 1 } };
     case 'capture': {
       const creature = newCreature(action.creatureId, action.speciesId, action.level, action.at);
       const team = state.team.length < MAX_TEAM_SIZE ? [...state.team, creature.id] : state.team;
-      return { ...state, creatures: [...state.creatures, creature], team, captures: state.captures + 1 };
+      // Cada captura dá 3 Grandes bolas (a única forma de consegui-las).
+      const inventory = { ...state.inventory, GREAT_BALL: state.inventory.GREAT_BALL + GREAT_BALLS_PER_CAPTURE };
+      return { ...state, creatures: [...state.creatures, creature], team, inventory, captures: state.captures + 1 };
     }
     case 'battleFinished':
       // No protótipo a equipe descansa ao fim de cada batalha (PV voltam ao máximo).
@@ -156,6 +162,17 @@ export function parseStoredPlayer(raw: string | null): PlayerState {
   } catch {
     return INITIAL_PLAYER;
   }
+}
+
+/** Quantas bolas desse tipo o jogador pode usar (Infinity para a Pokébola clássica). */
+export function ballCount(player: Pick<PlayerState, 'inventory'>, item: BallItem): number {
+  return item === UNLIMITED_BALL ? Infinity : player.inventory[item];
+}
+
+/** Texto da quantidade: "∞" para a Pokébola clássica. */
+export function ballCountLabel(player: Pick<PlayerState, 'inventory'>, item: BallItem): string {
+  const count = ballCount(player, item);
+  return count === Infinity ? '∞' : `×${count}`;
 }
 
 /** Quantas criaturas o jogador tem de cada espécie. */

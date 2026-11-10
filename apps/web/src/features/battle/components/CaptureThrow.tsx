@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { BallIcon, BALL_NAME } from '../../../components/ui/BallIcon.js';
 import { CreatureBadge } from '../../../components/ui/CreatureBadge.js';
 import { buttonStyles } from '../../../components/ui/ui.js';
+import { duckMusic } from '../../audio/music.js';
+import { playSfx, stopSfx } from '../../audio/sfx.js';
 import { getSpecies } from '../../catalog/species.js';
 import type { BallItem } from '../../player/playerState.js';
 import type { Combatant } from '../battleState.js';
@@ -33,14 +35,20 @@ export function CaptureThrow({ ball, foe, shakes: target, canRetry, onContinue, 
   useEffect(() => {
     let count = 0;
     let interval: number | undefined;
+    // A música abaixa durante a captura para o som da Pokébola aparecer.
+    duckMusic(true);
     const delay = window.setTimeout(() => {
       setPhase('shaking');
+      if (target > 0) playSfx('shake');
       interval = window.setInterval(() => {
         if (count < target) {
           count += 1;
           setShakes(count);
         } else {
           window.clearInterval(interval);
+          stopSfx();
+          if (caughtOutcome) playSfx('catch');
+          duckMusic(false);
           setPhase(caughtOutcome ? 'caught' : 'escaped');
         }
       }, SHAKE_INTERVAL_MS);
@@ -48,6 +56,8 @@ export function CaptureThrow({ ball, foe, shakes: target, canRetry, onContinue, 
     return () => {
       window.clearTimeout(delay);
       if (interval !== undefined) window.clearInterval(interval);
+      stopSfx();
+      duckMusic(false);
     };
   }, [target, caughtOutcome]);
 

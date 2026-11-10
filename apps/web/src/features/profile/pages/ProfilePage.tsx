@@ -5,7 +5,7 @@ import { SyncPanel } from '../../../components/SyncPanel.js';
 import { SPECIES } from '../../catalog/species.js';
 import { signOutGoogle } from '../../auth/googleAuth.js';
 import { usePlayer, useSync } from '../../player/PlayerProvider.js';
-import { COURSES, countBySpecies, initials, type BallItem } from '../../player/playerState.js';
+import { ballCountLabel, COURSES, countBySpecies, initials, type BallItem } from '../../player/playerState.js';
 import { rankingFor } from '../ranking.js';
 
 export function ProfilePage() {
@@ -70,7 +70,7 @@ export function ProfilePage() {
           <div key={item} className="flex items-center gap-3">
             <BallIcon item={item} size={40} />
             <span className="flex-1 text-[15px] font-extrabold">{BALL_NAME[item]}</span>
-            <span className="font-display text-[22px] font-bold">×{player.inventory[item]}</span>
+            <span className="font-display text-[22px] font-bold">{ballCountLabel(player, item)}</span>
           </div>
         ))}
       </section>

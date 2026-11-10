@@ -35,6 +35,17 @@ export default defineConfig(({ mode }) => ({
         // Guarda apenas os tiles já vistos pelo jogador (sem pré-download em massa, conforme a política do OSM).
         runtimeCaching: [
           {
+            // Músicas: guardadas na primeira vez que tocam, para funcionar offline.
+            urlPattern: ({ url }) => url.pathname.startsWith('/musicas/'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'musicas',
+              expiration: { maxEntries: 10 },
+              cacheableResponse: { statuses: [0, 200] },
+              rangeRequests: true,
+            },
+          },
+          {
             // Imagens dos Pokémon: guardadas na primeira vez que aparecem, para funcionar offline.
             urlPattern: ({ url }) => url.pathname.startsWith('/pokemon/') && url.pathname.endsWith('.png'),
             handler: 'CacheFirst',

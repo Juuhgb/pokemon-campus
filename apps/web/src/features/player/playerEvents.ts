@@ -1,4 +1,4 @@
-import { INITIAL_PLAYER, playerReducer, type PlayerAction, type PlayerState } from './playerState.js';
+import { ballCount, INITIAL_PLAYER, playerReducer, type PlayerAction, type PlayerState } from './playerState.js';
 
 /**
  * Registro de eventos do jogador (event sourcing).
@@ -119,7 +119,7 @@ export function foldPlayerEvents(base: PlayerState, events: readonly PlayerEvent
         break;
       }
       case 'useBall': {
-        if (player.inventory[action.item] <= 0) {
+        if (ballCount(player, action.item) <= 0) {
           conflicts.push({ eventId: event.id, kind: 'no-balls', winnerId: null, message: 'Bola usada sem estoque (gasta em outro aparelho): uso descartado.' });
           break;
         }

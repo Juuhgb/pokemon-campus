@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { rankingFor } from '../profile/ranking.js';
-import { countBySpecies, INITIAL_PLAYER, initials, parseStoredPlayer, playerReducer, type PlayerState } from './playerState.js';
+import { countBySpecies, INITIAL_PLAYER, initials, parseStoredPlayer, playerReducer, type PlayerState, ballCount, ballCountLabel, GREAT_BALLS_PER_CAPTURE } from './playerState.js';
 
 const AT = '2026-11-04T15:00:00.000Z';
 const onboarded = (): PlayerState => playerReducer(INITIAL_PLAYER, { type: 'onboard', starterSpeciesId: 'gotinha', creatureId: 's', at: AT });
@@ -41,11 +41,21 @@ describe('playerReducer', () => {
     expect(playerReducer(solo, { type: 'removeFromTeam', creatureId: 's' }).team).toEqual(['s']);
   });
 
-  it('gasta bolas sem ficar negativo', () => {
-    let state = { ...INITIAL_PLAYER, inventory: { POKE_BALL: 1, GREAT_BALL: 0 } };
-    state = playerReducer(state, { type: 'useBall', item: 'POKE_BALL' });
-    expect(state.inventory.POKE_BALL).toBe(0);
-    expect(playerReducer(state, { type: 'useBall', item: 'POKE_BALL' }).inventory.POKE_BALL).toBe(0);
+  it('Pokébola clássica é infinita; Grande bola gasta sem ficar negativa', () => {
+    const start = { ...INITIAL_PLAYER, inventory: { POKE_BALL: 0, GREAT_BALL: 1 } };
+    expect(playerReducer(start, { type: 'useBall', item: 'POKE_BALL' })).toBe(start);
+    expect(ballCount(start, 'POKE_BALL')).toBe(Infinity);
+    expect(ballCountLabel(start, 'POKE_BALL')).toBe('∞');
+    const used = playerReducer(start, { type: 'useBall', item: 'GREAT_BALL' });
+    expect(used.inventory.GREAT_BALL).toBe(0);
+    expect(playerReducer(used, { type: 'useBall', item: 'GREAT_BALL' })).toBe(used);
+  });
+
+  it('começa sem Grande bola e ganha 3 a cada captura', () => {
+    expect(INITIAL_PLAYER.inventory.GREAT_BALL).toBe(0);
+    const caught = playerReducer(onboarded(), { type: 'capture', creatureId: 'c', speciesId: 'gotinha', level: 5, at: AT });
+    expect(caught.inventory.GREAT_BALL).toBe(GREAT_BALLS_PER_CAPTURE);
+    expect(GREAT_BALLS_PER_CAPTURE).toBe(3);
   });
 
   it('ao fim da batalha soma pontos, XP e sobe de nível', () => {

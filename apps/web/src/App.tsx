@@ -4,6 +4,7 @@ import { navigate, ROUTES, usePath } from './app/router.js';
 import { ConnectionStatus, OfflineBanner } from './components/ConnectionStatus.js';
 import { BottomNav } from './components/ui/BottomNav.js';
 import { AdminPage, isAdminPath } from './features/admin/index.js';
+import { OpeningMusic } from './features/audio/OpeningMusic.js';
 import { BattleProvider, useBattle } from './features/battle/BattleProvider.js';
 import { BattlePage } from './features/battle/pages/BattlePage.js';
 import { BattleResultPage } from './features/battle/pages/BattleResultPage.js';
@@ -83,6 +84,7 @@ export default function App() {
         <PlayerProvider>
           <BattleProvider>
             <OfflineBanner />
+            <OpeningMusic />
             <PlayerRoutes />
           </BattleProvider>
         </PlayerProvider>

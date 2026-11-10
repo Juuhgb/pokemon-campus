@@ -20,6 +20,8 @@ const CACHE_KEY = 'pokemon-campus:player:v1';
 const IDENTITY_KEY = 'pokemon-campus:identity:v1';
 const DEVICE_KEY = 'pokemon-campus:device-id';
 const EVENTS_READY_KEY = 'pokemon-campus:events-ready';
+/** Conta Google dona do progresso guardado neste aparelho (vazio = jogado sem conta). */
+const OWNER_KEY = 'pokemon-campus:progress-owner';
 const RANKING_KEY = 'pokemon-campus:ranking-cache';
 
 interface Identity {
@@ -124,6 +126,15 @@ function withIdentity(player: PlayerState, identity: Identity): PlayerState {
   return { ...player, displayName, googleEmail: identity.googleEmail, googleUid: identity.googleUid };
 }
 
+/**
+ * O progresso guardado no aparelho continua quando entra a mesma conta que o criou.
+ * Qualquer outra conta (ou progresso feito sem conta) começa do zero, com o que a conta
+ * dela tem no servidor: ninguém herda os pontos de outro jogador.
+ */
+export function keepsLocalProgress(ownerUid: string | null, signingInUid: string): boolean {
+  return ownerUid === signingInUid;
+}
+
 /** Junta os eventos já gravados com os que acabaram de acontecer (ainda a caminho do IndexedDB). */
 function mergeEvents(stored: readonly StoredEvent[], fresh: readonly StoredEvent[]): StoredEvent[] {
   const ids = new Set(stored.map((event) => event.id));
@@ -210,6 +221,11 @@ function SyncedPlayerProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => writeJson(IDENTITY_KEY, identity), [identity]);
 
+  // Aparelhos de antes desta regra: o progresso guardado é da conta que já está vinculada.
+  useEffect(() => {
+    if (identity.googleUid && readJson<string>(OWNER_KEY) === null) writeJson(OWNER_KEY, identity.googleUid);
+  }, [identity.googleUid]);
+
   // Módulo de sincronização: monitor de conexão + fila de saída.
   useEffect(() => {
     const remote = withSimulatedOutage(firestoreRemote, () => outageRef.current);
@@ -267,9 +283,19 @@ function SyncedPlayerProvider({ children }: { children: ReactNode }) {
 
   const dispatch = useCallback((action: PlayerAction) => {
     switch (action.type) {
-      case 'linkGoogle':
-        setIdentity({ googleEmail: action.email, googleUid: action.uid ?? null, googleName: action.displayName?.trim() || null });
+      case 'linkGoogle': {
+        const uid = action.uid ?? null;
+        // Outra conta entrando neste aparelho: começa do zero e baixa só o progresso dela.
+        // O progresso da conta anterior continua salvo no servidor, na conta dela.
+        if (uid && !keepsLocalProgress(readJson<string>(OWNER_KEY), uid)) {
+          setFresh([]);
+          writeJson(CACHE_KEY, null);
+          void dexieEventStore.clear();
+        }
+        if (uid) writeJson(OWNER_KEY, uid);
+        setIdentity({ googleEmail: action.email, googleUid: uid, googleName: action.displayName?.trim() || null });
         return;
+      }
       case 'unlinkGoogle':
         setIdentity({ googleEmail: null, googleUid: null, googleName: null });
         return;
@@ -278,6 +304,7 @@ function SyncedPlayerProvider({ children }: { children: ReactNode }) {
         setIdentity({ googleEmail: null, googleUid: null, googleName: null });
         setFresh([]);
         writeJson(CACHE_KEY, null);
+        writeJson(OWNER_KEY, null);
         void dexieEventStore.clear();
         return;
       default: {

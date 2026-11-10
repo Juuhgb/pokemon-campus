@@ -5,10 +5,11 @@ import { CreatureBadge } from '../../../components/ui/CreatureBadge.js';
 import { BackLink, buttonStyles } from '../../../components/ui/ui.js';
 import { getSpecies } from '../../catalog/species.js';
 import { usePlayer } from '../../player/PlayerProvider.js';
-import type { BallItem } from '../../player/playerState.js';
 import { useBattle } from '../BattleProvider.js';
 import { attemptCapture, captureChancePercent, type BattleState } from '../battleState.js';
 import { Arena } from '../components/Arena.js';
+import { unlockSfx } from '../../audio/sfx.js';
+import { ballCount, ballCountLabel, type BallItem } from '../../player/playerState.js';
 import { CaptureThrow } from '../components/CaptureThrow.js';
 
 const BALLS: BallItem[] = ['POKE_BALL', 'GREAT_BALL'];
@@ -17,7 +18,7 @@ const BALLS: BallItem[] = ['POKE_BALL', 'GREAT_BALL'];
 export function CapturePage() {
   const { battle, update } = useBattle();
   const { player, dispatch } = usePlayer();
-  const [ball, setBall] = useState<BallItem>(player.inventory.POKE_BALL > 0 ? 'POKE_BALL' : 'GREAT_BALL');
+  const [ball, setBall] = useState<BallItem>('POKE_BALL');
   const [attempt, setAttempt] = useState<{ next: BattleState; ball: BallItem; key: number } | null>(null);
 
   useEffect(() => {
@@ -29,7 +30,8 @@ export function CapturePage() {
   const species = getSpecies(battle.foe.speciesId);
 
   const throwBall = () => {
-    if (attempt || battle.status !== 'active' || battle.mustSwitch || player.inventory[ball] <= 0) return;
+    if (attempt || battle.status !== 'active' || battle.mustSwitch || ballCount(player, ball) <= 0) return;
+    unlockSfx(); // no toque: libera os sons da Pokébola no celular
     dispatch({ type: 'useBall', item: ball });
     // O resultado é calculado agora (rolagem determinística) e aplicado ao fim da animação.
     setAttempt({ next: attemptCapture(battle, ball), ball, key: Date.now() });
@@ -68,7 +70,7 @@ export function CapturePage() {
     );
   }
 
-  const noBalls = player.inventory[ball] <= 0;
+  const noBalls = ballCount(player, ball) <= 0;
 
   return (
     <main className="mx-auto flex min-h-full w-full max-w-md flex-col bg-creme text-tinta">
@@ -90,7 +92,7 @@ export function CapturePage() {
         <div role="radiogroup" aria-label="Escolha a bola" className="flex flex-col gap-2.5">
           {BALLS.map((item) => {
             const on = item === ball;
-            const qty = player.inventory[item];
+            const qty = ballCount(player, item);
             const chance = captureChancePercent(battle.foe, item);
             return (
               <button
@@ -112,7 +114,10 @@ export function CapturePage() {
                     <span className="text-xs font-extrabold">{chance}% de chance</span>
                   </span>
                 </span>
-                <span className="font-display text-xl font-bold">×{qty}</span>
+                <span className="flex flex-col items-end">
+                  <span className="font-display text-xl font-bold">{ballCountLabel(player, item)}</span>
+                  {item === 'GREAT_BALL' && qty <= 0 && <span className="text-[11px] font-extrabold text-tinta-suave">Ganhe capturando</span>}
+                </span>
               </button>
             );
           })}
