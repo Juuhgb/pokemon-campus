@@ -73,7 +73,9 @@ export async function checkAdmin(): Promise<{ uid: string; email: string | null;
 
 /**
  * Escuta o mundo publicado e guarda cada versão no aparelho. `onChange` avisa a tela para
- * recarregar zonas e Pokémon. Funciona sem login (leitura pública).
+ * recarregar zonas e Pokémon. Funciona sem login (leitura pública). Aceita também o que veio do
+ * cache em memória: é a versão que este app já recebeu nesta sessão (o Firestore não repete o
+ * evento quando o servidor confirma os mesmos dados).
  */
 export function watchWorld(onChange: () => void, cache: WorldCache = indexedDbWorldCache): () => void {
   const unsubscribes: (() => void)[] = [];
@@ -84,12 +86,12 @@ export function watchWorld(onChange: () => void, cache: WorldCache = indexedDbWo
       if (cancelled) return;
       unsubscribes.push(
         sdk.onSnapshot(sdk.doc(fs, 'mundo', 'zonas'), (snapshot) => {
-          if (snapshot.metadata.fromCache || !snapshot.exists()) return;
+          if (!snapshot.exists()) return;
           const zones = parseZones(snapshot.data());
           if (zones) void cache.writeZones(zones).then(onChange);
         }, () => {}),
         sdk.onSnapshot(sdk.doc(fs, 'mundo', 'pokemon'), (snapshot) => {
-          if (snapshot.metadata.fromCache || !snapshot.exists()) return;
+          if (!snapshot.exists()) return;
           const spawns = parseSpawns(snapshot.get('spawns'));
           if (spawns) void cache.writeSpawns(spawns).then(onChange);
         }, () => {}),
