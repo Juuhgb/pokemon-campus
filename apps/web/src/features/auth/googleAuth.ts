@@ -1,6 +1,6 @@
 import type { FirebaseApp } from 'firebase/app';
 import type { Auth, AuthError } from 'firebase/auth';
-import { firebaseConfig } from './firebaseConfig.js';
+import { authDomainFor, firebaseConfig, prefersRedirectLogin } from './firebaseConfig.js';
 
 /** Conta Google vinculada ao jogador. */
 export interface GoogleAccount {
@@ -14,7 +14,7 @@ let authPromise: Promise<Auth> | null = null;
 
 /** Carrega o Firebase só quando precisa (o jogo abre e funciona offline sem ele). */
 export function getFirebaseApp(): Promise<FirebaseApp> {
-  appPromise ??= import('firebase/app').then(({ initializeApp, getApps }) => getApps()[0] ?? initializeApp(firebaseConfig));
+  appPromise ??= import('firebase/app').then(({ initializeApp, getApps }) => getApps()[0] ?? initializeApp({ ...firebaseConfig, authDomain: authDomainFor(window.location.hostname) }));
   return appPromise;
 }
 
@@ -56,25 +56,42 @@ export function googleAuthErrorMessage(error: unknown): string | null {
 
 const NEEDS_REDIRECT = new Set(['auth/popup-blocked', 'auth/operation-not-supported-in-this-environment']);
 
+/** Guardado nos dois armazenamentos: alguns celulares perdem o sessionStorage no redirecionamento. */
 function markGoogleRedirectPending(): void {
+  const stamp = String(Date.now());
   try {
-    window.sessionStorage.setItem(REDIRECT_FLAG, '1');
+    window.sessionStorage.setItem(REDIRECT_FLAG, stamp);
   } catch {
-    // sem sessionStorage: o resultado ainda pode ser lido na próxima abertura
+    // segue com o localStorage
+  }
+  try {
+    window.localStorage.setItem(REDIRECT_FLAG, stamp);
+  } catch {
+    // sem armazenamento: o login ainda conclui, só não é detectado ao voltar
   }
 }
 
+function shouldRedirect(): boolean {
+  const standalone = window.matchMedia?.('(display-mode: standalone)').matches
+    || (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  return prefersRedirectLogin(navigator.userAgent, navigator.maxTouchPoints ?? 0, standalone);
+}
+
 /**
- * Abre a janela do Google (popup) usando o domínio fixo de login do Firebase
- * (pokecampus-uenp.firebaseapp.com), que não é controlado pelo service worker do jogo.
- * Só usa redirecionamento se o navegador bloquear o popup; o retorno é concluído por
- * `completeGoogleRedirect`.
+ * No computador, abre a janela do Google (popup). No celular e no app instalado, vai para a
+ * página do Google na mesma aba e volta para o jogo (o popup costuma travar ali); o retorno é
+ * concluído por `completeGoogleRedirect`. Se o navegador bloquear o popup, também redireciona.
  */
 export async function signInWithGoogle(): Promise<GoogleAccount | null> {
   const auth = await getFirebaseAuth();
   const { GoogleAuthProvider, signInWithPopup, signInWithRedirect } = await import('firebase/auth');
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
+  if (shouldRedirect()) {
+    markGoogleRedirectPending();
+    await signInWithRedirect(auth, provider);
+    return null;
+  }
   try {
     const result = await signInWithPopup(auth, provider);
     return toAccount(result.user);
@@ -90,10 +107,18 @@ export async function signInWithGoogle(): Promise<GoogleAccount | null> {
 
 const REDIRECT_FLAG = 'pokemon-campus:google-redirect';
 
+const REDIRECT_MAX_AGE_MS = 15 * 60_000;
+
 /** Há um login por redirecionamento esperando resultado? (evita carregar o Firebase sem necessidade) */
-export function hasPendingGoogleRedirect(): boolean {
+export function hasPendingGoogleRedirect(now = Date.now()): boolean {
+  const fresh = (value: string | null) => value !== null && (value === '1' || now - Number(value) < REDIRECT_MAX_AGE_MS);
   try {
-    return window.sessionStorage.getItem(REDIRECT_FLAG) === '1';
+    if (fresh(window.sessionStorage.getItem(REDIRECT_FLAG))) return true;
+  } catch {
+    // tenta o localStorage
+  }
+  try {
+    return fresh(window.localStorage.getItem(REDIRECT_FLAG));
   } catch {
     return false;
   }
@@ -103,13 +128,17 @@ export function hasPendingGoogleRedirect(): boolean {
 export async function completeGoogleRedirect(): Promise<GoogleAccount | null> {
   try {
     window.sessionStorage.removeItem(REDIRECT_FLAG);
+    window.localStorage.removeItem(REDIRECT_FLAG);
   } catch {
     // ignorado
   }
   const auth = await getFirebaseAuth();
   const { getRedirectResult } = await import('firebase/auth');
   const result = await getRedirectResult(auth);
-  return result ? toAccount(result.user) : null;
+  if (result) return toAccount(result.user);
+  // Alguns navegadores já restauram a sessão sem entregar o resultado: vale o usuário logado.
+  await auth.authStateReady();
+  return auth.currentUser ? toAccount(auth.currentUser) : null;
 }
 
 export async function signOutGoogle(): Promise<void> {

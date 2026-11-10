@@ -13,3 +13,19 @@ export const firebaseConfig = {
   storageBucket: 'pokecampus-uenp.firebasestorage.app',
 };
 
+/**
+ * No site publicado (web.app / firebaseapp.com), o login roda no próprio endereço do jogo
+ * (/__/auth/handler, servido pelo Firebase Hosting). Assim o redirecionamento do celular
+ * funciona mesmo com navegadores que bloqueiam cookies de outros sites. O service worker
+ * deixa /__/ passar direto para o servidor (navigateFallbackDenylist no vite.config.ts).
+ * Fora dele (localhost), usa o domínio padrão do Firebase.
+ */
+export function authDomainFor(hostname: string, fallback: string = firebaseConfig.authDomain): string {
+  return hostname.endsWith('.web.app') || hostname.endsWith('.firebaseapp.com') ? hostname : fallback;
+}
+
+/** Celular ou app instalado: o popup do Google costuma não devolver o resultado ao jogo. */
+export function prefersRedirectLogin(userAgent: string, maxTouchPoints: number, standalone: boolean): boolean {
+  const mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent) || (/Macintosh/i.test(userAgent) && maxTouchPoints > 1);
+  return mobile || standalone;
+}
