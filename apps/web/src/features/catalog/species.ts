@@ -71,9 +71,9 @@ export const SPECIES: SpeciesInfo[] = [
     moves: [{ id: 'brasa', name: 'Brasa', type: 'Fogo', power: 40 }, { id: 'labareda', name: 'Labareda', type: 'Fogo', power: 55 }, TACKLE, SCRATCH],
   },
   {
-    id: 'aurora', number: '007', displayName: 'Vaporeon', kind: 'drop', type: 'Água', color: '#7fc8e8', image: '/pokemon/vaporeon.png', rarity: 'legendary',
-    baseStats: { hp: 30, attack: 15, defense: 13 },
-    description: 'Aparece raramente perto do lago ao entardecer. Poucos já viram de perto.',
+    id: 'aurora', number: '007', displayName: 'Vaporeon', kind: 'drop', type: 'Água', color: '#7fc8e8', image: '/pokemon/vaporeon.png', rarity: 'rare',
+    baseStats: { hp: 30, attack: 14, defense: 13 },
+    description: 'Evolução aquática do Eevee. Vive perto do lago e se mistura com a água.',
     moves: [{ id: 'hidro-bomba', name: 'Hidro bomba', type: 'Água', power: 60 }, { id: 'aqua-cauda', name: 'Aqua cauda', type: 'Água', power: 45 }, TACKLE, SCRATCH],
   },
   {
