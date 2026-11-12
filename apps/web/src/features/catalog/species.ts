@@ -249,6 +249,44 @@ export function getSpecies(speciesId: string): SpeciesInfo {
   };
 }
 
+/**
+ * Onde cada Pokémon aparece: a zona do curso que combina com ele (slug da zona → ids).
+ * Cada espécie mora em uma zona só. Zonas sem curso (ex.: área pessoal, zonas novas criadas
+ * no admin) recebem qualquer espécie.
+ */
+export const HABITATS: Record<string, readonly string[]> = {
+  // Eletricidade, tecnologia, mente e quem vira a noite programando.
+  'ciencia-da-computacao': ['faiscao', 'espurr', 'gastly', 'haunter', 'espeon', 'umbreon', 'gengar', 'mew', 'mewtwo'],
+  // Cura e cuidado: fadas, canto que acalma, aura e quem vive com dor de cabeça.
+  enfermagem: ['jigglypuff', 'psyduck', 'riolu', 'clefable', 'lucario', 'sylveon'],
+  // Vida aquática e insetos voadores do laboratório.
+  biologia: ['gotinha', 'magikarp', 'wartortle', 'butterfree', 'blastoise', 'gyarados', 'aurora'],
+  // Bichos que vão ao veterinário: mamíferos, roedores e lagartos.
+  'medicina-veterinaria': ['eevee', 'tandemaus', 'charmeleon', 'brasinha', 'charizard'],
+  // Plantas, lagartas da lavoura, terra e pedra.
+  agronomia: ['brotinho', 'caterpie', 'metapod', 'cubone', 'pedregulho', 'coruja', 'leafeon'],
+};
+
+export const HABITAT_LABEL: Record<string, string> = {
+  'ciencia-da-computacao': 'Ciência da Computação',
+  enfermagem: 'Enfermagem',
+  biologia: 'Biologia',
+  'medicina-veterinaria': 'Medicina Veterinária',
+  agronomia: 'Agronomia',
+};
+
+/** Espécies que podem aparecer numa zona (todas, se a zona não é de um curso). */
+export function speciesForZone(zoneSlug: string | undefined): SpeciesInfo[] {
+  const ids = zoneSlug ? HABITATS[zoneSlug] : undefined;
+  return ids ? ids.map(getSpecies) : SPECIES;
+}
+
+/** Nome da zona onde a espécie aparece (null se não tem uma zona fixa). */
+export function habitatOf(speciesId: string): string | null {
+  const slug = Object.keys(HABITATS).find((key) => HABITATS[key]!.includes(speciesId));
+  return slug ? HABITAT_LABEL[slug] ?? slug : null;
+}
+
 /** Os três iniciais do onboarding. */
 export const STARTER_IDS = ['brotinho', 'gotinha', 'brasinha'] as const;
 

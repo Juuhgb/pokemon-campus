@@ -1,5 +1,5 @@
 import type { CampusZone, ExplorationSpawn, GeoPoint, Rarity } from '../types.js';
-import { SPECIES } from '../../catalog/species.js';
+import { SPECIES, speciesForZone, type SpeciesInfo } from '../../catalog/species.js';
 import { offsetByMeters } from '../utils/distance.js';
 import { interiorPoint, polygonAreaSquareMeters, randomPointInPolygon, seededRandom } from '../utils/zoneGeometry.js';
 import { DEFAULT_ZONES } from './defaultZones.js';
@@ -12,13 +12,22 @@ export function spawnCountForZone(zone: CampusZone): number {
   return Math.min(4, Math.max(1, Math.round(polygonAreaSquareMeters(zone.boundary) / 4_000) + 1));
 }
 
-/** Espécies que podem aparecer em cada raridade (todas as do catálogo, na ordem dele). */
-const SPECIES_BY_RARITY: Record<Rarity, string[]> = {
-  common: SPECIES.filter((species) => species.rarity === 'common').map((species) => species.id),
-  uncommon: SPECIES.filter((species) => species.rarity === 'uncommon').map((species) => species.id),
-  rare: SPECIES.filter((species) => species.rarity === 'rare').map((species) => species.id),
-  legendary: SPECIES.filter((species) => species.rarity === 'legendary').map((species) => species.id),
-};
+const RARITY_ORDER: Rarity[] = ['common', 'uncommon', 'rare', 'legendary'];
+
+/**
+ * Sorteia a espécie entre as que moram na zona (species.ts → HABITATS). Se a zona não tem
+ * nenhuma da raridade sorteada (ex.: lendário fora da Computação), usa a raridade mais
+ * próxima abaixo dela (e, se não houver, acima).
+ */
+function pickSpecies(pool: readonly SpeciesInfo[], wanted: Rarity, roll: number): SpeciesInfo {
+  const index = RARITY_ORDER.indexOf(wanted);
+  const order = [...RARITY_ORDER.slice(0, index + 1).reverse(), ...RARITY_ORDER.slice(index + 1)];
+  for (const rarity of order) {
+    const candidates = pool.filter((species) => species.rarity === rarity);
+    if (candidates.length > 0) return candidates[Math.floor(roll * candidates.length)]!;
+  }
+  return SPECIES[Math.floor(roll * SPECIES.length)]!;
+}
 
 const LEVEL_RANGE: Record<Rarity, [number, number]> = {
   common: [2, 8],
@@ -39,14 +48,15 @@ function buildSpawn(
   position: GeoPoint,
   random: () => number,
   window: { startsAt: number; expiresAt: number },
+  pool: readonly SpeciesInfo[],
   zoneId?: string,
 ): ExplorationSpawn {
-  const rarity = pickRarity(random());
-  const species = SPECIES_BY_RARITY[rarity];
+  const species = pickSpecies(pool, pickRarity(random()), random());
+  const rarity = species.rarity;
   const [minLevel, maxLevel] = LEVEL_RANGE[rarity];
   const spawn: ExplorationSpawn = {
     spawnId,
-    speciesId: species[Math.floor(random() * species.length)]!,
+    speciesId: species.id,
     latitude: Number(position.latitude.toFixed(7)),
     longitude: Number(position.longitude.toFixed(7)),
     level: minLevel + Math.floor(random() * (maxLevel - minLevel + 1)),
@@ -76,9 +86,10 @@ export function createMockSpawns(now: Date = new Date(), zones: readonly CampusZ
     if (zone.boundary.length < 3) continue;
     const random = seededRandom(`${zone.id}:${slot}`);
     const count = spawnCountForZone(zone);
+    const pool = speciesForZone(zone.slug);
     for (let index = 0; index < count; index += 1) {
       const position = index === 0 ? interiorPoint(zone.boundary) : randomPointInPolygon(zone.boundary, random);
-      spawns.push(buildSpawn(`mock-${slot}-${zone.id}-${index}`, position, random, current, zone.id));
+      spawns.push(buildSpawn(`mock-${slot}-${zone.id}-${index}`, position, random, current, pool, zone.id));
     }
   }
 
@@ -86,14 +97,15 @@ export function createMockSpawns(now: Date = new Date(), zones: readonly CampusZ
   if (first) {
     const anchor = interiorPoint(first.boundary);
     const random = seededRandom(`${first.id}:${slot}:rules`);
+    const pool = speciesForZone(first.slug);
     spawns.push(buildSpawn(`mock-${slot}-expired`, offsetByMeters(anchor, 12, -8), random, {
       startsAt: slotStart - 2 * MOCK_SLOT_MS,
       expiresAt: slotStart - 1,
-    }));
+    }, pool));
     spawns.push(buildSpawn(`mock-${slot}-upcoming`, offsetByMeters(anchor, -12, 8), random, {
       startsAt: slotStart + 2 * MOCK_SLOT_MS,
       expiresAt: slotStart + 4 * MOCK_SLOT_MS,
-    }));
+    }, pool));
   }
 
   return spawns;
