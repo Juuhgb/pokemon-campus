@@ -25,6 +25,14 @@ describe('describeTurn', () => {
     expect(turn).toMatchObject({ foeFainted: true, foeAttacked: false, playerDamage: 0 });
   });
 
+  it('marca os acertos críticos do turno para a tela mostrar "Crítico!"', () => {
+    const before = battle();
+    const after: BattleState = { ...attack(before, 'brasa'), lastTurn: { playerCritical: true, foeCritical: true } };
+    expect(describeTurn(before, after, true, 9)).toMatchObject({ playerCritical: true, foeCritical: true });
+    const plain: BattleState = { ...attack(before, 'brasa'), lastTurn: undefined };
+    expect(describeTurn(before, plain, true, 10)).toMatchObject({ playerCritical: false, foeCritical: false });
+  });
+
   it('troca: só o adversário ataca, sem espera inicial', () => {
     const before = battle();
     const turn = describeTurn(before, switchTo(before, 1), false, 3);

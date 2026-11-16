@@ -1,4 +1,4 @@
-import { calculateDamage } from './battle.js';
+import { calculateDamage, isCriticalRoll } from './battle.js';
 import { captureChance } from './capture.js';
 import { deterministicRollV1 } from './random.js';
 import { battleRewardsV1, statsAtLevelV1 } from './progression.js';
@@ -46,6 +46,8 @@ export interface BattleState {
   /** O Pokémon em campo desmaiou e é preciso trocar. */
   mustSwitch: boolean;
   lastCapture: CaptureAttempt | null;
+  /** Acertos críticos do último turno (para a tela mostrar). Ausente em batalhas antigas. */
+  lastTurn?: { playerCritical: boolean; foeCritical: boolean };
 }
 
 export interface BattleRewards {
@@ -104,11 +106,12 @@ export function createBattleRulesV1(getSpecies: (id: string) => BattleSpecies) {
     const moves = movesOf(state.foe);
     const move = moves[Math.floor(deterministicRollV1(state.seed, state.turn, 'foe-move') * moves.length)]!;
     const target = activeMember(state);
-    const damage = calculateDamage({ attacker: state.foe, defender: target, power: move.power });
+    const critical = isCriticalRoll(deterministicRollV1(state.seed, state.turn, 'foe-critical'));
+    const damage = calculateDamage({ attacker: state.foe, defender: target, power: move.power, critical });
     const hp = target.hp - damage;
     const team = state.team.map((member, index) => (index === state.activeIndex ? { ...member, hp } : member));
-    let log = `${prefix} ${name(state.foe)} usou ${move.name}! ${name(target)} perdeu ${damage} PV.`;
-    const next = { ...state, team, turn: state.turn + 1 };
+    let log = `${prefix} ${name(state.foe)} usou ${move.name}!${critical ? ' Acerto crítico!' : ''} ${name(target)} perdeu ${damage} PV.`;
+    const next = { ...state, team, turn: state.turn + 1, lastTurn: { playerCritical: state.lastTurn?.playerCritical ?? false, foeCritical: critical } };
     if (hp > 0) return { ...next, log };
 
     log += ` ${name(target)} desmaiou!`;
@@ -121,18 +124,20 @@ export function createBattleRulesV1(getSpecies: (id: string) => BattleSpecies) {
     const attacker = activeMember(state);
     const move = movesOf(attacker).find((item) => item.id === moveId);
     if (!move) return state;
-    const damage = calculateDamage({ attacker, defender: state.foe, power: move.power });
+    const critical = isCriticalRoll(deterministicRollV1(state.seed, state.turn, 'player-critical'));
+    const damage = calculateDamage({ attacker, defender: state.foe, power: move.power, critical });
     const foe = { ...state.foe, hp: state.foe.hp - damage };
-    const text = `${name(attacker)} usou ${move.name}! ${name(foe)} perdeu ${damage} PV.`;
-    if (foe.hp <= 0) return { ...state, foe, turn: state.turn + 1, status: 'won', log: `${text} ${name(foe)} desmaiou!` };
-    return foeTurn({ ...state, foe }, text);
+    const text = `${name(attacker)} usou ${move.name}!${critical ? ' Acerto crítico!' : ''} ${name(foe)} perdeu ${damage} PV.`;
+    const lastTurn = { playerCritical: critical, foeCritical: false };
+    if (foe.hp <= 0) return { ...state, foe, turn: state.turn + 1, status: 'won', lastTurn, log: `${text} ${name(foe)} desmaiou!` };
+    return foeTurn({ ...state, foe, lastTurn }, text);
   }
 
   function switchTo(state: BattleState, index: number): BattleState {
     const member = state.team[index];
     if (state.status !== 'active' || !member || member.hp <= 0 || index === state.activeIndex) return state;
     const text = `Vai, ${name(member)}!`;
-    const switched = { ...state, activeIndex: index, mustSwitch: false };
+    const switched = { ...state, activeIndex: index, mustSwitch: false, lastTurn: { playerCritical: false, foeCritical: false } };
     // Trocar depois de um desmaio não dá turno extra ao adversário.
     return state.mustSwitch ? { ...switched, log: text } : foeTurn(switched, text);
   }
@@ -152,7 +157,7 @@ export function createBattleRulesV1(getSpecies: (id: string) => BattleSpecies) {
       return { ...state, status: 'captured', turn: state.turn + 1, lastCapture: { ball, caught: true, shakes: 3 }, log: `Pegou! ${name(state.foe)} foi capturado.` };
     }
     const shakes = shakesForMiss(roll, chance);
-    const escaped = { ...state, lastCapture: { ball, caught: false, shakes } };
+    const escaped = { ...state, lastCapture: { ball, caught: false, shakes }, lastTurn: { playerCritical: false, foeCritical: false } };
     return foeTurn(escaped, `${name(state.foe)} escapou da bola!`);
   }
 

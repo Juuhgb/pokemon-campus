@@ -21,6 +21,12 @@ export interface TurnAnimation {
   playerFainted: boolean;
   /** Índice do Pokémon do jogador que recebeu o golpe. */
   hitIndex: number;
+  /** PV antes do turno: a barra só desce quando o golpe acerta, não no toque. */
+  foeHpBefore: number;
+  playerHpBefore: number;
+  /** Acertos críticos do turno: do jogador (no adversário) e do adversário (no jogador). */
+  playerCritical: boolean;
+  foeCritical: boolean;
   /** Segundo em que o contra-ataque começa. */
   counterAt: number;
   /** Duração total, para bloquear os botões e atrasar a navegação. */
@@ -54,7 +60,19 @@ export function describeTurn(before: BattleState, after: BattleState, playerAtta
     foeFainted,
     playerFainted,
     hitIndex,
+    foeHpBefore: before.foe.hp,
+    playerHpBefore: beforeHp,
+    playerCritical: playerAttacked && foeDamage > 0 && Boolean(after.lastTurn?.playerCritical),
+    foeCritical: foeAttacked && Boolean(after.lastTurn?.foeCritical),
     counterAt,
     durationMs: Math.round(duration * 1000),
+  };
+}
+
+/** Em que instantes (ms) cada golpe acerta: a barra de PV de quem apanha desce só nessa hora. */
+export function hitTimesMs(anim: TurnAnimation): { foe: number; player: number } {
+  return {
+    foe: Math.round(TURN_TIMING.hitDelay * 1000),
+    player: Math.round((anim.counterAt + TURN_TIMING.hitDelay) * 1000),
   };
 }

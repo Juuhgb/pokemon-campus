@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { calculateDamage, CRITICAL_CHANCE, isCriticalRoll } from './battle.js';
 import { createBattleRulesV1 } from './encounter.js';
+import { deterministicRollV1 } from './random.js';
 
 const rules = createBattleRulesV1(() => ({
   displayName: 'Teste', baseStats: { hp: 24, attack: 10, defense: 10 },
@@ -32,5 +34,37 @@ describe('pure battle rules v1', () => {
   it('starts with a conscious member and loses if none are conscious', () => {
     expect(rules.createBattle(spawn, [{ ...team[0]!, hp: 0 }, team[1]!]).activeIndex).toBe(1);
     expect(rules.createBattle(spawn, team.map((member) => ({ ...member, hp: 0 }))).status).toBe('lost');
+  });
+});
+
+describe('acerto crítico', () => {
+  it('multiplica o dano por 1,5', () => {
+    const input = { attacker: { level: 20, attack: 30 }, defender: { defense: 10, hp: 999 }, power: 50 };
+    const normal = calculateDamage(input);
+    expect(calculateDamage({ ...input, critical: true })).toBe(Math.floor(((((2 * 20) / 5 + 2) * 50 * 3) / 50 + 2) * 1.5));
+    expect(calculateDamage({ ...input, critical: true })).toBeGreaterThan(normal);
+  });
+
+  it('acontece em cerca de 1 a cada 16 golpes, sempre igual para a mesma batalha e turno', () => {
+    let hits = 0;
+    for (let index = 0; index < 4000; index += 1) {
+      if (isCriticalRoll(deterministicRollV1(`seed-${index}-xxxxxxxxxxxx`, 1, 'player-critical'))) hits += 1;
+    }
+    expect(hits / 4000).toBeGreaterThan(CRITICAL_CHANCE * 0.7);
+    expect(hits / 4000).toBeLessThan(CRITICAL_CHANCE * 1.3);
+  });
+
+  it('o golpe crítico aparece no texto da batalha e no estado do turno', () => {
+    let state = null;
+    for (let index = 0; index < 500 && !state; index += 1) {
+      const battle = rules.createBattle({ ...spawn, battleSeed: `critical-seed-${index}-xxxxxx` }, team);
+      const after = rules.attack(battle, 'tackle');
+      if (after.lastTurn?.playerCritical) state = { battle, after };
+    }
+    expect(state).not.toBeNull();
+    const { battle, after } = state!;
+    expect(after.log).toMatch(/Investida! Acerto crítico!/);
+    const normalDamage = calculateDamage({ attacker: battle.team[0]!, defender: battle.foe, power: 40 });
+    expect(battle.foe.hp - after.foe.hp).toBeGreaterThanOrEqual(normalDamage);
   });
 });
