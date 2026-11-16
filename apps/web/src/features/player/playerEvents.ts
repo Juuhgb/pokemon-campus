@@ -113,7 +113,8 @@ export function foldPlayerEvents(base: PlayerState, events: readonly PlayerEvent
           conflicts.push({ eventId: event.id, kind: 'duplicate-capture', winnerId: winner, message: 'O mesmo Pokémon foi enfrentado em dois aparelhos: valeu a primeira batalha.' });
           break;
         }
-        const next = playerReducer(player, action);
+        // Batalhas antigas não traziam o horário: usa o horário do evento.
+        const next = playerReducer(player, action.endedAt ? action : { ...action, endedAt: new Date(event.at).toISOString() });
         if (next !== player && spawnId) captureBySpawn.set(spawnId, event.id);
         player = next;
         break;

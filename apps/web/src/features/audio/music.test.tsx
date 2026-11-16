@@ -104,7 +104,7 @@ describe('músicas', () => {
     expect(played).toEqual([]);
   });
 
-  it('Pokébola: som de chacoalhar durante as chacoalhadas e de captura quando pega', () => {
+  it('Poké Ball: som de chacoalhar durante as chacoalhadas e de captura quando pega', () => {
     vi.useFakeTimers();
     render(<CaptureThrow ball="POKE_BALL" foe={toCombatant('faiscao', 12, 9)} shakes={3} canRetry onContinue={vi.fn()} onRetry={vi.fn()} onBack={vi.fn()} />);
     act(() => { vi.advanceTimersByTime(900); });
@@ -113,7 +113,7 @@ describe('músicas', () => {
     expect(played).toEqual([SFX.shake.src, SFX.catch.src]);
   });
 
-  it('Pokébola que abre na hora não toca nada; a que escapa não toca o som de captura', () => {
+  it('Poké Ball que abre na hora não toca nada; a que escapa não toca o som de captura', () => {
     vi.useFakeTimers();
     render(<CaptureThrow ball="POKE_BALL" foe={toCombatant('faiscao', 12, 9)} shakes={1} canRetry onContinue={vi.fn()} onRetry={vi.fn()} onBack={vi.fn()} />);
     act(() => { vi.advanceTimersByTime(900 + SHAKE_INTERVAL_MS * 3); });

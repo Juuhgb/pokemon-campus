@@ -41,7 +41,7 @@ describe('playerReducer', () => {
     expect(playerReducer(solo, { type: 'removeFromTeam', creatureId: 's' }).team).toEqual(['s']);
   });
 
-  it('Pokébola clássica é infinita; Grande bola gasta sem ficar negativa', () => {
+  it('Poké Ball clássica é infinita; Great Ball gasta sem ficar negativa', () => {
     const start = { ...INITIAL_PLAYER, inventory: { POKE_BALL: 0, GREAT_BALL: 1 } };
     expect(playerReducer(start, { type: 'useBall', item: 'POKE_BALL' })).toBe(start);
     expect(ballCount(start, 'POKE_BALL')).toBe(Infinity);
@@ -51,7 +51,7 @@ describe('playerReducer', () => {
     expect(playerReducer(used, { type: 'useBall', item: 'GREAT_BALL' })).toBe(used);
   });
 
-  it('começa sem Grande bola e ganha 3 a cada captura', () => {
+  it('começa sem Great Ball e ganha 3 a cada captura', () => {
     expect(INITIAL_PLAYER.inventory.GREAT_BALL).toBe(0);
     const caught = playerReducer(onboarded(), { type: 'capture', creatureId: 'c', speciesId: 'gotinha', level: 5, at: AT });
     expect(caught.inventory.GREAT_BALL).toBe(GREAT_BALLS_PER_CAPTURE);
@@ -99,4 +99,13 @@ it('settles capture, XP and score atomically and ignores replay after restoring 
   expect(once.creatures[0]!.xp).toBe(25);
   const restored = parseStoredPlayer(JSON.stringify(once));
   expect(playerReducer(restored, action)).toBe(restored);
+});
+
+it('cada batalha resolvida entra no histórico uma vez, com resultado, Pokémon e pontos', () => {
+  const action = { type: 'settleBattle' as const, battleId: 'b1', spawnId: 's1', outcome: 'won' as const,
+    foe: { speciesId: 'faiscao', level: 12 }, endedAt: AT, points: 80, xpByCreature: {} };
+  const once = playerReducer(onboarded(), action);
+  expect(once.history).toEqual([{ battleId: 'b1', at: AT, outcome: 'won', speciesId: 'faiscao', level: 12, points: 80, captured: false }]);
+  expect(playerReducer(once, action).history).toHaveLength(1);
+  expect(parseStoredPlayer(JSON.stringify({ ...once, history: undefined })).history).toEqual([]);
 });

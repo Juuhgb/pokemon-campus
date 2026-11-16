@@ -33,14 +33,16 @@ export function CapturePage() {
     if (attempt || battle.status !== 'active' || battle.mustSwitch || ballCount(player, ball) <= 0) return;
     unlockSfx(); // no toque: libera os sons da Pokébola no celular
     dispatch({ type: 'useBall', item: ball });
-    // O resultado é calculado agora (rolagem determinística) e aplicado ao fim da animação.
-    setAttempt({ next: attemptCapture(battle, ball), ball, key: Date.now() });
+    // O resultado é calculado agora (rolagem determinística) e gravado na batalha na hora:
+    // se o app fechar durante a animação, a captura não se perde. A tela só mostra no fim.
+    const next = attemptCapture(battle, ball);
+    update(() => next);
+    setAttempt({ next, ball, key: Date.now() });
   };
 
   const apply = () => {
     if (!attempt) return null;
     const next = attempt.next;
-    update(() => next);
     setAttempt(null);
     return next;
   };

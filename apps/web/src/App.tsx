@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, type ReactNode } from 'react';
 import { AppUpdateProvider, UpdateBanner } from './app/AppUpdate.js';
 import { navigate, ROUTES, usePath } from './app/router.js';
 import { ConnectionStatus, OfflineBanner } from './components/ConnectionStatus.js';
@@ -17,10 +17,18 @@ import { StarterPage } from './features/onboarding/pages/StarterPage.js';
 import { WelcomePage } from './features/onboarding/pages/WelcomePage.js';
 import { PlayerProvider, usePlayer } from './features/player/PlayerProvider.js';
 import { ProfilePage } from './features/profile/pages/ProfilePage.js';
+import { HistoryPage } from './features/profile/pages/HistoryPage.js';
 import { RankingPage } from './features/profile/pages/RankingPage.js';
 import { SettingsPage } from './features/profile/pages/SettingsPage.js';
 
 const ONBOARDING_PATHS = new Set<string>([ROUTES.welcome, ROUTES.starter]);
+const BATTLE_PATHS = new Set<string>([ROUTES.battle, ROUTES.capture, ROUTES.battleResult]);
+
+/** A batalha em andamento fica salva no aparelho, separada por conta. */
+function GameBattleProvider({ children }: { children: ReactNode }) {
+  const { player } = usePlayer();
+  return <BattleProvider persistAs={player.googleUid ?? null}>{children}</BattleProvider>;
+}
 
 function MapScreen() {
   const { player } = usePlayer();
@@ -49,6 +57,15 @@ function PlayerRoutes() {
   const { player } = usePlayer();
   const needsOnboarding = !player.onboarded && !ONBOARDING_PATHS.has(path);
 
+  // Batalha que ficou aberta (o app fechou no meio): volta para ela até terminar.
+  const { battle } = useBattle();
+  const resumeTo = battle && player.onboarded && !BATTLE_PATHS.has(path)
+    ? (battle.status === 'active' ? ROUTES.battle : ROUTES.battleResult)
+    : null;
+  useEffect(() => {
+    if (resumeTo) navigate(resumeTo, { replace: true });
+  }, [resumeTo]);
+
   useEffect(() => {
     if (needsOnboarding) navigate(player.googleEmail ? ROUTES.starter : ROUTES.welcome, { replace: true });
     else if (player.onboarded && ONBOARDING_PATHS.has(path)) navigate(ROUTES.map, { replace: true });
@@ -64,6 +81,7 @@ function PlayerRoutes() {
     case ROUTES.team: return <TeamPage />;
     case ROUTES.profile: return <ProfilePage />;
     case ROUTES.ranking: return <RankingPage />;
+    case ROUTES.history: return <HistoryPage />;
     case ROUTES.settings: return <SettingsPage />;
     case ROUTES.battle: return <BattlePage />;
     case ROUTES.capture: return <CapturePage />;
@@ -82,11 +100,11 @@ export default function App() {
         <AdminPage headerAction={<ConnectionStatus />} />
       ) : (
         <PlayerProvider>
-          <BattleProvider>
+          <GameBattleProvider>
             <OfflineBanner />
             <OpeningMusic />
             <PlayerRoutes />
-          </BattleProvider>
+          </GameBattleProvider>
         </PlayerProvider>
       )}
     </AppUpdateProvider>

@@ -7,11 +7,11 @@ interface BallIconProps {
 }
 
 export const BALL_NAME: Record<BallItem, string> = {
-  POKE_BALL: 'Pokébola',
-  GREAT_BALL: 'Grande bola',
+  POKE_BALL: 'Poké Ball',
+  GREAT_BALL: 'Great Ball',
 };
 
-/** Pokébola (topo coral) e Grande bola (topo azul com dois riscos vermelhos). */
+/** Poké Ball (topo coral) e Great Ball (topo azul com dois riscos vermelhos). */
 export function BallIcon({ item, size = 44, className }: BallIconProps) {
   const great = item === 'GREAT_BALL';
   const inkPx = size >= 80 ? 3 : size >= 40 ? 2.5 : 2;

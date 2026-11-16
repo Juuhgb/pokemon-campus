@@ -53,7 +53,7 @@ describe('foldPlayerEvents', () => {
     expect(conflicts).toMatchObject([{ kind: 'duplicate-capture' }]);
   });
 
-  it('Grandes bolas gastas além do estoque em dois aparelhos: o excedente é descartado', () => {
+  it('Great Balls gastas além do estoque em dois aparelhos: o excedente é descartado', () => {
     const base = { ...INITIAL_PLAYER, onboarded: true, inventory: { POKE_BALL: 10, GREAT_BALL: 1 } };
     const { player, conflicts } = foldPlayerEvents(base, [
       ev('a', 1, { type: 'useBall', item: 'GREAT_BALL' }),

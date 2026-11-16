@@ -64,6 +64,14 @@ export function ProfilePage() {
         ))}
       </div>
 
+      <Link to={ROUTES.history} className="mt-3.5 flex min-h-14 items-center justify-between gap-3 rounded-[18px] sticker-sm bg-white px-4 py-3 text-tinta no-underline">
+        <span>
+          <span className="block font-display text-[19px] font-semibold">Minhas batalhas</span>
+          <span className="block text-xs font-extrabold text-tinta-suave">Histórico de capturas, vitórias e fugas</span>
+        </span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+      </Link>
+
       <section aria-labelledby="items-title" className="mt-3.5 flex flex-col gap-2.5 rounded-[22px] ink-border bg-white px-4 py-3.5">
         <h2 id="items-title" className="m-0 font-display text-[21px] font-semibold">Mochila</h2>
         {(['POKE_BALL', 'GREAT_BALL'] as BallItem[]).map((item) => (

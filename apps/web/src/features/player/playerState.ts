@@ -20,7 +20,7 @@ export type CourseSlug = (typeof COURSES)[number]['slug'];
 export type BallItem = 'POKE_BALL' | 'GREAT_BALL';
 
 export const MAX_TEAM_SIZE = 3;
-/** A Pokébola clássica é infinita; a Grande bola só se ganha capturando (3 por captura). */
+/** A Poké Ball clássica é infinita; a Great Ball só se ganha capturando (3 por captura). */
 export const UNLIMITED_BALL: BallItem = 'POKE_BALL';
 export const GREAT_BALLS_PER_CAPTURE = 3;
 export const MAX_NAME_LENGTH = 40;
@@ -35,6 +35,21 @@ export interface OwnedCreature {
   caughtAt: string;
 }
 
+/** Resultado de uma batalha, para o histórico do jogador. */
+export type BattleOutcome = 'captured' | 'won' | 'lost' | 'fled';
+
+export interface BattleRecord {
+  battleId: string;
+  /** ISO 8601. */
+  at: string | null;
+  /** null em batalhas registradas antes do histórico existir. */
+  outcome: BattleOutcome | null;
+  speciesId: string | null;
+  level: number | null;
+  points: number;
+  captured: boolean;
+}
+
 export interface PlayerState {
   version: 1;
   onboarded: boolean;
@@ -46,6 +61,8 @@ export interface PlayerState {
   score: number;
   battles: number;
   settledBattles?: string[];
+  /** Histórico das batalhas, da mais antiga para a mais recente. */
+  history: BattleRecord[];
   captures: number;
   creatures: OwnedCreature[];
   team: string[];
@@ -64,6 +81,7 @@ export const INITIAL_PLAYER: PlayerState = {
   creatures: [],
   team: [],
   inventory: { POKE_BALL: 10, GREAT_BALL: 0 },
+  history: [],
 };
 
 export type PlayerAction =
@@ -76,7 +94,7 @@ export type PlayerAction =
   | { type: 'useBall'; item: BallItem }
   | { type: 'capture'; creatureId: string; speciesId: string; level: number; at: string }
   | { type: 'battleFinished'; xpByCreature: Record<string, number>; points: number }
-  | { type: 'settleBattle'; battleId: string; spawnId?: string; xpByCreature: Record<string, number>; points: number; captured?: { creatureId: string; speciesId: string; level: number; at: string } }
+  | { type: 'settleBattle'; battleId: string; spawnId?: string; outcome?: BattleOutcome; foe?: { speciesId: string; level: number }; endedAt?: string; xpByCreature: Record<string, number>; points: number; captured?: { creatureId: string; speciesId: string; level: number; at: string } }
   | { type: 'reset' };
 
 export function newCreature(id: string, speciesId: string, level: number, at: string): OwnedCreature {
@@ -119,13 +137,13 @@ export function playerReducer(state: PlayerState, action: PlayerAction): PlayerS
       if (state.team.length <= 1) return state;
       return { ...state, team: state.team.filter((id) => id !== action.creatureId) };
     case 'useBall':
-      // Pokébola clássica: infinita, não gasta.
+      // Poké Ball clássica: infinita, não gasta.
       if (action.item === UNLIMITED_BALL || state.inventory[action.item] <= 0) return state;
       return { ...state, inventory: { ...state.inventory, [action.item]: state.inventory[action.item] - 1 } };
     case 'capture': {
       const creature = newCreature(action.creatureId, action.speciesId, action.level, action.at);
       const team = state.team.length < MAX_TEAM_SIZE ? [...state.team, creature.id] : state.team;
-      // Cada captura dá 3 Grandes bolas (a única forma de consegui-las).
+      // Cada captura dá 3 Great Balls (a única forma de consegui-las).
       const inventory = { ...state.inventory, GREAT_BALL: state.inventory.GREAT_BALL + GREAT_BALLS_PER_CAPTURE };
       return { ...state, creatures: [...state.creatures, creature], team, inventory, captures: state.captures + 1 };
     }
@@ -142,7 +160,20 @@ export function playerReducer(state: PlayerState, action: PlayerAction): PlayerS
       const captured = action.captured
         ? playerReducer(state, { type: 'capture', ...action.captured }) : state;
       const rewarded = playerReducer(captured, { type: 'battleFinished', xpByCreature: action.xpByCreature, points: action.points });
-      return { ...rewarded, settledBattles: [...(state.settledBattles ?? []), action.battleId] };
+      const record: BattleRecord = {
+        battleId: action.battleId,
+        at: action.endedAt ?? action.captured?.at ?? null,
+        outcome: action.outcome ?? (action.captured ? 'captured' : null),
+        speciesId: action.foe?.speciesId ?? action.captured?.speciesId ?? null,
+        level: action.foe?.level ?? action.captured?.level ?? null,
+        points: Math.max(0, action.points),
+        captured: Boolean(action.captured),
+      };
+      return {
+        ...rewarded,
+        settledBattles: [...(state.settledBattles ?? []), action.battleId],
+        history: [...(state.history ?? []), record],
+      };
     }
     case 'reset':
       return INITIAL_PLAYER;
@@ -156,6 +187,7 @@ export function parseStoredPlayer(raw: string | null): PlayerState {
     const value = JSON.parse(raw) as Partial<PlayerState>;
     if (value.version !== 1 || !Array.isArray(value.creatures) || !Array.isArray(value.team)) return INITIAL_PLAYER;
     const player = { ...INITIAL_PLAYER, ...value, inventory: { ...INITIAL_PLAYER.inventory, ...value.inventory } } as PlayerState;
+    if (!Array.isArray(player.history)) player.history = [];
     // Vínculo da versão antiga (login simulado, sem UID): passa a contar como não vinculado.
     if (player.googleEmail && !player.googleUid) player.googleEmail = null;
     return player;
@@ -164,12 +196,12 @@ export function parseStoredPlayer(raw: string | null): PlayerState {
   }
 }
 
-/** Quantas bolas desse tipo o jogador pode usar (Infinity para a Pokébola clássica). */
+/** Quantas bolas desse tipo o jogador pode usar (Infinity para a Poké Ball clássica). */
 export function ballCount(player: Pick<PlayerState, 'inventory'>, item: BallItem): number {
   return item === UNLIMITED_BALL ? Infinity : player.inventory[item];
 }
 
-/** Texto da quantidade: "∞" para a Pokébola clássica. */
+/** Texto da quantidade: "∞" para a Poké Ball clássica. */
 export function ballCountLabel(player: Pick<PlayerState, 'inventory'>, item: BallItem): string {
   const count = ballCount(player, item);
   return count === Infinity ? '∞' : `×${count}`;

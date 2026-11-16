@@ -37,6 +37,7 @@ export function BattleResultPage() {
     else stopMusic(true, 'battle');
     dispatch({
       type: 'settleBattle', battleId: battle.id, spawnId: battle.spawnId,
+      outcome: battle.status, foe: { speciesId: battle.foe.speciesId, level: battle.foe.level }, endedAt: new Date().toISOString(),
       xpByCreature: rewards.xpByCreature, points: rewards.points,
       captured: battle.status === 'captured' ? {
         creatureId: crypto.randomUUID(), speciesId: battle.foe.speciesId,
@@ -98,7 +99,7 @@ export function BattleResultPage() {
         <div className="flex flex-wrap gap-2">
           <span className={`rounded-xl ink-border px-3 py-1 text-sm font-extrabold ${rewards.points > 0 ? 'bg-verde' : 'bg-lilas'}`}>+{rewards.points} pts</span>
           {battle.status === 'captured' && (
-            <span className="rounded-xl ink-border bg-azul px-3 py-1 text-sm font-extrabold">+{GREAT_BALLS_PER_CAPTURE} Grandes bolas</span>
+            <span className="rounded-xl ink-border bg-azul px-3 py-1 text-sm font-extrabold">+{GREAT_BALLS_PER_CAPTURE} Great Balls</span>
           )}
           {battle.lastCapture && (
             <span className="rounded-xl ink-border bg-white px-3 py-1 text-sm font-extrabold">Última bola: {BALL_NAME[battle.lastCapture.ball]}</span>
