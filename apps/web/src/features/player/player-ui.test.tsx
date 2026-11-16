@@ -60,7 +60,7 @@ describe('CaptureThrow', () => {
     vi.useFakeTimers();
     const onContinue = vi.fn();
     render(<CaptureThrow ball="GREAT_BALL" foe={foe} shakes={3} canRetry onContinue={onContinue} onRetry={vi.fn()} onBack={vi.fn()} />);
-    expect(screen.getByRole('img', { name: 'Grande bola' })).toBeTruthy();
+    expect(screen.getByRole('img', { name: 'Great Ball' })).toBeTruthy();
     act(() => { vi.advanceTimersByTime(900 + SHAKE_INTERVAL_MS * 3); });
     expect(screen.queryByText('Pegou!')).toBeNull();
     act(() => { vi.advanceTimersByTime(SHAKE_INTERVAL_MS); });

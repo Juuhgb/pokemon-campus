@@ -7,7 +7,7 @@ import { Arena } from '../components/Arena.js';
 import { HpCard } from '../components/HpCard.js';
 import { useBattle } from '../BattleProvider.js';
 import { activeMember, attack, flee, movesOf, switchTo, type BattleState } from '../battleState.js';
-import { describeTurn, TURN_TIMING, type TurnAnimation } from '../turnAnimation.js';
+import { describeTurn, hitTimesMs, TURN_TIMING, type TurnAnimation } from '../turnAnimation.js';
 
 const TYPE_BG: Record<string, string> = {
   Normal: '#ece9f5', Planta: '#7ad88f', Água: '#6aa8ff', Fogo: '#ff8a5c', Elétrico: '#ffc23d', Voador: '#c9b8ff', Pedra: '#d9c3a0', Luz: '#ffd76a',
@@ -16,15 +16,16 @@ const TYPE_BG: Record<string, string> = {
 const bigAction = 'flex flex-col items-center justify-center gap-1 rounded-[20px] font-display text-[22px] font-bold text-tinta disabled:opacity-60';
 const delay = (seconds: number): CSSProperties => ({ animationDelay: `${seconds}s` });
 
-function DamagePop({ amount, at, className }: { amount: number; at: number; className: string }) {
+function DamagePop({ amount, at, critical = false, className }: { amount: number; at: number; critical?: boolean; className: string }) {
   if (amount <= 0) return null;
   return (
     <span
       aria-hidden="true"
-      className={`dmg-pop pointer-events-none absolute z-10 rounded-xl sticker-sm bg-white px-2.5 py-0.5 font-display text-2xl font-bold text-coral ${className}`}
+      className={`dmg-pop pointer-events-none absolute z-10 flex flex-col items-center rounded-xl sticker-sm px-2.5 py-0.5 font-display font-bold ${critical ? 'bg-amarelo text-tinta' : 'bg-white text-coral'} ${className}`}
       style={delay(at)}
     >
-      −{amount}
+      {critical && <span className="text-xs leading-none tracking-wide uppercase">Crítico!</span>}
+      <span className={critical ? 'text-[28px] leading-tight' : 'text-2xl'}>−{amount}</span>
     </span>
   );
 }
@@ -34,6 +35,8 @@ export function BattlePage() {
   const [mode, setMode] = useState<'main' | 'attack' | 'switch'>('main');
   const [anim, setAnim] = useState<TurnAnimation | null>(null);
   const animKey = useRef(0);
+  // Quais golpes do turno atual já acertaram (para descer cada barra de PV na hora certa).
+  const [landed, setLanded] = useState<{ key: number; foe: boolean; player: boolean }>({ key: -1, foe: false, player: false });
 
   useEffect(() => {
     if (!battle) {
@@ -53,6 +56,17 @@ export function BattlePage() {
     const id = window.setTimeout(() => setAnim((current) => (current?.key === anim.key ? null : current)), anim.durationMs + 50);
     return () => window.clearTimeout(id);
   }, [anim, battle?.status]);
+
+  useEffect(() => {
+    if (!anim) return;
+    const times = hitTimesMs(anim);
+    const foeId = window.setTimeout(() => setLanded((current) => ({ key: anim.key, foe: true, player: current.key === anim.key && current.player })), times.foe);
+    const playerId = window.setTimeout(() => setLanded({ key: anim.key, foe: true, player: true }), times.player);
+    return () => {
+      window.clearTimeout(foeId);
+      window.clearTimeout(playerId);
+    };
+  }, [anim]);
 
   if (!battle) return null;
 
@@ -82,6 +96,12 @@ export function BattlePage() {
   const meInnerDelay = counterAt + (anim?.playerFainted ? TURN_TIMING.faintDelay : TURN_TIMING.hitDelay);
   const turnKey = anim?.key ?? animKey.current;
 
+  // PV mostrado: o de antes do turno até o golpe acertar (o estado já tem o resultado final).
+  const foeLanded = !anim || (landed.key === anim.key && landed.foe);
+  const playerLanded = !anim || (landed.key === anim.key && landed.player);
+  const shownFoe = foeLanded ? battle.foe : { ...battle.foe, hp: anim.foeHpBefore };
+  const shownMe = playerLanded || anim.hitIndex !== battle.activeIndex ? me : { ...me, hp: anim.playerHpBefore };
+
   return (
     <main className="mx-auto flex min-h-full w-full max-w-md flex-col bg-creme text-tinta">
       <Arena height={420}>
@@ -89,7 +109,7 @@ export function BattlePage() {
           <span className="rounded-full bg-tinta px-3 py-1 font-display text-[15px] font-semibold text-amarelo">Turno {battle.turn}</span>
           <ConnectionStatus />
         </div>
-        <HpCard combatant={battle.foe} note="selvagem" className="absolute top-[62px] left-3.5" />
+        <HpCard combatant={shownFoe} note="selvagem" className="absolute top-[62px] left-3.5" />
 
         <div className="absolute top-[92px] right-[54px]">
           <div key={`foe-${turnKey}`} className={foeOuter} style={delay(counterAt)}>
@@ -97,7 +117,7 @@ export function BattlePage() {
               <CreatureBadge kind={foeSpecies.kind} image={foeSpecies.image} color={foeSpecies.color} size={108} label={foeSpecies.displayName} />
             </div>
           </div>
-          {anim && <DamagePop key={`dmg-foe-${anim.key}`} amount={anim.foeDamage} at={TURN_TIMING.hitDelay} className="-top-6 left-8" />}
+          {anim && <DamagePop key={`dmg-foe-${anim.key}`} amount={anim.foeDamage} critical={anim.playerCritical} at={TURN_TIMING.hitDelay} className="-top-6 left-8" />}
         </div>
 
         <div className="absolute top-[222px] left-11">
@@ -106,9 +126,9 @@ export function BattlePage() {
               <CreatureBadge kind={mySpecies.kind} image={mySpecies.image} color={mySpecies.color} size={124} label={mySpecies.displayName} />
             </div>
           </div>
-          {anim && <DamagePop key={`dmg-me-${anim.key}`} amount={anim.playerDamage} at={counterAt + TURN_TIMING.hitDelay} className="-top-6 left-10" />}
+          {anim && <DamagePop key={`dmg-me-${anim.key}`} amount={anim.playerDamage} critical={anim.foeCritical} at={counterAt + TURN_TIMING.hitDelay} className="-top-6 left-10" />}
         </div>
-        <HpCard combatant={me} className="absolute top-[262px] right-3.5" />
+        <HpCard combatant={shownMe} className="absolute top-[262px] right-3.5" />
       </Arena>
 
       <div className="px-4 pt-3.5">

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { TabScreen } from '../../../components/ui/BottomNav.js';
 import { CreatureBadge } from '../../../components/ui/CreatureBadge.js';
 import { ScreenTitle } from '../../../components/ui/ui.js';
-import { RARITY_CHIP, RARITY_LABEL, SPECIES } from '../../catalog/species.js';
+import { habitatOf, RARITY_CHIP, RARITY_LABEL, SPECIES } from '../../catalog/species.js';
 import type { Rarity } from '../../exploration/types.js';
 import { usePlayer } from '../../player/PlayerProvider.js';
 import { countBySpecies } from '../../player/playerState.js';
@@ -98,6 +98,7 @@ export function CollectionPage() {
                   <div className="flex flex-col gap-2 p-2">
                     <p>{species.description}</p>
                     <p>Tipo: {species.type}</p>
+                    {habitatOf(species.id) && <p>Onde encontrar: {habitatOf(species.id)}</p>}
                     <p>Golpes: {species.moves.map((move) => move.name).join(', ')}</p>
                     {player.creatures.filter((creature) => creature.speciesId === species.id).map((creature) => (
                       <p key={creature.id}>Nv. {creature.level} · PV {creature.hp}/{creature.maxHp} · {creature.xp} XP</p>

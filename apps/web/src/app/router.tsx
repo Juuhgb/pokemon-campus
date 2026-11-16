@@ -7,6 +7,7 @@ export const ROUTES = {
   team: '/equipe',
   profile: '/perfil',
   ranking: '/ranking',
+  history: '/historico',
   settings: '/configuracoes',
   welcome: '/boas-vindas',
   starter: '/inicial',

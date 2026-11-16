@@ -1,13 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import { INITIAL_PLAYER, parseStoredPlayer, playerReducer } from '../player/playerState.js';
-import { authDomainFor } from './firebaseConfig.js';
+import { authDomainFor, firebaseConfig, prefersRedirectLogin } from './firebaseConfig.js';
 import { googleAuthErrorMessage } from './googleAuth.js';
 
-describe('authDomainFor', () => {
-  it('usa o próprio domínio no site publicado e o padrão fora dele', () => {
+describe('firebaseConfig', () => {
+  it('no site publicado, o login roda no próprio endereço do jogo; fora dele, no domínio do Firebase', () => {
     expect(authDomainFor('pokecampus-uenp.web.app')).toBe('pokecampus-uenp.web.app');
     expect(authDomainFor('pokecampus-uenp.firebaseapp.com')).toBe('pokecampus-uenp.firebaseapp.com');
-    expect(authDomainFor('localhost', 'x.firebaseapp.com')).toBe('x.firebaseapp.com');
+    expect(authDomainFor('localhost')).toBe(firebaseConfig.authDomain);
+  });
+
+  it('celular e app instalado usam redirecionamento; computador usa popup', () => {
+    expect(prefersRedirectLogin('Mozilla/5.0 (Linux; Android 14) Mobile Safari', 5, false)).toBe(true);
+    expect(prefersRedirectLogin('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0)', 5, false)).toBe(true);
+    expect(prefersRedirectLogin('Mozilla/5.0 (Macintosh; Intel Mac OS X)', 5, false)).toBe(true); // iPad
+    expect(prefersRedirectLogin('Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 0, true)).toBe(true);
+    expect(prefersRedirectLogin('Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 0, false)).toBe(false);
   });
 });
 

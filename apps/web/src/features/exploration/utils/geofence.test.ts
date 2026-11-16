@@ -55,8 +55,8 @@ describe('findZoneAt', () => {
     expect(findZoneAt(CAMPUS_CENTER, CAMPUS_ZONES)).toBeNull();
   });
 
-  it('só as zonas ainda sem lugar real ficam marcadas como demonstração', () => {
+  it('todas as zonas já estão posicionadas no campus (nenhuma de demonstração)', () => {
     const demoSlugs = CAMPUS_ZONES.filter((zone: CampusZone) => zone.isDemo).map((zone) => zone.slug);
-    expect(demoSlugs).toEqual(['biologia', 'medicina-veterinaria']);
+    expect(demoSlugs).toEqual([]);
   });
 });

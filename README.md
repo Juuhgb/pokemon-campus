@@ -25,6 +25,7 @@ O app web abre em http://localhost:5173 e a API em http://localhost:3000. A rota
       game-engine/         Regras de jogo puras e determinísticas
     docs/
       CONTRACTS.md         Contratos HTTP, modelos, eventos e sincronização
+      SINCRONIZACAO.md     Online/offline: armazenamento local, sincronização, conflitos e falhas
 
 O contrato compartilhado está em docs/CONTRACTS.md e em packages/shared/src/index.ts. Os quatro integrantes devem combinar mudanças nesses contratos antes de depender deles em seus módulos.
 
@@ -37,6 +38,10 @@ A estrutura atende ao requisito central do Pokémon Campus: explorar e registrar
 - packages/game-engine reúne cálculos determinísticos para que uma ação iniciada offline possa ser reproduzida e validada pelo servidor com a mesma semente e versão das regras.
 
 Essa organização descreve o desenho do jogo; as rotas implementadas e as que ainda são especificações estão distinguidas em docs/CONTRACTS.md.
+
+## Online, offline e sincronização
+
+O progresso do jogador é um registro de eventos guardado no IndexedDB e enviado ao Cloud Firestore quando há conexão, com fila de saída, idempotência, backoff, detecção de "sem rede" e de "servidor fora" e uma política de conflitos determinística. Detalhes, política de conflitos e roteiro dos testes da apresentação: [docs/SINCRONIZACAO.md](docs/SINCRONIZACAO.md).
 
 ## Módulo de exploração (mapa, GPS e spawns)
 
@@ -76,9 +81,16 @@ Abra `http://localhost:5173/admin` (ou `https://<IP>:5173/admin` com `npm run de
 - **+ Nova zona**: toque no mapa marcando os cantos na ordem do contorno (qualquer formato, mínimo 3 pontos), dê um nome e salve.
 - Selecione uma zona (na lista ou no mapa) para editar: arraste os quadrados para mover cantos, toque nos **+** para criar cantos, toque duas vezes (ou segure) num canto para removê-lo e arraste **✥** para mover a zona inteira. Nome e cor também são editáveis.
 - "Mostrar Pokémon gerados" exibe uma prévia dos spawns simulados, que nascem dentro de cada zona e acompanham as mudanças de formato.
-- As edições são salvas automaticamente no IndexedDB deste navegador e o jogo do mesmo dispositivo passa a usá-las. Use **Exportar JSON** para compartilhar ou levar as zonas para o código/API, **Importar JSON** em outro dispositivo e **Restaurar padrão** para descartar.
+- **Cada mudança é publicada para todos os jogadores**: zonas vão para o Firestore em `mundo/zonas` e Pokémon colocados em `mundo/pokemon`. O jogo escuta esses documentos e aplica a versão nova sozinho, sem o jogador fazer nada. Cada aparelho guarda a última versão recebida, então ela continua valendo offline. Os Pokémon das zonas são gerados de forma determinística, então todos os jogadores veem os mesmos.
+- **Exportar JSON** e **Importar JSON** continuam disponíveis para backup. **Restaurar padrão** publica as zonas padrão para todos.
 
-O painel abre em desenvolvimento. Num build publicado, só com `VITE_ENABLE_ADMIN=true`. Ainda não há login de administrador nem gravação no servidor: isso depende dos módulos de autenticação e da API (ex.: `PUT /api/v1/zones`, que a API deve proteger).
+Quem pode publicar: o painel abre para qualquer um, mas só grava no servidor quem entrar com uma conta Google que tenha o documento `admins/{uid}` no Firestore. Para virar admin:
+
+1. Abra `/admin` e toque em **Entrar com Google**. O painel mostra o seu UID.
+2. Em Firebase Console → Firestore Database → **Iniciar coleção** `admins`, crie um documento com o ID igual a esse UID. Pode ficar sem campos; se o Console exigir um, use `nome` = seu nome.
+3. Recarregue o painel. Ele passa a mostrar "admin" e a publicar.
+
+As regras (`firestore.rules`) garantem que só admins escrevem em `mundo/` e que ninguém consegue se tornar admin pelo app. `VITE_ENABLE_ADMIN=false` esconde o painel num build.
 
 ### Jogar no celular
 
@@ -100,7 +112,9 @@ Publicar manualmente (do computador):
 
     npx firebase-tools login
     npm run build
-    npx firebase-tools deploy --only hosting
+    npx firebase-tools deploy --only hosting,firestore
+
+`--only firestore` publica as regras (`firestore.rules`). Antes do primeiro deploy, crie o banco uma vez em Firebase Console → Firestore Database → Criar banco de dados (modo produção, região `southamerica-east1`).
 
 Publicação automática pelo workflow `.github/workflows/ci.yml`:
 
@@ -110,7 +124,7 @@ Publicação automática pelo workflow `.github/workflows/ci.yml`:
 
 Para ativar a automática, rode uma vez `npx firebase-tools init hosting:github`, informe o repositório `Juuhgb/pokemon-campus` e **não** sobrescreva `firebase.json` nem os workflows. Ele cria o secret `FIREBASE_SERVICE_ACCOUNT_POKECAMPUS_UENP` no GitHub. Enquanto o secret não existir, os deploys são pulados sem falhar.
 
-O Firebase Hosting serve apenas o front-end. A API Fastify/PostgreSQL precisa de outra hospedagem (ex.: Cloud Run, Render ou Railway) quando o módulo de sincronização for integrado.
+O servidor remoto do jogo é o próprio Firebase (Authentication + Cloud Firestore, plano gratuito). A API Fastify/PostgreSQL continua no repositório, mas não é usada pela sincronização.
 
 ## Scripts
 

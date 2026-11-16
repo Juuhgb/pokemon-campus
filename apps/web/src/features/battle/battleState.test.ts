@@ -81,7 +81,7 @@ describe('attemptCapture', () => {
     expect(miss.team[0]!.hp).toBeLessThan(base.team[0]!.hp);
   });
 
-  it('a Grande bola tem chance maior', () => {
+  it('a Great Ball tem chance maior', () => {
     const foe = { hp: 20, maxHp: 40 };
     expect(captureChance(foe, BALL_BONUS.GREAT_BALL)).toBeGreaterThan(captureChance(foe, BALL_BONUS.POKE_BALL));
   });

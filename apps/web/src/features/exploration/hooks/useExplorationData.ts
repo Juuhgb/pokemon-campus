@@ -5,7 +5,8 @@ import type { CampusZone, ExplorationSpawn } from '../types.js';
 
 export const SPAWN_REFRESH_MS = 60_000;
 
-export function useZones(repository: ZoneRepository): CampusZone[] {
+/** `refreshKey`: quando muda, recarrega (ex.: o admin publicou zonas novas). */
+export function useZones(repository: ZoneRepository, refreshKey = 0): CampusZone[] {
   const [zones, setZones] = useState<CampusZone[]>([]);
   useEffect(() => {
     let cancelled = false;
@@ -15,7 +16,7 @@ export function useZones(repository: ZoneRepository): CampusZone[] {
     return () => {
       cancelled = true;
     };
-  }, [repository]);
+  }, [repository, refreshKey]);
   return zones;
 }
 
@@ -25,7 +26,7 @@ export interface SpawnsState {
   loading: boolean;
 }
 
-export function useSpawns(repository: SpawnRepository, refreshMs = SPAWN_REFRESH_MS): SpawnsState {
+export function useSpawns(repository: SpawnRepository, refreshMs = SPAWN_REFRESH_MS, refreshKey = 0): SpawnsState {
   const [state, setState] = useState<SpawnsState>({ spawns: [], error: null, loading: true });
 
   useEffect(() => {
@@ -45,7 +46,7 @@ export function useSpawns(repository: SpawnRepository, refreshMs = SPAWN_REFRESH
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [repository, refreshMs]);
+  }, [repository, refreshMs, refreshKey]);
 
   return state;
 }

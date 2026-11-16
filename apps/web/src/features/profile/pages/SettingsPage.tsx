@@ -3,6 +3,7 @@ import { ROUTES } from '../../../app/router.js';
 import { TabScreen } from '../../../components/ui/BottomNav.js';
 import { BackLink, buttonStyles } from '../../../components/ui/ui.js';
 import { useGoogleLink } from '../../auth/useGoogleLink.js';
+import { isMusicEnabled, setMusicEnabled } from '../../audio/music.js';
 import { usePlayer } from '../../player/PlayerProvider.js';
 import { COURSES, MAX_NAME_LENGTH, type CourseSlug } from '../../player/playerState.js';
 
@@ -12,6 +13,7 @@ export function SettingsPage() {
   const [course, setCourse] = useState<CourseSlug>(player.course);
   const [saved, setSaved] = useState(false);
   const google = useGoogleLink();
+  const [music, setMusic] = useState(isMusicEnabled);
 
   const trimmed = name.trim();
   const nameValid = trimmed.length >= 1 && trimmed.length <= MAX_NAME_LENGTH;
@@ -63,7 +65,7 @@ export function SettingsPage() {
           </>
         )}
         {google.error && <p role="alert" className="m-0 rounded-xl ink-border bg-[#ffd9cf] px-3 py-2 text-xs font-extrabold">{google.error}</p>}
-        <p className="m-0 text-xs font-bold text-tinta-suave">Login com Firebase Authentication. O progresso ainda fica neste aparelho até a API de sincronização existir.</p>
+        <p className="m-0 text-xs font-bold text-tinta-suave">Com a conta vinculada, o progresso é salvo no servidor e pode ser recuperado em outro aparelho.</p>
       </section>
 
       <section className="mt-3.5 flex flex-col gap-2 rounded-[22px] ink-border bg-white px-4 py-3.5">
@@ -114,10 +116,30 @@ export function SettingsPage() {
         <p className="m-0 text-xs font-bold text-tinta-suave">Usado no ranking “Meu curso”.</p>
       </section>
 
+      <section className="mt-3.5 flex items-center justify-between gap-3 rounded-[22px] ink-border bg-white px-4 py-3.5">
+        <span>
+          <span id="music-title" className="block font-display text-[19px] font-semibold">Músicas</span>
+          <span className="block text-xs font-bold text-tinta-suave">Abertura, batalha e vitória. Salvo neste aparelho.</span>
+        </span>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={music}
+          aria-labelledby="music-title"
+          onClick={() => {
+            setMusicEnabled(!music);
+            setMusic(!music);
+          }}
+          className={`relative h-8 w-14 shrink-0 rounded-full border-[2.5px] border-tinta transition-colors ${music ? 'bg-verde-forte' : 'bg-[#ece9f5]'}`}
+        >
+          <span aria-hidden="true" className={`absolute top-0.5 h-5 w-5 rounded-full border-2 border-tinta bg-white transition-all ${music ? 'left-[26px]' : 'left-0.5'}`} />
+        </button>
+      </section>
+
       <div className="mt-5 flex flex-col gap-2">
         {saved && (
           <p role="status" className="m-0 rounded-[14px] ink-border bg-verde px-3.5 py-2.5 text-center text-[13px] font-extrabold">
-            Salvo neste aparelho! Vai para o servidor quando a API de perfil estiver pronta.
+            Salvo! Vai para o servidor agora ou, se estiver offline, quando a conexão voltar.
           </p>
         )}
         <button type="button" onClick={save} disabled={!canSave} className={`${buttonStyles.primary} h-[58px]`}>Salvar alterações</button>
