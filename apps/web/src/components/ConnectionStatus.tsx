@@ -48,15 +48,43 @@ function useNetworkOnline(): boolean {
   return online;
 }
 
-/** Aviso em todas as telas (acima da barra inferior) quando o jogo está operando offline. */
+/** Por quanto tempo o aviso fica na tela antes de sumir sozinho. */
+export const OFFLINE_NOTICE_MS = 6_000;
+
+/**
+ * Aviso em todas as telas quando o jogo passa a operar offline. Aparece a cada mudança de
+ * estado, some sozinho depois de alguns segundos e pode ser fechado. O selo do mapa e o painel
+ * de Sincronização continuam mostrando o estado o tempo todo.
+ */
 export function OfflineBanner() {
   const { connection, enabled } = useSync();
   if (!enabled || connection === 'online') return null;
+  // `key`: um aviso novo (aberto de novo) a cada mudança de estado.
+  return <OfflineNotice key={connection} connection={connection} />;
+}
+
+function OfflineNotice({ connection }: { connection: Exclude<ConnectionState, 'online'> }) {
+  const [open, setOpen] = useState(true);
+
+  useEffect(() => {
+    const id = window.setTimeout(() => setOpen(false), OFFLINE_NOTICE_MS);
+    return () => window.clearTimeout(id);
+  }, []);
+
+  if (!open) return null;
   return (
     <div role="status" className="pointer-events-none fixed inset-x-0 bottom-[calc(max(0.875rem,env(safe-area-inset-bottom))+88px)] z-[1100] flex justify-center px-3">
-      <p className="m-0 max-w-md rounded-[14px] ink-border bg-white/95 px-3 py-1.5 text-center text-xs leading-snug font-extrabold text-tinta shadow">
-        {CONNECTION_COPY[connection].banner}
-      </p>
+      <div className="pointer-events-auto flex max-w-md items-start gap-2 rounded-[14px] ink-border bg-white/95 py-1.5 pr-1.5 pl-3 text-tinta shadow">
+        <p className="m-0 flex-1 py-0.5 text-xs leading-snug font-extrabold">{CONNECTION_COPY[connection].banner}</p>
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          aria-label="Fechar aviso"
+          className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-base leading-none font-extrabold hover:bg-creme"
+        >
+          ×
+        </button>
+      </div>
     </div>
   );
 }
