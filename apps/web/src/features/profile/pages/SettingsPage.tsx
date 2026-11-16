@@ -4,6 +4,8 @@ import { TabScreen } from '../../../components/ui/BottomNav.js';
 import { BackLink, buttonStyles } from '../../../components/ui/ui.js';
 import { useGoogleLink } from '../../auth/useGoogleLink.js';
 import { isMusicEnabled, setMusicEnabled } from '../../audio/music.js';
+import { InstallGuide } from '../../install/InstallGuide.js';
+import { isInstalled } from '../../install/installPrompt.js';
 import { usePlayer } from '../../player/PlayerProvider.js';
 import { COURSES, MAX_NAME_LENGTH, type CourseSlug } from '../../player/playerState.js';
 
@@ -14,6 +16,7 @@ export function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const google = useGoogleLink();
   const [music, setMusic] = useState(isMusicEnabled);
+  const [showInstall, setShowInstall] = useState(false);
 
   const trimmed = name.trim();
   const nameValid = trimmed.length >= 1 && trimmed.length <= MAX_NAME_LENGTH;
@@ -135,6 +138,21 @@ export function SettingsPage() {
           <span aria-hidden="true" className={`absolute top-0.5 h-5 w-5 rounded-full border-2 border-tinta bg-white transition-all ${music ? 'left-[26px]' : 'left-0.5'}`} />
         </button>
       </section>
+
+      {!isInstalled() && (
+        <button
+          type="button"
+          onClick={() => setShowInstall(true)}
+          className="mt-3.5 flex w-full items-center justify-between gap-3 rounded-[22px] ink-border bg-white px-4 py-3.5 text-left"
+        >
+          <span>
+            <span className="block font-display text-[19px] font-semibold">Colocar na tela inicial</span>
+            <span className="block text-xs font-bold text-tinta-suave">Veja como instalar o jogo como app no celular.</span>
+          </span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+        </button>
+      )}
+      {showInstall && <InstallGuide onClose={() => setShowInstall(false)} />}
 
       <div className="mt-5 flex flex-col gap-2">
         {saved && (

@@ -64,7 +64,7 @@ export function LocationPage() {
           {asking ? 'Aguardando o navegador…' : 'Permitir localização'}
         </button>
         <button type="button" onClick={() => navigate(ROUTES.map)} className={buttonStyles.link}>Agora não</button>
-        <StepDots step={3} />
+        <StepDots step={4} total={4} />
       </div>
     </main>
   );

@@ -78,6 +78,8 @@ export interface PlayerState {
   score: number;
   battles: number;
   settledBattles?: string[];
+  /** Já escolheu o curso (passo do primeiro acesso, depois do login). */
+  courseChosen?: boolean;
   /** Histórico das batalhas, da mais antiga para a mais recente. */
   history: BattleRecord[];
   captures: number;
@@ -143,7 +145,7 @@ export function playerReducer(state: PlayerState, action: PlayerAction): PlayerS
     case 'updateProfile': {
       const displayName = action.displayName.trim().slice(0, MAX_NAME_LENGTH);
       if (!displayName) return state;
-      return { ...state, displayName, course: action.course };
+      return { ...state, displayName, course: action.course, courseChosen: true };
     }
     case 'addToTeam':
       if (state.team.length >= MAX_TEAM_SIZE || state.team.includes(action.creatureId)) return state;

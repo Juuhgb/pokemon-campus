@@ -5,6 +5,7 @@ import { ConnectionStatus, OfflineBanner } from './components/ConnectionStatus.j
 import { BottomNav } from './components/ui/BottomNav.js';
 import { AdminPage, isAdminPath } from './features/admin/index.js';
 import { OpeningMusic } from './features/audio/OpeningMusic.js';
+import { FirstVisitInstallGuide } from './features/install/FirstVisitInstallGuide.js';
 import { BattleProvider, useBattle } from './features/battle/BattleProvider.js';
 import { BattlePage } from './features/battle/pages/BattlePage.js';
 import { BattleResultPage } from './features/battle/pages/BattleResultPage.js';
@@ -13,6 +14,7 @@ import { CollectionPage } from './features/collection/pages/CollectionPage.js';
 import { TeamPage } from './features/collection/pages/TeamPage.js';
 import { ExplorationPage, type EncounterStartRequest } from './features/exploration/index.js';
 import { LocationPage } from './features/onboarding/pages/LocationPage.js';
+import { CoursePage } from './features/onboarding/pages/CoursePage.js';
 import { StarterPage } from './features/onboarding/pages/StarterPage.js';
 import { WelcomePage } from './features/onboarding/pages/WelcomePage.js';
 import { PlayerProvider, usePlayer } from './features/player/PlayerProvider.js';
@@ -21,7 +23,7 @@ import { HistoryPage } from './features/profile/pages/HistoryPage.js';
 import { RankingPage } from './features/profile/pages/RankingPage.js';
 import { SettingsPage } from './features/profile/pages/SettingsPage.js';
 
-const ONBOARDING_PATHS = new Set<string>([ROUTES.welcome, ROUTES.starter]);
+const ONBOARDING_PATHS = new Set<string>([ROUTES.welcome, ROUTES.course, ROUTES.starter]);
 const BATTLE_PATHS = new Set<string>([ROUTES.battle, ROUTES.capture, ROUTES.battleResult]);
 
 /** A batalha em andamento fica salva no aparelho, separada por conta. */
@@ -67,14 +69,18 @@ function PlayerRoutes() {
   }, [resumeTo]);
 
   useEffect(() => {
-    if (needsOnboarding) navigate(player.googleEmail ? ROUTES.starter : ROUTES.welcome, { replace: true });
+    // Primeiro acesso: login → curso (uma vez) → Pokémon inicial.
+    if (needsOnboarding) navigate(!player.googleEmail ? ROUTES.welcome : player.courseChosen ? ROUTES.starter : ROUTES.course, { replace: true });
     else if (player.onboarded && ONBOARDING_PATHS.has(path)) navigate(ROUTES.map, { replace: true });
-  }, [needsOnboarding, player.onboarded, player.googleEmail, path]);
+    // Não pula o curso indo direto para a escolha do inicial.
+    else if (path === ROUTES.starter && player.googleEmail && !player.courseChosen) navigate(ROUTES.course, { replace: true });
+  }, [needsOnboarding, player.onboarded, player.googleEmail, player.courseChosen, path]);
 
   if (needsOnboarding) return null;
 
   switch (path) {
     case ROUTES.welcome: return <WelcomePage />;
+    case ROUTES.course: return <CoursePage />;
     case ROUTES.starter: return <StarterPage />;
     case ROUTES.location: return <LocationPage />;
     case ROUTES.collection: return <CollectionPage />;
@@ -103,6 +109,7 @@ export default function App() {
           <GameBattleProvider>
             <OfflineBanner />
             <OpeningMusic />
+            <FirstVisitInstallGuide />
             <PlayerRoutes />
           </GameBattleProvider>
         </PlayerProvider>
