@@ -7,11 +7,6 @@ import { getSpecies, statsAtLevel } from '../catalog/species.js';
  * O estado não é salvo direto: cada jogada vira um evento (playerEvents.ts), guardado no
  * aparelho e sincronizado com o servidor; o estado é recalculado a partir dos eventos.
  */
-
-// Cursos dos três campi, agrupados por curso no perfil e no ranking.
-// Fontes: https://vestibular.uenp.edu.br/2026/docs/static/resultado_2026/resultado/
-// e https://cct.uenp.edu.br/?page_id=25 (Licenciatura em Computação).
-// Os slugs existentes são mantidos para preservar os perfis já salvos.
 export const COURSES = [
   { slug: 'ciencia-da-computacao', label: 'Ciência da Computação', color: '#6aa8ff' },
   { slug: 'biologia', label: 'Biologia', color: '#7ad88f' },
@@ -34,6 +29,8 @@ export const COURSES = [
   { slug: 'matematica', label: 'Matemática', color: '#6aa8ff' },
   { slug: 'odontologia', label: 'Odontologia', color: '#ff8ab3' },
   { slug: 'pedagogia', label: 'Pedagogia', color: '#7ad88f' },
+  { slug: 'medicina', label: 'Medicina', color: '#ff8ab3' },
+  { slug: 'nenhum-curso', label: 'Nenhum curso', color: '#cccccc' },
 ] as const;
 
 export type CourseSlug = (typeof COURSES)[number]['slug'];
