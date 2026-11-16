@@ -15,7 +15,7 @@ import { levelFor, resumeOutput, type Level } from './output.js';
 export type Track = 'opening' | 'battle' | 'victory';
 
 export const TRACKS: Record<Track, { src: string; loop: boolean; volume: number }> = {
-  opening: { src: '/musicas/abertura.mp3', loop: false, volume: 0.035 },
+  opening: { src: '/musicas/abertura.mp3', loop: false, volume: 0.05 },
   battle: { src: '/musicas/batalha.mp3', loop: true, volume: 0.1 },
   victory: { src: '/musicas/vitoria.mp3', loop: false, volume: 0.11 },
 };
