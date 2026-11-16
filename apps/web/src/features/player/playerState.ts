@@ -8,12 +8,32 @@ import { getSpecies, statsAtLevel } from '../catalog/species.js';
  * aparelho e sincronizado com o servidor; o estado é recalculado a partir dos eventos.
  */
 
+// Cursos dos três campi, agrupados por curso no perfil e no ranking.
+// Fontes: https://vestibular.uenp.edu.br/2026/docs/static/resultado_2026/resultado/
+// e https://cct.uenp.edu.br/?page_id=25 (Licenciatura em Computação).
+// Os slugs existentes são mantidos para preservar os perfis já salvos.
 export const COURSES = [
   { slug: 'ciencia-da-computacao', label: 'Ciência da Computação', color: '#6aa8ff' },
   { slug: 'biologia', label: 'Biologia', color: '#7ad88f' },
   { slug: 'enfermagem', label: 'Enfermagem', color: '#ff8ab3' },
   { slug: 'medicina-veterinaria', label: 'Medicina Veterinária', color: '#ffc23d' },
   { slug: 'agronomia', label: 'Agronomia', color: '#c9b8ff' },
+  { slug: 'sistemas-de-informacao', label: 'Sistemas de Informação', color: '#6aa8ff' },
+  { slug: 'licenciatura-em-computacao', label: 'Licenciatura em Computação', color: '#6aa8ff' },
+  { slug: 'administracao', label: 'Administração', color: '#ffc23d' },
+  { slug: 'ciencias-contabeis', label: 'Ciências Contábeis', color: '#ffc23d' },
+  { slug: 'ciencias-economicas', label: 'Ciências Econômicas', color: '#ffc23d' },
+  { slug: 'direito', label: 'Direito', color: '#c9b8ff' },
+  { slug: 'educacao-fisica', label: 'Educação Física', color: '#ff8a5c' },
+  { slug: 'filosofia', label: 'Filosofia', color: '#c9b8ff' },
+  { slug: 'fisioterapia', label: 'Fisioterapia', color: '#ff8ab3' },
+  { slug: 'geografia', label: 'Geografia', color: '#7ad88f' },
+  { slug: 'historia', label: 'História', color: '#c9b8ff' },
+  { slug: 'letras-portugues-espanhol', label: 'Letras Português/Espanhol', color: '#ffc23d' },
+  { slug: 'letras-portugues-ingles', label: 'Letras Português/Inglês', color: '#ffc23d' },
+  { slug: 'matematica', label: 'Matemática', color: '#6aa8ff' },
+  { slug: 'odontologia', label: 'Odontologia', color: '#ff8ab3' },
+  { slug: 'pedagogia', label: 'Pedagogia', color: '#7ad88f' },
 ] as const;
 
 export type CourseSlug = (typeof COURSES)[number]['slug'];
