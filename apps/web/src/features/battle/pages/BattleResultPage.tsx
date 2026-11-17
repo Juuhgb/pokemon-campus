@@ -5,7 +5,7 @@ import { BALL_NAME } from '../../../components/ui/BallIcon.js';
 import { buttonStyles, ProgressBar } from '../../../components/ui/ui.js';
 import { getSpecies } from '../../catalog/species.js';
 import { usePlayer } from '../../player/PlayerProvider.js';
-import { xpToNextLevel } from '../../player/playerState.js';
+import { xpToNextLevel, type PlayerState } from '../../player/playerState.js';
 import { playTrack, stopMusic } from '../../audio/music.js';
 import { useBattle } from '../BattleProvider.js';
 import { greatBallReward, rewardsFor, type BattleStatus } from '../battleState.js';
@@ -16,6 +16,17 @@ const COPY: Record<Exclude<BattleStatus, 'active'>, { badge: string; title: stri
   lost: { badge: 'Fim', title: 'Sua equipe desmaiou', heroBg: '#c9b8ff', primary: { label: 'Ver equipe', to: ROUTES.team } },
   fled: { badge: 'Fuga', title: 'Você fugiu', heroBg: '#bfe3ff', primary: { label: 'Voltar a explorar', to: ROUTES.map } },
 };
+
+/** O jogador já tinha essa espécie antes desta batalha? */
+export function alreadyOwnedBefore(
+  player: Pick<PlayerState, 'creatures' | 'settledBattles'>,
+  speciesId: string,
+  battleId: string,
+): boolean {
+  const owned = player.creatures.filter((creature) => creature.speciesId === speciesId).length;
+  const thisCapture = player.settledBattles?.includes(battleId) ? 1 : 0;
+  return owned - thisCapture > 0;
+}
 
 export function BattleResultPage() {
   const { battle, end } = useBattle();
@@ -48,12 +59,17 @@ export function BattleResultPage() {
 
   if (!battle || battle.status === 'active' || !rewards) return null;
 
-  const copy = COPY[battle.status];
   const foe = getSpecies(battle.foe.speciesId);
+  // "Novo!" só quando a espécie ainda não estava no álbum. A captura desta batalha já pode
+  // estar somada (depois que o resultado foi gravado), então ela não conta.
+  const alreadyHad = battle.status === 'captured' && alreadyOwnedBefore(player, battle.foe.speciesId, battle.id);
+  const copy = alreadyHad ? { ...COPY.captured, badge: 'Repetido' } : COPY[battle.status];
   const active = getSpecies(battle.team[battle.activeIndex]!.speciesId);
   const hero = battle.status === 'captured' || battle.status === 'fled' ? foe : active;
   const subtitle = {
-    captured: `${foe.displayName} entrou para o seu álbum.`,
+    captured: alreadyHad
+      ? `Mais um ${foe.displayName} para a sua coleção.`
+      : `${foe.displayName} entrou para o seu álbum.`,
     won: `${foe.displayName} desmaiou e voltou para a natureza. Sua equipe ganhou XP, mas Pokémon derrotado não é capturado: da próxima vez, enfraqueça e use uma bola.`,
     lost: 'Sua equipe descansou e já está pronta de novo.',
     fled: `${foe.displayName} continua por perto até o spawn expirar.`,
