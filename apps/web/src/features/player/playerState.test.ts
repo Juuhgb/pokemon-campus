@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { rankingFor } from '../profile/ranking.js';
-import { countBySpecies, INITIAL_PLAYER, initials, parseStoredPlayer, playerReducer, type PlayerState, ballCount, ballCountLabel, GREAT_BALLS_PER_CAPTURE } from './playerState.js';
+import { countBySpecies, INITIAL_PLAYER, initials, parseStoredPlayer, playerReducer, type PlayerState, ballCount, ballCountLabel, LEGACY_GREAT_BALLS_PER_CAPTURE } from './playerState.js';
 
 const AT = '2026-11-04T15:00:00.000Z';
 const onboarded = (): PlayerState => playerReducer(INITIAL_PLAYER, { type: 'onboard', starterSpeciesId: 'gotinha', creatureId: 's', at: AT });
@@ -51,11 +51,18 @@ describe('playerReducer', () => {
     expect(playerReducer(used, { type: 'useBall', item: 'GREAT_BALL' })).toBe(used);
   });
 
-  it('começa sem Great Ball e ganha 3 a cada captura', () => {
+  it('começa sem Great Ball; a captura dá a Great Ball sorteada (0 ou 1)', () => {
     expect(INITIAL_PLAYER.inventory.GREAT_BALL).toBe(0);
-    const caught = playerReducer(onboarded(), { type: 'capture', creatureId: 'c', speciesId: 'gotinha', level: 5, at: AT });
-    expect(caught.inventory.GREAT_BALL).toBe(GREAT_BALLS_PER_CAPTURE);
-    expect(GREAT_BALLS_PER_CAPTURE).toBe(3);
+    const settle = (battleId: string, greatBalls?: number) => ({
+      type: 'settleBattle' as const, battleId, points: 10, xpByCreature: {}, greatBalls,
+      captured: { creatureId: `c-${battleId}`, speciesId: 'gotinha', level: 5, at: AT },
+    });
+    expect(playerReducer(onboarded(), settle('b1', 1)).inventory.GREAT_BALL).toBe(1);
+    expect(playerReducer(onboarded(), settle('b2', 0)).inventory.GREAT_BALL).toBe(0);
+    // Capturas antigas (sem o sorteio na jogada) continuam valendo as 3 de antes.
+    expect(playerReducer(onboarded(), settle('b3')).inventory.GREAT_BALL).toBe(LEGACY_GREAT_BALLS_PER_CAPTURE);
+    // Derrotar sem capturar não dá Great Ball.
+    expect(playerReducer(onboarded(), { type: 'settleBattle', battleId: 'b4', points: 10, xpByCreature: {}, greatBalls: 1 }).inventory.GREAT_BALL).toBe(0);
   });
 
   it('ao fim da batalha soma pontos, XP e sobe de nível', () => {

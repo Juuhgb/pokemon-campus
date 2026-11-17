@@ -5,10 +5,10 @@ import { BALL_NAME } from '../../../components/ui/BallIcon.js';
 import { buttonStyles, ProgressBar } from '../../../components/ui/ui.js';
 import { getSpecies } from '../../catalog/species.js';
 import { usePlayer } from '../../player/PlayerProvider.js';
-import { GREAT_BALLS_PER_CAPTURE, xpToNextLevel } from '../../player/playerState.js';
+import { xpToNextLevel } from '../../player/playerState.js';
 import { playTrack, stopMusic } from '../../audio/music.js';
 import { useBattle } from '../BattleProvider.js';
-import { rewardsFor, type BattleStatus } from '../battleState.js';
+import { greatBallReward, rewardsFor, type BattleStatus } from '../battleState.js';
 
 const COPY: Record<Exclude<BattleStatus, 'active'>, { badge: string; title: string; heroBg: string; primary: { label: string; to: string } }> = {
   captured: { badge: 'Novo!', title: 'Capturado!', heroBg: '#7ad88f', primary: { label: 'Ver no álbum', to: ROUTES.collection } },
@@ -38,7 +38,7 @@ export function BattleResultPage() {
     dispatch({
       type: 'settleBattle', battleId: battle.id, spawnId: battle.spawnId,
       outcome: battle.status, foe: { speciesId: battle.foe.speciesId, level: battle.foe.level }, endedAt: new Date().toISOString(),
-      xpByCreature: rewards.xpByCreature, points: rewards.points,
+      xpByCreature: rewards.xpByCreature, points: rewards.points, greatBalls: greatBallReward(battle),
       captured: battle.status === 'captured' ? {
         creatureId: crypto.randomUUID(), speciesId: battle.foe.speciesId,
         level: battle.foe.level, at: new Date().toISOString(),
@@ -98,8 +98,8 @@ export function BattleResultPage() {
         })}
         <div className="flex flex-wrap gap-2">
           <span className={`rounded-xl ink-border px-3 py-1 text-sm font-extrabold ${rewards.points > 0 ? 'bg-verde' : 'bg-lilas'}`}>+{rewards.points} pts</span>
-          {battle.status === 'captured' && (
-            <span className="rounded-xl ink-border bg-azul px-3 py-1 text-sm font-extrabold">+{GREAT_BALLS_PER_CAPTURE} Great Balls</span>
+          {greatBallReward(battle) > 0 && (
+            <span className="rounded-xl ink-border bg-azul px-3 py-1 text-sm font-extrabold">+1 Great Ball</span>
           )}
           {battle.lastCapture && (
             <span className="rounded-xl ink-border bg-white px-3 py-1 text-sm font-extrabold">Última bola: {BALL_NAME[battle.lastCapture.ball]}</span>

@@ -1,7 +1,7 @@
 import { captureChance } from '@pokemon-campus/game-engine';
 import { describe, expect, it } from 'vitest';
 import { newCreature } from '../player/playerState.js';
-import { attack, attemptCapture, battleSeed, BALL_BONUS, createBattle, flee, rewardsFor, shakesForMiss, switchTo, type BattleState } from './battleState.js';
+import { attack, attemptCapture, battleSeed, BALL_BONUS, createBattle, flee, rewardsFor, shakesForMiss, switchTo, type BattleState, greatBallReward } from './battleState.js';
 
 const AT = '2026-11-04T15:00:00.000Z';
 const SPAWN = { spawnId: 'mock-1-zone-0', speciesId: 'faiscao', level: 12 };
@@ -115,4 +115,19 @@ it('uses the canonical seed, independently from the signed spawn token', () => {
   expect(a.seed).toBe('canonical-seed-12345');
   expect(attack(a, 'arranhao').foe).toEqual(attack(b, 'arranhao').foe);
   expect(() => createBattle({ ...SPAWN, rulesVersion: 2 }, team)).toThrow();
+});
+
+describe('Great Ball da captura', () => {
+  it('sai em cerca de metade das capturas, sempre igual para a mesma batalha', () => {
+    let won = 0;
+    for (let index = 0; index < 2000; index += 1) {
+      const battle = { seed: `seed-${index}-xxxxxxxxxxxx`, turn: 3, status: 'captured' as const };
+      const reward = greatBallReward(battle);
+      expect(greatBallReward(battle)).toBe(reward);
+      won += reward;
+    }
+    expect(won / 2000).toBeGreaterThan(0.4);
+    expect(won / 2000).toBeLessThan(0.6);
+    expect(greatBallReward({ seed: 'seed-x-xxxxxxxxxxxx', turn: 3, status: 'won' })).toBe(0);
+  });
 });

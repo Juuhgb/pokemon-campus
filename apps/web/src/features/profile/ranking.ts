@@ -1,4 +1,4 @@
-import type { CourseSlug, PlayerState } from '../player/playerState.js';
+import { COURSES, type CampusId, type CourseSlug, type PlayerState } from '../player/playerState.js';
 
 /** Jogadores de exemplo, só enquanto o ranking do servidor nunca foi baixado neste aparelho. */
 const SAMPLE_PLAYERS: { name: string; course: CourseSlug; score: number }[] = [
@@ -38,4 +38,30 @@ export function rankingFor(player: Pick<PlayerState, 'displayName' | 'course' | 
     .filter((row) => scope === 'all' || row.course === player.course)
     .sort((a, b) => b.score - a.score || Number(b.me) - Number(a.me))
     .map((row, index) => ({ ...row, rank: index + 1 }));
+}
+
+export interface CourseTotal {
+  rank: number;
+  course: CourseSlug;
+  /** Soma dos pontos de todos os jogadores do curso. */
+  total: number;
+  players: number;
+  /** É o curso do jogador. */
+  mine: boolean;
+}
+
+/**
+ * Pontuação total de cada curso (soma dos jogadores), da maior para a menor.
+ * Só entram cursos com pelo menos um jogador; `campus` filtra por câmpus.
+ */
+export function courseTotals(rows: readonly Pick<RankingRow, 'course' | 'score' | 'me'>[], campus?: CampusId): CourseTotal[] {
+  const byCourse = new Map<CourseSlug, { total: number; players: number; mine: boolean }>();
+  for (const row of rows) {
+    const current = byCourse.get(row.course) ?? { total: 0, players: 0, mine: false };
+    byCourse.set(row.course, { total: current.total + row.score, players: current.players + 1, mine: current.mine || row.me });
+  }
+  return [...byCourse.entries()]
+    .filter(([course]) => !campus || COURSES.find((item) => item.slug === course)?.campus === campus)
+    .sort((a, b) => b[1].total - a[1].total || Number(b[1].mine) - Number(a[1].mine))
+    .map(([course, data], index) => ({ rank: index + 1, course, ...data }));
 }

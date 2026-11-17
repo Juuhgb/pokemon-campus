@@ -1,7 +1,7 @@
 import type { CreatureStats } from '@pokemon-campus/shared';
 
-/** Chance de acerto crítico por golpe (1 em 16, como nos jogos Pokémon) e quanto ele multiplica o dano. */
-export const CRITICAL_CHANCE = 1 / 16;
+/** Chance de acerto crítico por golpe (1 em 5) e quanto ele multiplica o dano. */
+export const CRITICAL_CHANCE = 1 / 5;
 export const CRITICAL_MULTIPLIER = 1.5;
 
 export interface AttackInput {

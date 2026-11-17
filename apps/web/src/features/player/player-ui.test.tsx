@@ -35,7 +35,7 @@ describe('SettingsPage', () => {
     expect(screen.getByText(/pelo menos 1 caractere/)).toBeTruthy();
 
     fireEvent.change(input, { target: { value: 'Aninha' } });
-    fireEvent.click(screen.getByRole('radio', { name: /Biologia/ }));
+    fireEvent.click(screen.getByRole('radio', { name: /Agronomia/ }));
     expect(save.disabled).toBe(false);
     fireEvent.click(save);
     expect(screen.getByRole('status').textContent).toMatch(/Salvo/);

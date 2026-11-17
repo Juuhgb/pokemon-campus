@@ -32,7 +32,7 @@ export function StarterPage() {
         </div>
         <div className="flex flex-col gap-3">
           <button type="button" onClick={finish} className={buttonStyles.primary}>Continuar</button>
-          <StepDots step={2} />
+          <StepDots step={3} total={4} />
         </div>
       </main>
     );
@@ -88,7 +88,7 @@ export function StarterPage() {
 
       <div className="mt-auto flex flex-col gap-3">
         <button type="button" onClick={() => setConfirmed(true)} className={buttonStyles.primary}>Escolher {current.displayName}</button>
-        <StepDots step={2} />
+        <StepDots step={3} total={4} />
       </div>
     </main>
   );

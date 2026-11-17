@@ -7,39 +7,85 @@ import { getSpecies, statsAtLevel } from '../catalog/species.js';
  * O estado não é salvo direto: cada jogada vira um evento (playerEvents.ts), guardado no
  * aparelho e sincronizado com o servidor; o estado é recalculado a partir dos eventos.
  */
+/** Câmpus da UENP. "Outros" guarda a opção de quem não é aluno. */
+export const CAMPUSES = [
+  { id: 'bandeirantes', label: 'Bandeirantes' },
+  { id: 'jacarezinho', label: 'Jacarezinho' },
+  { id: 'cornelio-procopio', label: 'Cornélio Procópio' },
+  { id: 'outros', label: 'Outros' },
+] as const;
+
+export type CampusId = (typeof CAMPUSES)[number]['id'];
+
+/**
+ * Cursos de graduação da UENP por câmpus (fonte: tabelas do Sisu/vestibular da UENP).
+ * Cursos que existem em mais de um câmpus têm um slug por câmpus. Os slugs antigos não mudam,
+ * para não perder o curso já salvo no progresso dos jogadores.
+ */
 export const COURSES = [
-  { slug: 'ciencia-da-computacao', label: 'Ciência da Computação', color: '#6aa8ff' },
-  { slug: 'biologia', label: 'Biologia', color: '#7ad88f' },
-  { slug: 'enfermagem', label: 'Enfermagem', color: '#ff8ab3' },
-  { slug: 'medicina-veterinaria', label: 'Medicina Veterinária', color: '#ffc23d' },
-  { slug: 'agronomia', label: 'Agronomia', color: '#c9b8ff' },
-  { slug: 'sistemas-de-informacao', label: 'Sistemas de Informação', color: '#6aa8ff' },
-  { slug: 'licenciatura-em-computacao', label: 'Licenciatura em Computação', color: '#6aa8ff' },
-  { slug: 'administracao', label: 'Administração', color: '#ffc23d' },
-  { slug: 'ciencias-contabeis', label: 'Ciências Contábeis', color: '#ffc23d' },
-  { slug: 'ciencias-economicas', label: 'Ciências Econômicas', color: '#ffc23d' },
-  { slug: 'direito', label: 'Direito', color: '#c9b8ff' },
-  { slug: 'educacao-fisica', label: 'Educação Física', color: '#ff8a5c' },
-  { slug: 'filosofia', label: 'Filosofia', color: '#c9b8ff' },
-  { slug: 'fisioterapia', label: 'Fisioterapia', color: '#ff8ab3' },
-  { slug: 'geografia', label: 'Geografia', color: '#7ad88f' },
-  { slug: 'historia', label: 'História', color: '#c9b8ff' },
-  { slug: 'letras-portugues-espanhol', label: 'Letras Português/Espanhol', color: '#ffc23d' },
-  { slug: 'letras-portugues-ingles', label: 'Letras Português/Inglês', color: '#ffc23d' },
-  { slug: 'matematica', label: 'Matemática', color: '#6aa8ff' },
-  { slug: 'odontologia', label: 'Odontologia', color: '#ff8ab3' },
-  { slug: 'pedagogia', label: 'Pedagogia', color: '#7ad88f' },
-  { slug: 'medicina', label: 'Medicina', color: '#ff8ab3' },
-  { slug: 'nenhum-curso', label: 'Nenhum curso', color: '#cccccc' },
+  // Bandeirantes (Câmpus Luiz Meneghel)
+  { slug: 'ciencia-da-computacao', label: 'Ciência da Computação', color: '#6aa8ff', campus: 'bandeirantes' },
+  { slug: 'sistemas-de-informacao', label: 'Sistemas de Informação', color: '#6aa8ff', campus: 'bandeirantes' },
+  { slug: 'licenciatura-em-computacao', label: 'Licenciatura em Computação', color: '#6aa8ff', campus: 'bandeirantes' },
+  { slug: 'agronomia', label: 'Agronomia', color: '#c9b8ff', campus: 'bandeirantes' },
+  { slug: 'biologia', label: 'Ciências Biológicas', color: '#7ad88f', campus: 'bandeirantes' },
+  { slug: 'enfermagem', label: 'Enfermagem', color: '#ff8ab3', campus: 'bandeirantes' },
+  { slug: 'medicina-veterinaria', label: 'Medicina Veterinária', color: '#ffc23d', campus: 'bandeirantes' },
+  { slug: 'fruticultura', label: 'Fruticultura', color: '#b6e388', campus: 'bandeirantes' },
+  // Jacarezinho
+  { slug: 'direito', label: 'Direito', color: '#c9b8ff', campus: 'jacarezinho' },
+  { slug: 'odontologia', label: 'Odontologia', color: '#ff8ab3', campus: 'jacarezinho' },
+  { slug: 'fisioterapia', label: 'Fisioterapia', color: '#ff8ab3', campus: 'jacarezinho' },
+  { slug: 'educacao-fisica', label: 'Educação Física', color: '#ff8a5c', campus: 'jacarezinho' },
+  { slug: 'ciencias-biologicas-jacarezinho', label: 'Ciências Biológicas', color: '#7ad88f', campus: 'jacarezinho' },
+  { slug: 'filosofia', label: 'Filosofia', color: '#c9b8ff', campus: 'jacarezinho' },
+  { slug: 'historia', label: 'História', color: '#c9b8ff', campus: 'jacarezinho' },
+  { slug: 'letras-portugues-espanhol', label: 'Letras Português/Espanhol', color: '#ffc23d', campus: 'jacarezinho' },
+  { slug: 'letras-portugues-ingles', label: 'Letras Português/Inglês', color: '#ffc23d', campus: 'jacarezinho' },
+  { slug: 'matematica', label: 'Matemática', color: '#6aa8ff', campus: 'jacarezinho' },
+  { slug: 'pedagogia', label: 'Pedagogia', color: '#7ad88f', campus: 'jacarezinho' },
+  // Cornélio Procópio
+  { slug: 'administracao', label: 'Administração', color: '#ffc23d', campus: 'cornelio-procopio' },
+  { slug: 'ciencias-contabeis', label: 'Ciências Contábeis', color: '#ffc23d', campus: 'cornelio-procopio' },
+  { slug: 'ciencias-economicas', label: 'Ciências Econômicas', color: '#ffc23d', campus: 'cornelio-procopio' },
+  { slug: 'geografia', label: 'Geografia', color: '#7ad88f', campus: 'cornelio-procopio' },
+  { slug: 'letras-portugues-ingles-cornelio', label: 'Letras Português/Inglês', color: '#ffc23d', campus: 'cornelio-procopio' },
+  { slug: 'matematica-cornelio', label: 'Matemática', color: '#6aa8ff', campus: 'cornelio-procopio' },
+  { slug: 'pedagogia-cornelio', label: 'Pedagogia', color: '#7ad88f', campus: 'cornelio-procopio' },
+  { slug: 'ciencias-biologicas-cornelio', label: 'Ciências Biológicas', color: '#7ad88f', campus: 'cornelio-procopio' },
+  { slug: 'medicina', label: 'Medicina', color: '#ff8ab3', campus: 'cornelio-procopio' },
+  // Outros
+  { slug: 'nenhum-curso', label: 'Nenhum curso', color: '#cccccc', campus: 'outros' },
 ] as const;
 
 export type CourseSlug = (typeof COURSES)[number]['slug'];
+export type CourseInfo = (typeof COURSES)[number];
+
+/** Cursos agrupados por câmpus, na ordem de CAMPUSES (para as telas de escolha). */
+export function coursesByCampus(): { campus: (typeof CAMPUSES)[number]; courses: CourseInfo[] }[] {
+  return CAMPUSES.map((campus) => ({ campus, courses: COURSES.filter((course) => course.campus === campus.id) }))
+    .filter((group) => group.courses.length > 0);
+}
+
+/** Nome do curso; com `withCampus`, inclui a cidade (cursos repetidos em mais de um câmpus). */
+export function courseLabel(slug: string, withCampus = false): string {
+  const course = COURSES.find((item) => item.slug === slug);
+  if (!course) return slug;
+  if (!withCampus || course.campus === 'outros') return course.label;
+  const campus = CAMPUSES.find((item) => item.id === course.campus)!;
+  return `${course.label} · ${campus.label}`;
+}
 export type BallItem = 'POKE_BALL' | 'GREAT_BALL';
 
 export const MAX_TEAM_SIZE = 3;
-/** A Poké Ball clássica é infinita; a Great Ball só se ganha capturando (3 por captura). */
+/**
+ * A Poké Ball clássica é infinita. A Great Ball só se ganha capturando: cada captura tem
+ * GREAT_BALL_CHANCE de dar 1 (sorteio da batalha, gravado na jogada). Capturas antigas, de
+ * antes dessa regra, continuam valendo as 3 que davam.
+ */
 export const UNLIMITED_BALL: BallItem = 'POKE_BALL';
-export const GREAT_BALLS_PER_CAPTURE = 3;
+export const GREAT_BALL_CHANCE = 0.5;
+export const LEGACY_GREAT_BALLS_PER_CAPTURE = 3;
 export const MAX_NAME_LENGTH = 40;
 
 export interface OwnedCreature {
@@ -78,6 +124,8 @@ export interface PlayerState {
   score: number;
   battles: number;
   settledBattles?: string[];
+  /** Já escolheu o curso (passo do primeiro acesso, depois do login). */
+  courseChosen?: boolean;
   /** Histórico das batalhas, da mais antiga para a mais recente. */
   history: BattleRecord[];
   captures: number;
@@ -111,7 +159,7 @@ export type PlayerAction =
   | { type: 'useBall'; item: BallItem }
   | { type: 'capture'; creatureId: string; speciesId: string; level: number; at: string }
   | { type: 'battleFinished'; xpByCreature: Record<string, number>; points: number }
-  | { type: 'settleBattle'; battleId: string; spawnId?: string; outcome?: BattleOutcome; foe?: { speciesId: string; level: number }; endedAt?: string; xpByCreature: Record<string, number>; points: number; captured?: { creatureId: string; speciesId: string; level: number; at: string } }
+  | { type: 'settleBattle'; battleId: string; spawnId?: string; outcome?: BattleOutcome; foe?: { speciesId: string; level: number }; endedAt?: string; greatBalls?: number; xpByCreature: Record<string, number>; points: number; captured?: { creatureId: string; speciesId: string; level: number; at: string } }
   | { type: 'reset' };
 
 export function newCreature(id: string, speciesId: string, level: number, at: string): OwnedCreature {
@@ -143,7 +191,7 @@ export function playerReducer(state: PlayerState, action: PlayerAction): PlayerS
     case 'updateProfile': {
       const displayName = action.displayName.trim().slice(0, MAX_NAME_LENGTH);
       if (!displayName) return state;
-      return { ...state, displayName, course: action.course };
+      return { ...state, displayName, course: action.course, courseChosen: true };
     }
     case 'addToTeam':
       if (state.team.length >= MAX_TEAM_SIZE || state.team.includes(action.creatureId)) return state;
@@ -160,9 +208,7 @@ export function playerReducer(state: PlayerState, action: PlayerAction): PlayerS
     case 'capture': {
       const creature = newCreature(action.creatureId, action.speciesId, action.level, action.at);
       const team = state.team.length < MAX_TEAM_SIZE ? [...state.team, creature.id] : state.team;
-      // Cada captura dá 3 Great Balls (a única forma de consegui-las).
-      const inventory = { ...state.inventory, GREAT_BALL: state.inventory.GREAT_BALL + GREAT_BALLS_PER_CAPTURE };
-      return { ...state, creatures: [...state.creatures, creature], team, inventory, captures: state.captures + 1 };
+      return { ...state, creatures: [...state.creatures, creature], team, captures: state.captures + 1 };
     }
     case 'battleFinished':
       // No protótipo a equipe descansa ao fim de cada batalha (PV voltam ao máximo).
@@ -174,8 +220,13 @@ export function playerReducer(state: PlayerState, action: PlayerAction): PlayerS
       };
     case 'settleBattle': {
       if (state.settledBattles?.includes(action.battleId)) return state;
-      const captured = action.captured
+      const withCreature = action.captured
         ? playerReducer(state, { type: 'capture', ...action.captured }) : state;
+      // Great Balls da captura: o sorteio vem na jogada (0 ou 1); jogadas antigas não traziam e davam 3.
+      const greatBalls = action.captured ? Math.max(0, Math.min(3, action.greatBalls ?? LEGACY_GREAT_BALLS_PER_CAPTURE)) : 0;
+      const captured = greatBalls > 0
+        ? { ...withCreature, inventory: { ...withCreature.inventory, GREAT_BALL: withCreature.inventory.GREAT_BALL + greatBalls } }
+        : withCreature;
       const rewarded = playerReducer(captured, { type: 'battleFinished', xpByCreature: action.xpByCreature, points: action.points });
       const record: BattleRecord = {
         battleId: action.battleId,

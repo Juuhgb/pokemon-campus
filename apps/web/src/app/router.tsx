@@ -10,6 +10,7 @@ export const ROUTES = {
   history: '/historico',
   settings: '/configuracoes',
   welcome: '/boas-vindas',
+  course: '/curso',
   starter: '/inicial',
   location: '/localizacao',
   battle: '/batalha',

@@ -15,7 +15,7 @@ export function WelcomePage() {
     setRestoring(true);
     void restore(account.uid).finally(() => {
       setRestoring(false);
-      navigate(ROUTES.starter);
+      navigate(ROUTES.course); // se a conta já tem progresso, o roteador leva ao mapa
     });
   }, [restore]);
   const google = useGoogleLink(afterLogin);
@@ -55,7 +55,7 @@ export function WelcomePage() {
         <p className="m-0 text-center text-[13px] leading-normal font-semibold text-tinta-suave">
           Ao continuar, você concorda com os Termos de uso e a Política de privacidade.
         </p>
-        <StepDots step={1} />
+        <StepDots step={1} total={4} />
       </div>
     </main>
   );
