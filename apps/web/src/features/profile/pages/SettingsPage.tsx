@@ -7,7 +7,8 @@ import { isMusicEnabled, setMusicEnabled } from '../../audio/music.js';
 import { InstallGuide } from '../../install/InstallGuide.js';
 import { isInstalled } from '../../install/installPrompt.js';
 import { usePlayer } from '../../player/PlayerProvider.js';
-import { COURSES, MAX_NAME_LENGTH, type CourseSlug } from '../../player/playerState.js';
+import { coursesByCampus, MAX_NAME_LENGTH, type CourseSlug } from '../../player/playerState.js';
+import { CampusHeader } from '../../../components/ui/CampusHeader.js';
 
 export function SettingsPage() {
   const { player, dispatch } = usePlayer();
@@ -95,8 +96,12 @@ export function SettingsPage() {
 
       <section aria-labelledby="course-title" className="mt-3.5 flex flex-col gap-2.5 rounded-[22px] ink-border bg-white px-4 py-3.5">
         <h2 id="course-title" className="m-0 font-display text-[19px] font-semibold">Curso</h2>
-        <div role="radiogroup" aria-labelledby="course-title" className="grid grid-cols-2 gap-2">
-          {COURSES.map((item) => {
+        <div role="radiogroup" aria-labelledby="course-title" className="flex flex-col gap-2">
+          {coursesByCampus().map(({ campus, courses }) => (
+            <div key={campus.id} className="flex flex-col gap-2">
+              <CampusHeader label={campus.label} />
+              <div className="grid grid-cols-2 gap-2">
+          {courses.map((item) => {
             const on = item.slug === course;
             return (
               <button
@@ -115,6 +120,9 @@ export function SettingsPage() {
               </button>
             );
           })}
+              </div>
+            </div>
+          ))}
         </div>
         <p className="m-0 text-xs font-bold text-tinta-suave">Usado no ranking “Meu curso”.</p>
       </section>

@@ -5,13 +5,12 @@ import { SyncPanel } from '../../../components/SyncPanel.js';
 import { SPECIES } from '../../catalog/species.js';
 import { signOutGoogle } from '../../auth/googleAuth.js';
 import { usePlayer, useSync } from '../../player/PlayerProvider.js';
-import { ballCountLabel, COURSES, countBySpecies, initials, type BallItem } from '../../player/playerState.js';
+import { ballCountLabel, courseLabel, countBySpecies, initials, type BallItem } from '../../player/playerState.js';
 import { rankingFor } from '../ranking.js';
 
 export function ProfilePage() {
   const { player, dispatch } = usePlayer();
   const sync = useSync();
-  const course = COURSES.find((item) => item.slug === player.course);
   const discovered = countBySpecies(player.creatures).size;
   const position = rankingFor(player, 'all', sync.ranking ? { entries: sync.ranking, myUid: player.googleUid ?? null } : null).find((row) => row.me)?.rank;
 
@@ -33,7 +32,7 @@ export function ProfilePage() {
         </span>
         <div className="min-w-0 flex-1">
           <h1 className="m-0 truncate font-display text-[28px] leading-tight font-bold">{player.displayName}</h1>
-          <p className="mt-0.5 mb-0 text-sm font-bold text-tinta-suave">{course?.label}</p>
+          <p className="mt-0.5 mb-0 text-sm font-bold text-tinta-suave">{courseLabel(player.course, true)}</p>
         </div>
         <Link to={ROUTES.settings} aria-label="Configurações" className="grid h-[46px] w-[46px] shrink-0 place-items-center rounded-[14px] sticker-sm bg-white text-tinta">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" /></svg>

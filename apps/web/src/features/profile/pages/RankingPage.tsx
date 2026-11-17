@@ -3,18 +3,19 @@ import { ROUTES } from '../../../app/router.js';
 import { TabScreen } from '../../../components/ui/BottomNav.js';
 import { BackLink } from '../../../components/ui/ui.js';
 import { usePlayer, useSync } from '../../player/PlayerProvider.js';
-import { COURSES, initials } from '../../player/playerState.js';
-import { rankingFor } from '../ranking.js';
+import { CAMPUSES, COURSES, courseLabel, initials, type CampusId } from '../../player/playerState.js';
+import { courseTotals, rankingFor } from '../ranking.js';
 
 const MEDALS = ['#ffc23d', '#ece9f5', '#ff8a5c'];
-const courseLabel = (slug: string) => COURSES.find((course) => course.slug === slug)?.label ?? slug;
 
 export function RankingPage() {
   const { player } = usePlayer();
   const { ranking, refreshRanking, connection } = useSync();
-  const [scope, setScope] = useState<'all' | 'course'>('all');
+  const [scope, setScope] = useState<'all' | 'course' | 'courses'>('all');
+  const [campus, setCampus] = useState<CampusId | null>(null);
   const others = ranking ? { entries: ranking, myUid: player.googleUid ?? null } : null;
-  const rows = rankingFor(player, scope, others);
+  const rows = rankingFor(player, scope === 'course' ? 'course' : 'all', others);
+  const totals = courseTotals(rankingFor(player, 'all', others), campus ?? undefined);
 
   useEffect(() => {
     if (connection === 'online') void refreshRanking();
@@ -29,8 +30,8 @@ export function RankingPage() {
         <h1 className="m-0 font-display text-[32px] leading-none font-bold">Ranking</h1>
       </header>
 
-      <div role="group" aria-label="Escopo do ranking" className="mt-4 grid grid-cols-2 gap-2">
-        {([['all', 'Geral'], ['course', 'Meu curso']] as const).map(([id, label]) => (
+      <div role="group" aria-label="Escopo do ranking" className="mt-4 grid grid-cols-3 gap-2">
+        {([['all', 'Geral'], ['course', 'Meu curso'], ['courses', 'Por curso']] as const).map(([id, label]) => (
           <button
             key={id}
             type="button"
@@ -43,6 +44,10 @@ export function RankingPage() {
         ))}
       </div>
 
+      {scope === 'courses' ? (
+        <CourseTotals totals={totals} campus={campus} onCampus={setCampus} />
+      ) : (
+      <>
       <section aria-label="Pódio" className="mt-5 grid grid-cols-3 items-end gap-2.5">
         {podium.map((row) => {
           const place = row.rank - 1;
@@ -78,17 +83,70 @@ export function RankingPage() {
             <span aria-hidden="true" className="grid h-9 w-9 place-items-center rounded-xl border-2 border-tinta bg-lilas text-[13px] font-extrabold">{initials(row.name)}</span>
             <span className="flex min-w-0 flex-1 flex-col">
               <span className="truncate text-[15px] font-extrabold">{row.name}{row.me ? ' (você)' : ''}</span>
-              <span className="text-xs font-bold text-tinta-suave">{courseLabel(row.course)}</span>
+              <span className="text-xs font-bold text-tinta-suave">{courseLabel(row.course, true)}</span>
             </span>
             <span className="font-display text-lg font-bold">{row.score.toLocaleString('pt-BR')}</span>
           </li>
         ))}
       </ol>
+      </>
+      )}
       <p className="mt-4 mb-0 text-xs font-bold text-tinta-suave">
         {!ranking
           ? 'Outros jogadores são de exemplo até o ranking ser baixado do servidor.'
           : connection === 'online' ? 'Ranking do servidor, atualizado agora.' : 'Último ranking baixado do servidor (você está offline).'}
       </p>
     </TabScreen>
+  );
+}
+
+/** Soma dos pontos de todos os jogadores de cada curso, com filtro por câmpus. */
+function CourseTotals({ totals, campus, onCampus }: {
+  totals: ReturnType<typeof courseTotals>;
+  campus: CampusId | null;
+  onCampus: (campus: CampusId | null) => void;
+}) {
+  const filters: [CampusId | null, string][] = [[null, 'Todos'], ...CAMPUSES.filter((item) => item.id !== 'outros').map((item): [CampusId, string] => [item.id, item.label])];
+  return (
+    <>
+      <div role="group" aria-label="Filtrar por câmpus" className="mt-3 flex gap-1.5 overflow-x-auto pb-1">
+        {filters.map(([id, label]) => (
+          <button
+            key={label}
+            type="button"
+            aria-pressed={campus === id}
+            onClick={() => onCampus(id)}
+            className={`h-9 shrink-0 rounded-full px-3 text-xs font-extrabold ${campus === id ? 'sticker-sm bg-azul' : 'ink-border bg-white'}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {totals.length === 0 ? (
+        <p className="mt-4 mb-0 rounded-2xl ink-border bg-white px-4 py-5 text-center text-sm font-bold text-tinta-suave">
+          Nenhum jogador desse câmpus no ranking ainda.
+        </p>
+      ) : (
+        <ol aria-label="Pontuação por curso" className="mt-3 mb-0 flex list-none flex-col gap-2 p-0">
+          {totals.map((row) => {
+            const color = COURSES.find((course) => course.slug === row.course)?.color ?? '#cccccc';
+            return (
+              <li
+                key={row.course}
+                className={`flex min-h-[56px] items-center gap-3 rounded-2xl px-3.5 py-2 ${row.mine ? 'sticker bg-amarelo' : 'ink-border bg-white'}`}
+              >
+                <span className="w-6 font-display text-lg font-bold">{row.rank}</span>
+                <span aria-hidden="true" className="h-4 w-4 shrink-0 rounded-full border-2 border-tinta" style={{ background: color }} />
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="truncate text-[15px] font-extrabold">{courseLabel(row.course, true)}{row.mine ? ' (seu curso)' : ''}</span>
+                  <span className="text-xs font-bold text-tinta-suave">{row.players} {row.players === 1 ? 'jogador' : 'jogadores'}</span>
+                </span>
+                <span className="font-display text-lg font-bold whitespace-nowrap">{row.total.toLocaleString('pt-BR')} pts</span>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+    </>
   );
 }

@@ -19,7 +19,7 @@ describe('escolha do curso no primeiro acesso', () => {
     expect(next.disabled).toBe(true);
 
     fireEvent.click(screen.getByRole('radio', { name: /Enfermagem/ }));
-    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Continuar/ }));
     expect(screen.getByTestId('state').textContent).toBe('enfermagem|true');
   });
 
