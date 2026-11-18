@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { playTrack, stopMusic } from '../../audio/music.js';
 import { TabScreen } from '../../../components/ui/BottomNav.js';
+import { EvolutionScene } from '../components/EvolutionScene.js';
 import { CreatureBadge } from '../../../components/ui/CreatureBadge.js';
 import { ScreenTitle } from '../../../components/ui/ui.js';
 import { evolutionFor, getSpecies, habitatOf, RARITY_CHIP, RARITY_LABEL, SPECIES } from '../../catalog/species.js';
@@ -152,19 +153,7 @@ export function CollectionPage() {
       </section>
       {attempt && !applied && <p role="alert">A evolução não foi aplicada ao progresso atual. Confira a sincronização no perfil.</p>}
       {error && <p role="alert">{error}</p>}
-      {reveal && (
-        <dialog ref={node => {
-          if (node && !node.open) node.showModal();
-        }}
-          onCancel={() => setDismissed(true)} aria-labelledby="evolution-title"
-          className="fixed inset-0 m-auto rounded-3xl ink-border bg-creme p-6 text-center backdrop:bg-black/50">
-          <div className="evolution-glow mx-auto grid size-36 place-items-center" aria-hidden="true">
-            {[reveal.from, reveal.to].map(id => <img key={id} className="col-start-1 row-start-1 size-32 object-contain" src={getSpecies(id).image} alt="" />)}
-          </div>
-          <h2 id="evolution-title" className="my-4 font-display text-xl">{getSpecies(reveal.from).displayName} evoluiu para {getSpecies(reveal.to).displayName}!</h2>
-          <button type="button" className="rounded-xl ink-border bg-amarelo px-5 py-2 font-bold" onClick={() => setDismissed(true)}>Continuar</button>
-        </dialog>
-      )}
+      {reveal && <EvolutionScene from={reveal.from} to={reveal.to} onClose={() => setDismissed(true)} />}
     </TabScreen>
   );
 }
