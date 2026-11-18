@@ -4,7 +4,7 @@ import { offsetByMeters } from '../utils/distance.js';
 import { evaluateEncounter, nearbySpawns } from '../utils/encounter.js';
 import { isPointInPolygon } from '../utils/geofence.js';
 import { CAMPUS_ZONES } from './campusZones.js';
-import { integrationAppearance } from './integrationEvent.js';
+import { appearances, integrationAppearance, JIRACHI_MAX_LEVEL, JIRACHI_MIN_LEVEL } from './integrationEvent.js';
 
 describe('Jirachi no XII Evento de Integração', () => {
   it.each(['2026-11-18T20:00Z', '2026-11-19T12:00Z', '2026-11-19T16:00Z'])(
@@ -46,5 +46,13 @@ describe('Jirachi no XII Evento de Integração', () => {
     for (const slug of [...CAMPUS_ZONES.map((zone) => zone.slug), undefined]) {
       expect(speciesForZone(slug).some((species) => species.id === 'jirachi')).toBe(false);
     }
+  });
+
+  it('Jirachi aparece entre os níveis 15 e 20', () => {
+    for (const { spawn } of appearances) {
+      expect(spawn.level).toBeGreaterThanOrEqual(JIRACHI_MIN_LEVEL);
+      expect(spawn.level).toBeLessThanOrEqual(JIRACHI_MAX_LEVEL);
+    }
+    expect([JIRACHI_MIN_LEVEL, JIRACHI_MAX_LEVEL]).toEqual([15, 20]);
   });
 });
