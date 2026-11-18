@@ -1,5 +1,5 @@
 import type { CampusZone, ExplorationSpawn, GeoPoint, Rarity } from '../types.js';
-import { SPECIES, speciesForZone, type SpeciesInfo } from '../../catalog/species.js';
+import { minimumWildLevel, REGULAR_SPECIES, speciesForZone, type SpeciesInfo } from '../../catalog/species.js';
 import { offsetByMeters } from '../utils/distance.js';
 import { interiorPoint, polygonAreaSquareMeters, randomPointInPolygon, seededRandom } from '../utils/zoneGeometry.js';
 import { DEFAULT_ZONES } from './defaultZones.js';
@@ -26,7 +26,7 @@ function pickSpecies(pool: readonly SpeciesInfo[], wanted: Rarity, roll: number)
     const candidates = pool.filter((species) => species.rarity === rarity);
     if (candidates.length > 0) return candidates[Math.floor(roll * candidates.length)]!;
   }
-  return SPECIES[Math.floor(roll * SPECIES.length)]!;
+  return REGULAR_SPECIES[Math.floor(roll * REGULAR_SPECIES.length)]!;
 }
 
 const LEVEL_RANGE: Record<Rarity, [number, number]> = {
@@ -53,7 +53,9 @@ function buildSpawn(
 ): ExplorationSpawn {
   const species = pickSpecies(pool, pickRarity(random()), random());
   const rarity = species.rarity;
-  const [minLevel, maxLevel] = LEVEL_RANGE[rarity];
+  const [lower, upper] = LEVEL_RANGE[rarity];
+  const minLevel = Math.max(lower, minimumWildLevel(species.id));
+  const maxLevel = Math.max(minLevel, upper);
   const spawn: ExplorationSpawn = {
     spawnId,
     speciesId: species.id,

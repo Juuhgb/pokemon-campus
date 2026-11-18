@@ -5,6 +5,7 @@ import { EncounterSheet } from '../components/EncounterSheet.js';
 import { LocationNotice } from '../components/LocationNotice.js';
 import { NearbyCards } from '../components/NearbyCards.js';
 import { createMockSpawns } from '../data/mockSpawns.js';
+import { integrationAppearance } from '../data/integrationEvent.js';
 import { useDebouncedValue } from '../hooks/useDebouncedValue.js';
 import { useSpawns, useZones } from '../hooks/useExplorationData.js';
 import { useGeolocation } from '../hooks/useGeolocation.js';
@@ -28,6 +29,7 @@ const LOCATION_HELP_MS = 5000;
 const spawnCache = createIndexedDbSpawnCache();
 
 interface ExplorationPageProps {
+  clock?: () => number;
   /** Contrato de início de encontro; implementado pelo módulo de batalha/captura. */
   onStartEncounter?: EncounterStartHandler;
   /** Padrão: spawns simulados gerados dentro das zonas atuais. */
@@ -52,8 +54,9 @@ export function ExplorationPage({
   headerAction,
   footer,
   hiddenSpawnIds = NO_HIDDEN,
+  clock = Date.now,
 }: ExplorationPageProps) {
-  const now = useNow();
+  const now = useNow(1000, clock);
   const geo = useGeolocation(locationProvider);
   // Zonas e Pokémon publicados pelo admin: a versão nova é aplicada assim que chega.
   const worldVersion = useWorldVersion(!zoneRepository);
@@ -71,7 +74,11 @@ export function ExplorationPage({
     [spawnRepository, settledZones],
   );
   const { spawns: allSpawns, error: spawnsError } = useSpawns(effectiveSpawnRepository, undefined, worldVersion);
-  const spawns = useMemo(() => allSpawns.filter((spawn) => !hiddenSpawnIds.has(spawn.spawnId)), [allSpawns, hiddenSpawnIds]);
+  const event = integrationAppearance(now);
+  const spawns = useMemo(() => {
+    const available = event ? [...allSpawns, event.spawn] : allSpawns;
+    return available.filter((spawn) => !hiddenSpawnIds.has(spawn.spawnId));
+  }, [allSpawns, event, hiddenSpawnIds]);
 
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [selectedSpawnId, setSelectedSpawnId] = useState<string | null>(null);
@@ -117,7 +124,7 @@ export function ExplorationPage({
   const startEncounter = useCallback(async (spawn: ExplorationSpawn) => {
     const position = geo.position;
     // Revalida no momento do clique (o spawn pode ter expirado ou o jogador se movido).
-    const eligibility = evaluateEncounter(spawn, position, new Date());
+    const eligibility = evaluateEncounter(spawn, position, new Date(clock()));
     if (!eligibility.allowed || !position) return;
     if (position.source === 'simulated' && !SIMULATED_LOCATION_AVAILABLE) return;
 
@@ -147,7 +154,7 @@ export function ExplorationPage({
     } finally {
       setEncounterPending(false);
     }
-  }, [geo.position, onStartEncounter, showToast]);
+  }, [geo.position, onStartEncounter, showToast, clock]);
 
   const zoneLabel = player ? (activeZone ? activeZone.name : 'Fora das zonas dos cursos') : 'Localização indisponível';
   const selectedZoneName = selectedSpawn ? zones.find((zone) => zone.id === selectedSpawn.zoneId)?.name : undefined;

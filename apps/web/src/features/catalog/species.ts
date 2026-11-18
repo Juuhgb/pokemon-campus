@@ -25,6 +25,7 @@ export interface SpeciesInfo {
   /** Imagem em /public/pokemon; sem ela, o ícone redondo é usado. */
   image?: string;
   rarity: Rarity;
+  eventOnly?: boolean;
   baseStats: { hp: number; attack: number; defense: number };
   description: string;
   moves: Move[];
@@ -32,6 +33,10 @@ export interface SpeciesInfo {
 
 const TACKLE: Move = { id: 'investida', name: 'Investida', type: 'Normal', power: 50 };
 const SCRATCH: Move = { id: 'arranhao', name: 'Arranhão', type: 'Normal', power: 35 };
+
+function artwork(pokedexNumber: number): string {
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokedexNumber}.png`;
+}
 
 export const SPECIES: SpeciesInfo[] = [
   {
@@ -238,8 +243,117 @@ export const SPECIES: SpeciesInfo[] = [
     description: 'Acalma brigas com as fitas que saem do corpo.',
     moves: [{ id: 'brilho-lunar', name: 'Brilho lunar', type: 'Fada', power: 55 }, { id: 'voz-encantada', name: 'Voz encantada', type: 'Fada', power: 45 }, TACKLE, SCRATCH],
   },
+  {
+    id: 'magnemite', number: '035', displayName: 'Magnemite', kind: 'bolt', type: 'Elétrico', color: '#a2c4db', image: artwork(81), rarity: 'common',
+    baseStats: { hp: 22, attack: 10, defense: 13 },
+    description: 'Flutua perto dos equipamentos do laboratório de computação.',
+    moves: [{ id: 'choque', name: 'Choque', type: 'Elétrico', power: 40 }, { id: 'bomba-magnetica', name: 'Bomba magnética', type: 'Aço', power: 45 }, TACKLE, SCRATCH],
+  },
+  {
+    id: 'porygon', number: '036', displayName: 'Porygon', kind: 'star', type: 'Normal', color: '#e89eab', image: artwork(137), rarity: 'uncommon',
+    baseStats: { hp: 25, attack: 12, defense: 11 },
+    description: 'Explora as redes do campus como quem passeia por um jardim.',
+    moves: [{ id: 'psico-raio', name: 'Psico-raio', type: 'Psíquico', power: 45 }, { id: 'ataque-triplo', name: 'Ataque triplo', type: 'Normal', power: 50 }, TACKLE, SCRATCH],
+  },
+  {
+    id: 'rotom', number: '037', displayName: 'Rotom', kind: 'bolt', type: 'Elétrico', color: '#ff985e', image: artwork(479), rarity: 'rare',
+    baseStats: { hp: 25, attack: 16, defense: 11 },
+    description: 'Faz as telas piscarem quando entra nos aparelhos.',
+    moves: [{ id: 'faisca', name: 'Faísca', type: 'Elétrico', power: 50 }, { id: 'bola-sombria', name: 'Bola sombria', type: 'Fantasma', power: 55 }, TACKLE, SCRATCH],
+  },
+  {
+    id: 'cutiefly', number: '038', displayName: 'Cutiefly', kind: 'wing', type: 'Inseto', color: '#f7d578', image: artwork(742), rarity: 'common',
+    baseStats: { hp: 20, attack: 10, defense: 8 },
+    description: 'Percebe a aura de quem descansa entre as aulas.',
+    moves: [{ id: 'vento-de-fada', name: 'Vento de fada', type: 'Fada', power: 40 }, { id: 'zumbido', name: 'Zumbido', type: 'Inseto', power: 45 }, TACKLE, SCRATCH],
+  },
+  {
+    id: 'audino', number: '039', displayName: 'Audino', kind: 'star', type: 'Normal', color: '#efb0bd', image: artwork(531), rarity: 'uncommon',
+    baseStats: { hp: 30, attack: 9, defense: 12 },
+    description: 'Ouve até as batidas mais suaves do coração.',
+    moves: [{ id: 'voz-encantada', name: 'Voz encantada', type: 'Fada', power: 45 }, { id: 'pancada', name: 'Pancada', type: 'Normal', power: 50 }, TACKLE, SCRATCH],
+  },
+  {
+    id: 'chansey', number: '040', displayName: 'Chansey', kind: 'star', type: 'Normal', color: '#f3acc6', image: artwork(113), rarity: 'rare',
+    baseStats: { hp: 35, attack: 9, defense: 11 },
+    description: 'Carrega um ovo e procura quem precisa de cuidados.',
+    moves: [{ id: 'pancada', name: 'Pancada', type: 'Normal', power: 50 }, { id: 'voz-encantada', name: 'Voz encantada', type: 'Fada', power: 55 }, TACKLE, SCRATCH],
+  },
+  {
+    id: 'poliwag', number: '041', displayName: 'Poliwag', kind: 'drop', type: 'Água', color: '#7fb9f2', image: artwork(60), rarity: 'common',
+    baseStats: { hp: 22, attack: 10, defense: 10 },
+    description: 'Nada perto da margem com a espiral da barriga à mostra.',
+    moves: [{ id: 'bolhas', name: 'Bolhas', type: 'Água', power: 40 }, { id: 'jato-de-agua', name: 'Jato de água', type: 'Água', power: 45 }, TACKLE, SCRATCH],
+  },
+  {
+    id: 'burmy', number: '042', displayName: 'Burmy', kind: 'leaf', type: 'Inseto', color: '#9abe72', image: artwork(412), rarity: 'uncommon',
+    baseStats: { hp: 23, attack: 9, defense: 13 },
+    description: 'Usa folhas e gravetos do campus para montar sua capa.',
+    moves: [{ id: 'picada', name: 'Picada', type: 'Inseto', power: 45 }, { id: 'investida-de-inseto', name: 'Investida de inseto', type: 'Inseto', power: 50 }, TACKLE, SCRATCH],
+  },
+  {
+    id: 'ditto', number: '043', displayName: 'Ditto', kind: 'star', type: 'Normal', color: '#c2a2df', image: artwork(132), rarity: 'rare',
+    baseStats: { hp: 26, attack: 12, defense: 12 },
+    description: 'Imita a forma dos Pokémon que observa no laboratório.',
+    moves: [{ id: 'pancada', name: 'Pancada', type: 'Normal', power: 50 }, { id: 'ataque-rapido', name: 'Ataque rápido', type: 'Normal', power: 55 }, TACKLE, SCRATCH],
+  },
+  {
+    id: 'lillipup', number: '044', displayName: 'Lillipup', kind: 'star', type: 'Normal', color: '#d4ac81', image: artwork(506), rarity: 'common',
+    baseStats: { hp: 22, attack: 11, defense: 9 },
+    description: 'Fareja as trilhas perto do setor de veterinária.',
+    moves: [{ id: 'mordida', name: 'Mordida', type: 'Sombrio', power: 40 }, { id: 'ataque-rapido', name: 'Ataque rápido', type: 'Normal', power: 45 }, TACKLE, SCRATCH],
+  },
+  {
+    id: 'mareep', number: '045', displayName: 'Mareep', kind: 'bolt', type: 'Elétrico', color: '#f5df9a', image: artwork(179), rarity: 'uncommon',
+    baseStats: { hp: 25, attack: 11, defense: 10 },
+    description: 'Acumula eletricidade estática na lã enquanto pasta.',
+    moves: [{ id: 'choque', name: 'Choque', type: 'Elétrico', power: 45 }, { id: 'faisca', name: 'Faísca', type: 'Elétrico', power: 50 }, TACKLE, SCRATCH],
+  },
+  {
+    id: 'ponyta', number: '046', displayName: 'Ponyta', kind: 'flame', type: 'Fogo', color: '#ffb778', image: artwork(77), rarity: 'rare',
+    baseStats: { hp: 25, attack: 15, defense: 10 },
+    description: 'Galopa pelos piquetes com a crina em chamas.',
+    moves: [{ id: 'brasa', name: 'Brasa', type: 'Fogo', power: 50 }, { id: 'roda-de-fogo', name: 'Roda de fogo', type: 'Fogo', power: 55 }, TACKLE, SCRATCH],
+  },
+  {
+    id: 'combee', number: '047', displayName: 'Combee', kind: 'wing', type: 'Inseto', color: '#f4c65d', image: artwork(415), rarity: 'common',
+    baseStats: { hp: 21, attack: 9, defense: 11 },
+    description: 'Visita as flores das parcelas experimentais em busca de néctar.',
+    moves: [{ id: 'rajada', name: 'Rajada', type: 'Voador', power: 40 }, { id: 'picada', name: 'Picada', type: 'Inseto', power: 45 }, TACKLE, SCRATCH],
+  },
+  {
+    id: 'drilbur', number: '048', displayName: 'Drilbur', kind: 'rock', type: 'Terra', color: '#ad9890', image: artwork(529), rarity: 'uncommon',
+    baseStats: { hp: 24, attack: 13, defense: 10 },
+    description: 'Deixa montinhos de terra na entrada dos túneis.',
+    moves: [{ id: 'tapa-de-lama', name: 'Tapa de lama', type: 'Terra', power: 45 }, { id: 'garra-de-metal', name: 'Garra de metal', type: 'Aço', power: 50 }, TACKLE, SCRATCH],
+  },
+  {
+    id: 'tropius', number: '049', displayName: 'Tropius', kind: 'leaf', type: 'Planta', color: '#95bf77', image: artwork(357), rarity: 'rare',
+    baseStats: { hp: 32, attack: 13, defense: 13 },
+    description: 'Abre as asas de folhas para tomar sol perto do pomar.',
+    moves: [{ id: 'folha-navalha', name: 'Folha navalha', type: 'Planta', power: 50 }, { id: 'rajada', name: 'Rajada', type: 'Voador', power: 55 }, TACKLE, SCRATCH],
+  },
+  {
+    id: 'jirachi', number: '050', displayName: 'Jirachi', kind: 'star', type: 'Psíquico', color: '#f6d665', image: artwork(385), rarity: 'legendary', eventOnly: true,
+    baseStats: { hp: 32, attack: 16, defense: 15 },
+    description: 'O Pokémon mítico dos desejos despertou para o XII Evento de Integração da UENP.',
+    moves: [{ id: 'psiquico', name: 'Psíquico', type: 'Psíquico', power: 55 }, { id: 'bomba-magnetica', name: 'Bomba magnética', type: 'Aço', power: 50 }, TACKLE, SCRATCH],
+  },
+  {
+    id: 'ivysaur', number: '051', displayName: 'Ivysaur', kind: 'leaf', type: 'Planta', color: '#6cbd98', image: artwork(2), rarity: 'uncommon',
+    baseStats: { hp: 28, attack: 11, defense: 13 },
+    description: 'Busca áreas ensolaradas para fortalecer o botão nas costas.',
+    moves: [{ id: 'folha-navalha', name: 'Folha navalha', type: 'Planta', power: 50 }, { id: 'chicote', name: 'Chicote de cipó', type: 'Planta', power: 45 }, TACKLE, SCRATCH],
+  },
+  {
+    id: 'venusaur', number: '052', displayName: 'Venusaur', kind: 'leaf', type: 'Planta', color: '#5da98b', image: artwork(3), rarity: 'rare',
+    baseStats: { hp: 33, attack: 14, defense: 15 },
+    description: 'A flor nas costas absorve a luz do sol e espalha seu perfume pelo campo.',
+    moves: [{ id: 'folha-navalha', name: 'Folha navalha', type: 'Planta', power: 55 }, { id: 'raio-solar', name: 'Raio solar', type: 'Planta', power: 60 }, TACKLE, SCRATCH],
+  },
 ];
 
+export const REGULAR_SPECIES = SPECIES.filter((species) => !species.eventOnly);
 const BY_ID = new Map(SPECIES.map((species) => [species.id, species]));
 
 export function getSpecies(speciesId: string): SpeciesInfo {
@@ -256,15 +370,15 @@ export function getSpecies(speciesId: string): SpeciesInfo {
  */
 export const HABITATS: Record<string, readonly string[]> = {
   // Eletricidade, tecnologia, mente e quem vira a noite programando.
-  'ciencia-da-computacao': ['faiscao', 'espurr', 'gastly', 'haunter', 'espeon', 'umbreon', 'gengar', 'mew', 'mewtwo'],
+  'ciencia-da-computacao': ['faiscao', 'espurr', 'gastly', 'haunter', 'espeon', 'umbreon', 'gengar', 'mew', 'mewtwo', 'magnemite', 'porygon', 'rotom'],
   // Cura e cuidado: fadas, canto que acalma, aura e quem vive com dor de cabeça.
-  enfermagem: ['jigglypuff', 'psyduck', 'riolu', 'clefable', 'lucario', 'sylveon'],
+  enfermagem: ['jigglypuff', 'psyduck', 'riolu', 'clefable', 'lucario', 'sylveon', 'cutiefly', 'audino', 'chansey'],
   // Vida aquática e insetos voadores do laboratório.
-  biologia: ['gotinha', 'magikarp', 'wartortle', 'butterfree', 'blastoise', 'gyarados', 'aurora'],
+  biologia: ['gotinha', 'magikarp', 'wartortle', 'butterfree', 'blastoise', 'gyarados', 'aurora', 'poliwag', 'burmy', 'ditto'],
   // Bichos que vão ao veterinário: mamíferos, roedores e lagartos.
-  'medicina-veterinaria': ['eevee', 'tandemaus', 'charmeleon', 'brasinha', 'charizard'],
+  'medicina-veterinaria': ['eevee', 'tandemaus', 'charmeleon', 'brasinha', 'charizard', 'lillipup', 'mareep', 'ponyta'],
   // Plantas, lagartas da lavoura, terra e pedra.
-  agronomia: ['brotinho', 'caterpie', 'metapod', 'cubone', 'pedregulho', 'coruja', 'leafeon'],
+  agronomia: ['brotinho', 'caterpie', 'metapod', 'cubone', 'pedregulho', 'coruja', 'leafeon', 'combee', 'drilbur', 'tropius', 'ivysaur', 'venusaur'],
 };
 
 export const HABITAT_LABEL: Record<string, string> = {
@@ -278,7 +392,7 @@ export const HABITAT_LABEL: Record<string, string> = {
 /** Espécies que podem aparecer numa zona (todas, se a zona não é de um curso). */
 export function speciesForZone(zoneSlug: string | undefined): SpeciesInfo[] {
   const ids = zoneSlug ? HABITATS[zoneSlug] : undefined;
-  return ids ? ids.map(getSpecies) : SPECIES;
+  return ids ? ids.map(getSpecies) : REGULAR_SPECIES;
 }
 
 /** Nome da zona onde a espécie aparece (null se não tem uma zona fixa). */
@@ -308,4 +422,25 @@ export const RARITY_CHIP: Record<Rarity, { bg: string; fg: string }> = {
 /** Atributos de uma criatura no nível dado (fórmula simples de protótipo). */
 export function statsAtLevel(species: SpeciesInfo, level: number) {
   return statsAtLevelV1(species.baseStats, level);
+}
+
+const EVOLUTIONS: Partial<Record<string, { target: string; level: number }>> = {
+  brotinho: { target: 'ivysaur', level: 12 },
+  ivysaur: { target: 'venusaur', level: 16 },
+  brasinha: { target: 'charmeleon', level: 8 },
+  charmeleon: { target: 'charizard', level: 16 },
+  gotinha: { target: 'wartortle', level: 12 },
+  wartortle: { target: 'blastoise', level: 16 },
+  riolu: { target: 'lucario', level: 16 },
+  magikarp: { target: 'gyarados', level: 20 },
+  gastly: { target: 'haunter', level: 12 },
+  haunter: { target: 'gengar', level: 16 },
+};
+
+export function evolutionFor(speciesId: string) {
+  return EVOLUTIONS[speciesId];
+}
+
+export function minimumWildLevel(speciesId: string): number {
+  return Object.values(EVOLUTIONS).find(rule => rule?.target === speciesId)?.level ?? 1;
 }

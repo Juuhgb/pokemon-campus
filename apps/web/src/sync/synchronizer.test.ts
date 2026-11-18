@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { PlayerEvent } from '../features/player/playerEvents.js';
+import { INITIAL_PLAYER, newCreature, countBySpecies } from '../features/player/playerState.js';
+import { foldPlayerEvents, type PlayerEvent } from '../features/player/playerEvents.js';
 import type { ConnectionPort, ConnectionState } from './connection.js';
 import { createMemoryEventStore, newStoredEvent } from './eventStore.js';
 import { RemoteError, type PlayerRemote } from './playerRemote.js';
@@ -56,6 +57,30 @@ function setup(events: PlayerEvent[] = [event('e1', 1), event('e2', 2)], uid: st
 }
 
 describe('Synchronizer', () => {
+  it('mantém o único Charmander evoluído após recusa e confirma quando o servidor aceitar', async () => {
+    const evolution: PlayerEvent = {
+      ...event('evolution', 1),
+      action: { type: 'evolveCreature', creatureId: 'starter', from: 'brasinha', to: 'charmeleon' },
+    };
+    const { store, server, sync } = setup([evolution]);
+    const initial = { ...INITIAL_PLAYER, creatures: [newCreature('starter', 'brasinha', 13, '2026-01-01')], team: ['starter'] };
+    try {
+      server.fail('permission-denied');
+      await sync.synchronize();
+      expect(store.rows.get('evolution')?.status).toBe('pending');
+      const events = (await store.all()).filter(e => e.status !== 'rejected');
+      const player = foldPlayerEvents(initial, events).player;
+      expect(player.creatures).toMatchObject([{ id: 'starter', speciesId: 'charmeleon' }]);
+      expect(countBySpecies(player.creatures)).toEqual(new Map([['brasinha', 0], ['charmeleon', 1]]));
+      server.fail(null);
+      await sync.onReconnect();
+      expect(store.rows.get('evolution')?.status).toBe('confirmed');
+      expect(server.saved.size).toBe(1);
+    } finally {
+      sync.stop();
+    }
+  });
+
   it('envia a fila em ordem e só tira da fila depois da confirmação', async () => {
     const { store, server, sync } = setup();
     await sync.synchronize();

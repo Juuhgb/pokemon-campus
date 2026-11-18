@@ -1,6 +1,6 @@
 import { applyExperience } from '@pokemon-campus/game-engine';
 export { xpToNextLevel } from '@pokemon-campus/game-engine';
-import { getSpecies, statsAtLevel } from '../catalog/species.js';
+import { evolutionFor, getSpecies, statsAtLevel } from '../catalog/species.js';
 
 /**
  * Estado do jogador e as regras de cada jogada (reducer puro).
@@ -89,6 +89,7 @@ export const LEGACY_GREAT_BALLS_PER_CAPTURE = 3;
 export const MAX_NAME_LENGTH = 40;
 
 export interface OwnedCreature {
+  previousForms?: string[];
   id: string;
   speciesId: string;
   level: number;
@@ -156,6 +157,7 @@ export type PlayerAction =
   | { type: 'updateProfile'; displayName: string; course: CourseSlug }
   | { type: 'addToTeam'; creatureId: string }
   | { type: 'removeFromTeam'; creatureId: string }
+  | { type: 'evolveCreature'; creatureId: string; from: string; to: string }
   | { type: 'useBall'; item: BallItem }
   | { type: 'capture'; creatureId: string; speciesId: string; level: number; at: string }
   | { type: 'battleFinished'; xpByCreature: Record<string, number>; points: number }
@@ -201,6 +203,16 @@ export function playerReducer(state: PlayerState, action: PlayerAction): PlayerS
       // A equipe nunca fica vazia: é preciso ter alguém para batalhar.
       if (state.team.length <= 1) return state;
       return { ...state, team: state.team.filter((id) => id !== action.creatureId) };
+    case 'evolveCreature': {
+      const creature = state.creatures.find(item => item.id === action.creatureId);
+      const rule = evolutionFor(action.from);
+      if (!creature || creature.speciesId !== action.from || !rule || rule.target !== action.to || creature.level < rule.level) return state;
+      const { maxHp } = statsAtLevel(getSpecies(action.to), creature.level);
+      const hp = creature.hp === 0 ? 0 : Math.max(1, Math.round(creature.hp * maxHp / creature.maxHp));
+      const previousForms = [...(creature.previousForms ?? []), creature.speciesId];
+      const evolved = { ...creature, previousForms, speciesId: action.to, maxHp, hp };
+      return { ...state, creatures: state.creatures.map(item => item.id === creature.id ? evolved : item) };
+    }
     case 'useBall':
       // Poké Ball clássica: infinita, não gasta.
       if (action.item === UNLIMITED_BALL || state.inventory[action.item] <= 0) return state;
@@ -278,7 +290,12 @@ export function ballCountLabel(player: Pick<PlayerState, 'inventory'>, item: Bal
 /** Quantas criaturas o jogador tem de cada espécie. */
 export function countBySpecies(creatures: readonly OwnedCreature[]): Map<string, number> {
   const counts = new Map<string, number>();
-  for (const creature of creatures) counts.set(creature.speciesId, (counts.get(creature.speciesId) ?? 0) + 1);
+  for (const creature of creatures) {
+    for (const species of creature.previousForms ?? []) {
+      if (!counts.has(species)) counts.set(species, 0);
+    }
+    counts.set(creature.speciesId, (counts.get(creature.speciesId) ?? 0) + 1);
+  }
   return counts;
 }
 

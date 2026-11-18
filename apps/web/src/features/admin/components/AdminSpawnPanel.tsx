@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getSpecies, RARITY_LABEL, SPECIES } from '../../catalog/species.js';
+import { minimumWildLevel, getSpecies, RARITY_LABEL, REGULAR_SPECIES } from '../../catalog/species.js';
 import type { GeolocationState } from '../../exploration/hooks/useGeolocation.js';
 import { ADMIN_SPAWN_DURATIONS } from '../../exploration/services/adminSpawns.js';
 import type { ExplorationSpawn } from '../../exploration/types.js';
@@ -26,7 +26,7 @@ export interface SpawnForm {
   durationMinutes: number;
 }
 
-export const DEFAULT_SPAWN_FORM: SpawnForm = { speciesId: SPECIES[0]?.id ?? 'brotinho', level: 5, durationMinutes: 120 };
+export const DEFAULT_SPAWN_FORM: SpawnForm = { speciesId: REGULAR_SPECIES[0]?.id ?? 'brotinho', level: 5, durationMinutes: 120 };
 
 const button = 'min-h-11 rounded-full px-4 text-sm font-semibold disabled:opacity-40';
 
@@ -60,10 +60,10 @@ export function AdminSpawnPanel({ admin, geo, now, picking, onTogglePicking, for
           Pokémon
           <select
             value={form.speciesId}
-            onChange={(event) => onFormChange({ ...form, speciesId: event.target.value })}
+            onChange={(event) => onFormChange({ ...form, speciesId: event.target.value, level: Math.max(form.level, minimumWildLevel(event.target.value)) })}
             className="h-11 rounded-xl border border-slate-700 bg-slate-900 px-3 text-slate-100"
           >
-            {SPECIES.map((species) => (
+            {REGULAR_SPECIES.map((species) => (
               <option key={species.id} value={species.id}>
                 #{species.number} {species.displayName} · {RARITY_LABEL[species.rarity]}
               </option>
@@ -74,10 +74,10 @@ export function AdminSpawnPanel({ admin, geo, now, picking, onTogglePicking, for
           Nível
           <input
             type="number"
-            min={1}
+            min={minimumWildLevel(form.speciesId)}
             max={100}
             value={form.level}
-            onChange={(event) => onFormChange({ ...form, level: Math.min(100, Math.max(1, Number(event.target.value) || 1)) })}
+            onChange={(event) => onFormChange({ ...form, level: Math.min(100, Math.max(minimumWildLevel(form.speciesId), Number(event.target.value) || 1)) })}
             className="h-11 rounded-xl border border-slate-700 bg-slate-900 px-3 text-slate-100"
           />
         </label>

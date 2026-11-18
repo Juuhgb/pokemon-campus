@@ -11,8 +11,11 @@ import { BattlePage } from './features/battle/pages/BattlePage.js';
 import { BattleResultPage } from './features/battle/pages/BattleResultPage.js';
 import { CapturePage } from './features/battle/pages/CapturePage.js';
 import { CollectionPage } from './features/collection/pages/CollectionPage.js';
+import { CollectionSimulation } from './features/collection/pages/CollectionSimulation.js';
 import { TeamPage } from './features/collection/pages/TeamPage.js';
 import { ExplorationPage, type EncounterStartRequest } from './features/exploration/index.js';
+import { IntegrationAnnouncement } from './features/exploration/components/IntegrationAnnouncement.js';
+import { IntegrationSimulation } from './features/exploration/pages/IntegrationSimulation.js';
 import { LocationPage } from './features/onboarding/pages/LocationPage.js';
 import { CoursePage } from './features/onboarding/pages/CoursePage.js';
 import { StarterPage } from './features/onboarding/pages/StarterPage.js';
@@ -98,6 +101,8 @@ function PlayerRoutes() {
 
 export default function App() {
   const path = usePath();
+  if (import.meta.env.DEV && path === '/simular-jirachi') return <IntegrationSimulation />;
+  if (import.meta.env.DEV && path === '/simular-evolucao') return <CollectionSimulation />;
 
   return (
     <AppUpdateProvider>
@@ -111,6 +116,7 @@ export default function App() {
             <OpeningMusic />
             <FirstVisitInstallGuide />
             <PlayerRoutes />
+            <IntegrationAnnouncement />
           </GameBattleProvider>
         </PlayerProvider>
       )}

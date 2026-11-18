@@ -97,3 +97,51 @@ describe('progresso por conta', () => {
     expect(keepsLocalProgress(null, 'conta-b')).toBe(false); // jogado sem conta: não passa para a conta
   });
 });
+
+describe('evolução por exemplar', () => {
+  it.each([
+    ['brotinho', 'ivysaur', 12],
+    ['ivysaur', 'venusaur', 16],
+    ['riolu', 'lucario', 16],
+    ['magikarp', 'gyarados', 20],
+    ['gastly', 'haunter', 12],
+    ['haunter', 'gengar', 16],
+  ] as const)('evolui %s para %s a partir do nível %i', (from, to, level) => {
+    const player = {
+      ...INITIAL_PLAYER,
+      creatures: [newCreature('ready', from, level, AT), newCreature('early', from, level - 1, AT)],
+    };
+    const evolved = foldPlayerEvents(player, [
+      ev('a', 1, { type: 'evolveCreature', creatureId: 'early', from, to }),
+      ev('a', 2, { type: 'evolveCreature', creatureId: 'ready', from, to }),
+    ]).player;
+
+    expect(evolved.creatures[0]).toMatchObject({ id: 'ready', speciesId: to, level });
+    expect(evolved.creatures[1]).toEqual(player.creatures[1]);
+  });
+
+  const creature = newCreature('a', 'brasinha', 8, AT);
+  const base = { ...INITIAL_PLAYER, creatures: [{ ...creature, xp: 17 }, newCreature('b', 'brasinha', 7, AT)], team: ['a'] };
+  const action = { type: 'evolveCreature', creatureId: 'a', from: 'brasinha', to: 'charmeleon' } as const;
+
+  it('aplica uma vez mesmo em dois aparelhos e preserva equipe, XP e data de captura', () => {
+    const first = ev('a', 1, action);
+    const second = ev('b', 2, action);
+    const { player } = foldPlayerEvents(base, [second, first]);
+    expect(player.creatures[0]).toMatchObject({ id: 'a', speciesId: 'charmeleon', level: 8, xp: 17, caughtAt: AT });
+    expect(player.creatures[1]).toEqual(base.creatures[1]);
+    expect(player.team).toEqual(['a']);
+    expect(player.captures).toBe(0);
+  });
+
+  it('recusa nível insuficiente e salto direto para a forma final', () => {
+    expect(foldPlayerEvents(base, [ev('a', 1, { ...action, creatureId: 'b' })]).player).toBe(base);
+    expect(foldPlayerEvents(base, [ev('a', 1, { ...action, to: 'charizard' })]).player).toBe(base);
+  });
+
+  it('permite a segunda evolução no nível 16', () => {
+    const ready = { ...base, creatures: [newCreature('a', 'wartortle', 16, AT)] };
+    const result = foldPlayerEvents(ready, [ev('a', 1, { ...action, from: 'wartortle', to: 'blastoise' })]);
+    expect(result.player.creatures[0]?.speciesId).toBe('blastoise');
+  });
+});

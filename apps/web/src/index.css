@@ -269,3 +269,31 @@ button:disabled {
     animation: none;
   }
 }
+
+.evolution-glow { position: relative; isolation: isolate; border-radius: 50%; background: radial-gradient(circle, #fff2a8 15%, transparent 70%); }
+.evolution-glow::before {
+  content: ''; position: absolute; inset: 10%; border: 3px solid #ffc23d; border-radius: 50%;
+  z-index: -1; animation: evolution-ring 4.8s both;
+}
+.evolution-glow img:first-child { animation: evolution-away 4.8s both; }
+.evolution-glow img:last-child { animation: evolution-arrive 4.8s both; }
+@keyframes evolution-ring {
+  0%, 35% { opacity: 0; transform: scale(.6); }
+  52% { opacity: .85; }
+  78%, 100% { opacity: 0; transform: scale(1.4); }
+}
+@keyframes evolution-away {
+  0%, 12% { opacity: 1; transform: scale(1); }
+  40% { opacity: 1; transform: scale(1.08); filter: brightness(0) invert(1) drop-shadow(0 0 12px gold); }
+  55%, 100% { opacity: 0; }
+}
+@keyframes evolution-arrive {
+  0%, 40% { opacity: 0; transform: scale(.84); }
+  55% { opacity: 1; filter: brightness(0) invert(1) drop-shadow(0 0 16px gold); }
+  72% { transform: scale(1.08); }
+  86%, 100% { opacity: 1; transform: scale(1); filter: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .evolution-glow::before, .evolution-glow img:first-child { display: none; }
+  .evolution-glow img:last-child { animation: none; }
+}

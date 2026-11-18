@@ -12,7 +12,7 @@ import { ballCount, INITIAL_PLAYER, playerReducer, type PlayerAction, type Playe
 /** Ações que fazem parte do progresso e vão para o servidor. */
 export type SyncedAction = Extract<
   PlayerAction,
-  { type: 'onboard' | 'updateProfile' | 'addToTeam' | 'removeFromTeam' | 'useBall' | 'settleBattle' }
+  { type: 'onboard' | 'updateProfile' | 'addToTeam' | 'removeFromTeam' | 'evolveCreature' | 'useBall' | 'settleBattle' }
 >;
 
 /** Progresso salvo antes da sincronização existir: entra uma vez como evento. */
@@ -37,7 +37,7 @@ export interface PlayerEvent {
   basis?: string | null;
 }
 
-const SYNCED_TYPES = new Set<string>(['onboard', 'updateProfile', 'addToTeam', 'removeFromTeam', 'useBall', 'settleBattle']);
+const SYNCED_TYPES = new Set<string>(['onboard', 'updateProfile', 'addToTeam', 'removeFromTeam', 'useBall', 'evolveCreature', 'settleBattle']);
 
 export function isSyncedAction(action: PlayerAction): action is SyncedAction {
   return SYNCED_TYPES.has(action.type);

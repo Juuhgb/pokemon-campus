@@ -32,7 +32,7 @@ interface Identity {
 
 interface PlayerContextValue {
   player: PlayerState;
-  dispatch: (action: PlayerAction) => void;
+  dispatch: (action: PlayerAction) => void | boolean | Promise<boolean>;
 }
 
 export interface SyncStatus {
@@ -160,6 +160,7 @@ function MemoryPlayerProvider({ children, initial }: { children: ReactNode; init
     if (playerReducer(playerRef.current, action) === playerRef.current) return;
     const event = newStoredEvent({ id: crypto.randomUUID(), deviceId: 'test', at: Date.now(), action });
     setEvents((current) => [...current, event]);
+    return true;
   }, []);
   return <PlayerContext.Provider value={{ player, dispatch }}>{children}</PlayerContext.Provider>;
 }
@@ -311,6 +312,13 @@ function SyncedPlayerProvider({ children }: { children: ReactNode }) {
         if (!isSyncedAction(action)) return;
         if (playerReducer(playerRef.current, action) === playerRef.current) return; // jogada sem efeito
         const event: PlayerEvent = { id: crypto.randomUUID(), deviceId, at: Date.now(), action };
+        if (action.type === 'evolveCreature') {
+          return dexieEventStore.add(event).then((stored) => {
+            setFresh(current => [...current, stored]);
+            void engineRef.current?.synchronizer.synchronize();
+            return true;
+          });
+        }
         if (action.type === 'updateProfile') event.basis = lastProfileEventId(eventsRef.current);
         // Grava no aparelho primeiro; o envio acontece em seguida (ou quando a conexão voltar).
         setFresh((current) => [...current, newStoredEvent(event)]);

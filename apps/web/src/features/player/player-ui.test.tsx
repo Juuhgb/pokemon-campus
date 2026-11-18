@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import * as music from '../audio/music.js';
 import { CaptureThrow, SHAKE_INTERVAL_MS } from '../battle/components/CaptureThrow.js';
 import { toCombatant } from '../battle/battleState.js';
 import { CollectionPage } from '../collection/pages/CollectionPage.js';
@@ -90,4 +91,33 @@ it('shows owned species details in the Pokedex and keeps unknown species hidden'
   // A espécie de id "brasinha" é exibida como Charmander no catálogo atual.
   fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'Charmander' } });
   expect(screen.getAllByText('Ver na Pokédex')).toHaveLength(1);
+});
+
+it('evolui o exemplar pelo álbum e revela a nova forma', async () => {
+  const play = vi.spyOn(music, 'playTrack').mockResolvedValue(true);
+  const stop = vi.spyOn(music, 'stopMusic').mockImplementation(() => {});
+  Object.defineProperty(HTMLDialogElement.prototype, 'showModal', {
+    configurable: true,
+    value(this: HTMLDialogElement) { this.open = true; },
+  });
+  try {
+    render(<PlayerProvider initial={player}><CollectionPage /></PlayerProvider>);
+    const evolve = screen.getByText('Evoluir para Charmeleon');
+    evolve.closest('details')!.open = true;
+    fireEvent.click(evolve);
+    const dialog = await screen.findByRole('dialog', { name: 'Charmander evoluiu para Charmeleon!' });
+    expect(dialog.querySelectorAll('img')).toHaveLength(2);
+    expect(play).toHaveBeenCalledExactlyOnceWith('evolution');
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    expect(stop).toHaveBeenCalledWith(false, 'evolution');
+    expect(screen.getByText('Charmander', { selector: 'h2' })).toBeTruthy();
+    expect(screen.getByText('Registrado')).toBeTruthy();
+    expect(screen.queryByText('Evoluir para Charmeleon')).toBeNull();
+    expect(screen.getByText('Charmeleon', { selector: 'h2' })).toBeTruthy();
+    expect(screen.getByText('Evolui no Nv. 16')).toBeTruthy();
+  } finally {
+    Reflect.deleteProperty(HTMLDialogElement.prototype, 'showModal');
+    play.mockRestore();
+    stop.mockRestore();
+  }
 });
