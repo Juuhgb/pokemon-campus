@@ -26,8 +26,8 @@ describe('createAdminSpawn', () => {
     });
   });
 
-  it('limita o nível entre 1 e 100', () => {
-    expect(createAdminSpawn({ speciesId: 'gotinha', level: 0, point: HERE, durationMinutes: 30, now: NOW }).level).toBe(1);
+  it('respeita o mínimo da espécie e o limite de nível 100', () => {
+    expect(createAdminSpawn({ speciesId: 'charmeleon', level: 0, point: HERE, durationMinutes: 30, now: NOW }).level).toBe(8);
     expect(createAdminSpawn({ speciesId: 'gotinha', level: 500, point: HERE, durationMinutes: 30, now: NOW }).level).toBe(100);
   });
 });

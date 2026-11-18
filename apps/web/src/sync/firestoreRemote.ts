@@ -74,7 +74,7 @@ function toEvent(id: string, data: Record<string, unknown>): PlayerEvent | null 
 }
 
 function eventsFrom(snapshot: QuerySnapshot): PlayerEvent[] {
-  return snapshot.docs.map((doc) => toEvent(doc.id, doc.data())).filter((event) => event !== null);
+  return snapshot.docs.filter(doc => !doc.metadata.hasPendingWrites).map((doc) => toEvent(doc.id, doc.data())).filter((event) => event !== null);
 }
 
 export const firestoreRemote: PlayerRemote = {

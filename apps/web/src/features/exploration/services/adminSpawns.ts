@@ -1,4 +1,4 @@
-import { getSpecies } from '../../catalog/species.js';
+import { minimumWildLevel, getSpecies } from '../../catalog/species.js';
 import { database } from '../../../sync/database.js';
 import type { ExplorationSpawn, GeoPoint } from '../types.js';
 import type { SpawnQuery, SpawnRepository } from './spawnRepository.js';
@@ -33,7 +33,7 @@ export interface NewAdminSpawn {
 
 export function createAdminSpawn({ speciesId, level, point, durationMinutes, now = new Date(), id = crypto.randomUUID() }: NewAdminSpawn): ExplorationSpawn {
   const species = getSpecies(speciesId);
-  const clampedLevel = Math.min(100, Math.max(1, Math.round(level)));
+  const clampedLevel = Math.min(100, Math.max(minimumWildLevel(speciesId), Math.round(level)));
   return {
     spawnId: `${ADMIN_SPAWN_PREFIX}${id}`,
     speciesId,

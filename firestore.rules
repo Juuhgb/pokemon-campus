@@ -28,7 +28,7 @@ service cloud.firestore {
         && e.deviceId is string && e.deviceId.size() <= 64
         && e.at is number
         && e.action is map
-        && e.action.type in ['onboard', 'updateProfile', 'addToTeam', 'removeFromTeam', 'useBall', 'settleBattle', 'importLegacy']
+        && e.action.type in ['onboard', 'updateProfile', 'addToTeam', 'removeFromTeam', 'useBall', 'evolveCreature', 'settleBattle', 'importLegacy']
         && (!('basis' in e) || e.basis == null || e.basis is string)
         && e.recebidoEm == request.time;
     }

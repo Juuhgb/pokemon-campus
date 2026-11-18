@@ -98,6 +98,18 @@ export class Synchronizer {
           this.connection.markServerResponding();
           return true;
         }
+        if (arrived === false && event.action.type === 'evolveCreature') {
+          // A evolução já foi salva no aparelho. Uma versão anterior das regras
+          // pode recusar esse tipo de evento até a atualização do servidor.
+          await this.store.update(event.id, {
+            status: 'pending',
+            attempts: event.attempts + 1,
+            nextAttemptAt: this.now() + 15 * 60_000,
+            error: 'Evolução salva no aparelho. O servidor recusou a sincronização.',
+          });
+          this.notify();
+          return true;
+        }
         if (arrived === false) {
           await this.store.update(event.id, { status: 'rejected', error: 'Recusado pelo servidor' });
           this.notify();

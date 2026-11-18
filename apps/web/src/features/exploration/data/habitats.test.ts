@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getSpecies, habitatOf, HABITATS, SPECIES } from '../../catalog/species.js';
+import { getSpecies, habitatOf, HABITATS, REGULAR_SPECIES } from '../../catalog/species.js';
 import { CAMPUS_ZONES } from './campusZones.js';
 import { createMockSpawns, MOCK_SLOT_MS } from './mockSpawns.js';
 
@@ -21,7 +21,7 @@ function spawnedByZone(rounds = 800) {
 describe('cada Pokémon na zona do curso que combina com ele', () => {
   it('toda espécie mora em exatamente uma zona de curso', () => {
     const all = Object.values(HABITATS).flat();
-    expect([...all].sort()).toEqual(SPECIES.map((species) => species.id).sort());
+    expect([...all].sort()).toEqual(REGULAR_SPECIES.map((species) => species.id).sort());
     expect(new Set(all).size).toBe(all.length);
     expect(Object.keys(HABITATS).sort()).toEqual(CAMPUS_ZONES.map((zone) => zone.slug).sort());
   });
@@ -38,6 +38,17 @@ describe('cada Pokémon na zona do curso que combina com ele', () => {
     for (const [slug, ids] of Object.entries(HABITATS)) {
       expect([...(byZone.get(slug) ?? [])].sort()).toEqual([...ids].sort());
     }
+  });
+
+  it.each([
+    ['ciencia-da-computacao', 'magnemite', 'porygon', 'rotom'],
+    ['enfermagem', 'cutiefly', 'audino', 'chansey'],
+    ['biologia', 'poliwag', 'burmy', 'ditto'],
+    ['medicina-veterinaria', 'lillipup', 'mareep', 'ponyta'],
+    ['agronomia', 'combee', 'drilbur', 'tropius'],
+  ])('associa os novos Pokémon de %s às raridades previstas', (slug, common, uncommon, rare) => {
+    expect(HABITATS[slug]).toEqual(expect.arrayContaining([common, uncommon, rare]));
+    expect([common, uncommon, rare].map((id) => getSpecies(id).rarity)).toEqual(['common', 'uncommon', 'rare']);
   });
 
   it('o nível acompanha a raridade da espécie sorteada', () => {
