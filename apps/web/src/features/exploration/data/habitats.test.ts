@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { getSpecies, habitatOf, HABITATS, REGULAR_SPECIES, SPECIES } from '../../catalog/species.js';
 import { polygonAreaSquareMeters } from '../utils/zoneGeometry.js';
 import { CAMPUS_ZONES } from './campusZones.js';
-import { createMockSpawns, MOCK_SLOT_MS } from './mockSpawns.js';
+import { createMockSpawns, pickRarity, MOCK_SLOT_MS } from './mockSpawns.js';
 
 it('gera dois encontros extras por zona e troca a rodada aos 20 minutos', () => {
   const at = (time: string) => createMockSpawns(new Date('2026-11-18T14:' + time + 'Z'), CAMPUS_ZONES)
@@ -86,4 +86,9 @@ describe('cada Pokémon na zona do curso que combina com ele', () => {
     }
     expect(seen.size).toBeGreaterThan(20);
   });
+});
+
+it('reserva os últimos 1% de cada sorteio para lendários', () => {
+  expect(pickRarity(0.989999)).toBe('rare');
+  expect(pickRarity(0.99)).toBe('legendary');
 });
