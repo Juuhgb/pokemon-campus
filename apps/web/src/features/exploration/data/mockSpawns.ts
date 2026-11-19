@@ -5,11 +5,11 @@ import { interiorPoint, polygonAreaSquareMeters, randomPointInPolygon, seededRan
 import { DEFAULT_ZONES } from './defaultZones.js';
 
 /** Duração de cada "rodada" de spawns simulados. */
-export const MOCK_SLOT_MS = 30 * 60 * 1000;
+export const MOCK_SLOT_MS = 20 * 60 * 1000;
 
-/** Uma zona recebe 1 spawn a cada ~4.000 m², entre 1 e 4. */
+/** Uma zona recebe 1 spawn a cada ~4.000 m², entre 3 e 6. */
 export function spawnCountForZone(zone: CampusZone): number {
-  return Math.min(4, Math.max(1, Math.round(polygonAreaSquareMeters(zone.boundary) / 4_000) + 1));
+  return Math.min(6, 3 + Math.round(polygonAreaSquareMeters(zone.boundary) / 4_000));
 }
 
 const RARITY_ORDER: Rarity[] = ['common', 'uncommon', 'rare', 'legendary'];
@@ -81,7 +81,7 @@ function buildSpawn(
 export function createMockSpawns(now: Date = new Date(), zones: readonly CampusZone[] = DEFAULT_ZONES): ExplorationSpawn[] {
   const slot = Math.floor(now.getTime() / MOCK_SLOT_MS);
   const slotStart = slot * MOCK_SLOT_MS;
-  const current = { startsAt: slotStart, expiresAt: slotStart + 2 * MOCK_SLOT_MS };
+  const current = { startsAt: slotStart, expiresAt: slotStart + MOCK_SLOT_MS };
   const spawns: ExplorationSpawn[] = [];
 
   for (const zone of zones) {

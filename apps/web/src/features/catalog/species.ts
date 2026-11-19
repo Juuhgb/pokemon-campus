@@ -393,6 +393,8 @@ export function speciesForZone(zoneSlug: string | undefined): SpeciesInfo[] {
 
 /** Nome da zona onde a espécie aparece (null se não tem uma zona fixa). */
 export function habitatOf(speciesId: string): string | null {
+  // Jirachi tem setor base na Pokédex e continua exclusivo do evento no mapa.
+  if (speciesId === 'jirachi') return HABITAT_LABEL['ciencia-da-computacao']!;
   const slug = Object.keys(HABITATS).find((key) => HABITATS[key]!.includes(speciesId));
   return slug ? HABITAT_LABEL[slug] ?? slug : null;
 }

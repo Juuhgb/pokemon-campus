@@ -1,3 +1,4 @@
+import { PokedexStatus } from '../../player/PokedexStatus.js';
 import { useEffect, useState } from 'react';
 import { navigate, ROUTES } from '../../../app/router.js';
 import { BallIcon, BALL_NAME } from '../../../components/ui/BallIcon.js';
@@ -85,6 +86,7 @@ export function CapturePage() {
       </Arena>
 
       <section className="flex flex-1 flex-col gap-3 px-4 pt-4.5 pb-6">
+        <PokedexStatus speciesId={battle.foe.speciesId} />
         <h1 className="m-0 font-display text-[28px] leading-tight font-bold">{battle.lastCapture ? 'Tente de novo!' : 'Hora de capturar!'}</h1>
         <p className="m-0 text-[15px] leading-snug font-bold text-tinta-suave">
           Escolha a bola. Ela precisa chacoalhar 3 vezes para capturar. {species.displayName} está com {battle.foe.hp}/{battle.foe.maxHp} PV:

@@ -74,6 +74,7 @@ export type EncounterEligibility =
  * (spawnToken, janela de tempo e regras). Localização do cliente não é autoridade.
  */
 export interface EncounterStartRequest {
+  sector?: { id: string; name: string };
   spawnId: string;
   speciesId: string;
   level: number;

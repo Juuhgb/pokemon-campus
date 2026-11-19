@@ -29,7 +29,7 @@ describe('dados simulados', () => {
 
   it('são iguais para jogadores diferentes no mesmo horário (spawn compartilhado)', () => {
     const playerA = createMockSpawns(new Date('2026-11-04T15:01:00.000Z'));
-    const playerB = createMockSpawns(new Date('2026-11-04T15:29:00.000Z'));
+    const playerB = createMockSpawns(new Date('2026-11-04T15:19:00.000Z'));
     expect(playerA).toEqual(playerB);
   });
 });

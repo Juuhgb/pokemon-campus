@@ -2,7 +2,8 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EncounterStartRequest } from '../../exploration/types.js';
-import { newCreature } from '../../player/playerState.js';
+import { PlayerProvider } from '../../player/PlayerProvider.js';
+import { INITIAL_PLAYER, newCreature } from '../../player/playerState.js';
 import { BattleProvider, useBattle } from '../BattleProvider.js';
 import { hitTimesMs } from '../turnAnimation.js';
 import { BattlePage } from './BattlePage.js';
@@ -30,6 +31,13 @@ afterEach(() => {
 });
 
 describe('dano na hora certa', () => {
+  it.each([false, true])('mostra o registro da espécie selvagem, inclusive após evoluir: %s', (known) => {
+    const player = { ...INITIAL_PLAYER, creatures: known ? [{ ...TEAM[0]!, previousForms: [REQUEST.speciesId] }] : TEAM };
+    render(<PlayerProvider initial={player}><BattleProvider><Starter /></BattleProvider></PlayerProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'começar' }));
+    expect(screen.getAllByText(known ? 'Já registrado na Pokédex' : 'Falta registrar na Pokédex')).toHaveLength(1);
+  });
+
   it('a vida de cada Pokémon só cai quando o golpe dele acerta', () => {
     render(<BattleProvider><Starter /></BattleProvider>);
     fireEvent.click(screen.getByRole('button', { name: 'começar' }));

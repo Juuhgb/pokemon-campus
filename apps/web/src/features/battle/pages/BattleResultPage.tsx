@@ -11,7 +11,7 @@ import { useBattle } from '../BattleProvider.js';
 import { greatBallReward, rewardsFor, type BattleStatus } from '../battleState.js';
 
 const COPY: Record<Exclude<BattleStatus, 'active'>, { badge: string; title: string; heroBg: string; primary: { label: string; to: string } }> = {
-  captured: { badge: 'Novo!', title: 'Capturado!', heroBg: '#7ad88f', primary: { label: 'Ver no álbum', to: ROUTES.collection } },
+  captured: { badge: 'Novo!', title: 'Capturado!', heroBg: '#7ad88f', primary: { label: 'Ver na Pokédex', to: ROUTES.collection } },
   won: { badge: 'Vitória', title: 'Você venceu!', heroBg: '#ffc23d', primary: { label: 'Continuar explorando', to: ROUTES.map } },
   lost: { badge: 'Fim', title: 'Sua equipe desmaiou', heroBg: '#c9b8ff', primary: { label: 'Ver equipe', to: ROUTES.team } },
   fled: { badge: 'Fuga', title: 'Você fugiu', heroBg: '#bfe3ff', primary: { label: 'Voltar a explorar', to: ROUTES.map } },
@@ -51,7 +51,7 @@ export function BattleResultPage() {
       outcome: battle.status, foe: { speciesId: battle.foe.speciesId, level: battle.foe.level }, endedAt: new Date().toISOString(),
       xpByCreature: rewards.xpByCreature, points: rewards.points, greatBalls: greatBallReward(battle),
       captured: battle.status === 'captured' ? {
-        creatureId: crypto.randomUUID(), speciesId: battle.foe.speciesId,
+        sector: battle.sector, creatureId: crypto.randomUUID(), speciesId: battle.foe.speciesId,
         level: battle.foe.level, at: new Date().toISOString(),
       } : undefined,
     });

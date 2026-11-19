@@ -13,7 +13,7 @@ import {
   type PlayerEvent,
   type ResolvedConflict,
 } from './playerEvents.js';
-import { INITIAL_PLAYER, parseStoredPlayer, playerReducer, type PlayerAction, type PlayerState } from './playerState.js';
+import { countBySpecies, INITIAL_PLAYER, parseStoredPlayer, playerReducer, type PlayerAction, type PlayerState } from './playerState.js';
 
 /** Cópia do último estado calculado: abre o jogo na hora, antes de o IndexedDB responder. */
 const CACHE_KEY = 'pokemon-campus:player:v1';
@@ -403,6 +403,12 @@ function SyncedPlayerProvider({ children }: { children: ReactNode }) {
       <SyncContext.Provider value={sync}>{children}</SyncContext.Provider>
     </PlayerContext.Provider>
   );
+}
+
+export function useSpeciesRegistered(speciesId: string): boolean | undefined {
+  const creatures = useContext(PlayerContext)?.player.creatures;
+  const registered = useMemo(() => creatures && countBySpecies(creatures), [creatures]);
+  return registered?.has(speciesId);
 }
 
 export function usePlayer(): PlayerContextValue {

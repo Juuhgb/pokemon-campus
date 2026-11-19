@@ -89,6 +89,7 @@ export const LEGACY_GREAT_BALLS_PER_CAPTURE = 3;
 export const MAX_NAME_LENGTH = 40;
 
 export interface OwnedCreature {
+  sector?: { id: string; name: string };
   previousForms?: string[];
   id: string;
   speciesId: string;
@@ -159,9 +160,9 @@ export type PlayerAction =
   | { type: 'removeFromTeam'; creatureId: string }
   | { type: 'evolveCreature'; creatureId: string; from: string; to: string }
   | { type: 'useBall'; item: BallItem }
-  | { type: 'capture'; creatureId: string; speciesId: string; level: number; at: string }
+  | { type: 'capture'; creatureId: string; speciesId: string; level: number; at: string; sector?: { id: string; name: string }; }
   | { type: 'battleFinished'; xpByCreature: Record<string, number>; points: number }
-  | { type: 'settleBattle'; battleId: string; spawnId?: string; outcome?: BattleOutcome; foe?: { speciesId: string; level: number }; endedAt?: string; greatBalls?: number; xpByCreature: Record<string, number>; points: number; captured?: { creatureId: string; speciesId: string; level: number; at: string } }
+  | { type: 'settleBattle'; battleId: string; spawnId?: string; outcome?: BattleOutcome; foe?: { speciesId: string; level: number }; endedAt?: string; greatBalls?: number; xpByCreature: Record<string, number>; points: number; captured?: { creatureId: string; speciesId: string; level: number; at: string; sector?: { id: string; name: string }; } }
   | { type: 'reset' };
 
 export function newCreature(id: string, speciesId: string, level: number, at: string): OwnedCreature {
@@ -180,7 +181,7 @@ export function playerReducer(state: PlayerState, action: PlayerAction): PlayerS
     case 'onboard': {
       if (state.onboarded) return state;
       const starter = newCreature(action.creatureId, action.starterSpeciesId, 5, action.at);
-      return { ...state, onboarded: true, creatures: [starter], team: [starter.id] };
+      return { ...state, onboarded: true, creatures: [{ ...starter, sector: { id: 'starter', name: 'Pokémon inicial' } }], team: [starter.id] };
     }
     case 'linkGoogle': {
       // Usa o nome da conta Google se o jogador ainda está com o nome padrão.
@@ -218,7 +219,7 @@ export function playerReducer(state: PlayerState, action: PlayerAction): PlayerS
       if (action.item === UNLIMITED_BALL || state.inventory[action.item] <= 0) return state;
       return { ...state, inventory: { ...state.inventory, [action.item]: state.inventory[action.item] - 1 } };
     case 'capture': {
-      const creature = newCreature(action.creatureId, action.speciesId, action.level, action.at);
+      const creature = { ...newCreature(action.creatureId, action.speciesId, action.level, action.at), sector: action.sector };
       const team = state.team.length < MAX_TEAM_SIZE ? [...state.team, creature.id] : state.team;
       return { ...state, creatures: [...state.creatures, creature], team, captures: state.captures + 1 };
     }
