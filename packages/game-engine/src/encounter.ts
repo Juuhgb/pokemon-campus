@@ -7,6 +7,7 @@ export type BallItem = 'POKE_BALL' | 'GREAT_BALL';
 export interface BattleCreature { id: string; speciesId: string; level: number; hp: number }
 export interface BattleMove { id: string; name: string; type: string; power: number }
 export interface BattleSpecies {
+  rarity?: string;
   displayName: string;
   baseStats: { hp: number; attack: number; defense: number };
   moves: BattleMove[];
@@ -60,9 +61,13 @@ export interface BattleRewards {
 export function createBattleRulesV1(getSpecies: (id: string) => BattleSpecies) {
   const BALL_BONUS: Record<BallItem, number> = { POKE_BALL: 0, GREAT_BALL: 0.2 };
 
-  /** Chance de captura em %, pela regra do game-engine: cresce quando o PV do Pokémon cai. */
-  function captureChancePercent(foe: { hp: number; maxHp: number }, ball: BallItem): number {
-    return Math.round(captureChance(foe, BALL_BONUS[ball]) * 100);
+  function chanceForBall(foe: Pick<Combatant, 'hp' | 'maxHp' | 'speciesId'>, ball: BallItem): number {
+    const chance = captureChance(foe, BALL_BONUS[ball]);
+    return getSpecies(foe.speciesId).rarity === 'legendary' ? chance * 0.5 : chance;
+  }
+
+  function captureChancePercent(foe: Pick<Combatant, 'hp' | 'maxHp' | 'speciesId'>, ball: BallItem): number {
+    return Math.round(chanceForBall(foe, ball) * 100);
   }
 
   function battleSeed(spawnId: string, spawnToken?: string): string {
@@ -153,7 +158,7 @@ export function createBattleRulesV1(getSpecies: (id: string) => BattleSpecies) {
 
   function attemptCapture(state: BattleState, ball: BallItem): BattleState {
     if (state.status !== 'active' || state.mustSwitch) return state;
-    const chance = captureChance(state.foe, BALL_BONUS[ball]);
+    const chance = chanceForBall(state.foe, ball);
     const roll = deterministicRollV1(state.seed, state.turn, 'capture');
     if (roll < chance) {
       return { ...state, status: 'captured', turn: state.turn + 1, lastCapture: { ball, caught: true, shakes: 3 }, log: `Pegou! ${name(state.foe)} foi capturado.` };

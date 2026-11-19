@@ -1,7 +1,7 @@
 import { captureChance } from '@pokemon-campus/game-engine';
 import { describe, expect, it } from 'vitest';
 import { newCreature } from '../player/playerState.js';
-import { attack, attemptCapture, battleSeed, BALL_BONUS, createBattle, flee, rewardsFor, shakesForMiss, switchTo, type BattleState, greatBallReward } from './battleState.js';
+import { attack, attemptCapture, battleSeed, captureChancePercent, BALL_BONUS, createBattle, flee, rewardsFor, shakesForMiss, switchTo, type BattleState, greatBallReward } from './battleState.js';
 
 const AT = '2026-11-04T15:00:00.000Z';
 const SPAWN = { spawnId: 'mock-1-zone-0', speciesId: 'faiscao', level: 12 };
@@ -140,4 +140,11 @@ describe('Great Ball da captura', () => {
     expect(won / 2000).toBeLessThan(0.6);
     expect(greatBallReward({ seed: 'seed-x-xxxxxxxxxxxx', turn: 3, status: 'won' })).toBe(0);
   });
+});
+
+it.each(['mew', 'mewtwo', 'jirachi'])('reduz a chance final das duas bolas para %s', speciesId => {
+  const { foe } = createBattle({ ...SPAWN, speciesId }, team);
+  expect(captureChancePercent(foe, 'POKE_BALL')).toBe(5);
+  expect(captureChancePercent(foe, 'GREAT_BALL')).toBe(15);
+  expect(captureChancePercent({ ...foe, hp: 1, maxHp: 100 }, 'GREAT_BALL')).toBe(48);
 });

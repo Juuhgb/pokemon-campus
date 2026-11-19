@@ -36,10 +36,10 @@ const LEVEL_RANGE: Record<Rarity, [number, number]> = {
   legendary: [25, 35],
 };
 
-function pickRarity(roll: number): Rarity {
+export function pickRarity(roll: number): Rarity {
   if (roll < 0.6) return 'common';
   if (roll < 0.86) return 'uncommon';
-  if (roll < 0.97) return 'rare';
+  if (roll < 0.99) return 'rare';
   return 'legendary';
 }
 
