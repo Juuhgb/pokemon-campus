@@ -7,6 +7,16 @@ const AT = '2026-11-04T15:00:00.000Z';
 const SPAWN = { spawnId: 'mock-1-zone-0', speciesId: 'faiscao', level: 12 };
 const team = [newCreature('a', 'brasinha', 15, AT), newCreature('b', 'brotinho', 6, AT)];
 
+it.each([
+  ['captured', 100, 32, 120],
+  ['won', 120, 40, 60],
+  ['lost', 20, 6, 0],
+  ['fled', 0, 0, 0],
+] as const)('dobra apenas o XP de cada integrante: %s', (status, active, reserve, points) => {
+  const battle = createBattle({ ...SPAWN, level: 10 }, team);
+  expect(rewardsFor({ ...battle, status })).toEqual({ points, xpByCreature: { a: active, b: reserve } });
+});
+
 describe('createBattle', () => {
   it('monta o adversário e a equipe com PV cheios', () => {
     const battle = createBattle(SPAWN, team);

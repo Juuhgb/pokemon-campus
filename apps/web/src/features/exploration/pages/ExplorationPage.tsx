@@ -128,7 +128,9 @@ export function ExplorationPage({
     if (!eligibility.allowed || !position) return;
     if (position.source === 'simulated' && !SIMULATED_LOCATION_AVAILABLE) return;
 
+    const sector = zones.find(zone => zone.id === spawn.zoneId) ?? findZoneAt(spawn, zones);
     const request: EncounterStartRequest = {
+      sector: sector ? { id: sector.id, name: sector.name } : { id: 'outside', name: 'Fora dos setores' },
       spawnId: spawn.spawnId,
       speciesId: spawn.speciesId,
       level: spawn.level,
@@ -154,7 +156,7 @@ export function ExplorationPage({
     } finally {
       setEncounterPending(false);
     }
-  }, [geo.position, onStartEncounter, showToast, clock]);
+  }, [geo.position, onStartEncounter, showToast, clock, zones]);
 
   const zoneLabel = player ? (activeZone ? activeZone.name : 'Fora das zonas dos cursos') : 'Localização indisponível';
   const selectedZoneName = selectedSpawn ? zones.find((zone) => zone.id === selectedSpawn.zoneId)?.name : undefined;

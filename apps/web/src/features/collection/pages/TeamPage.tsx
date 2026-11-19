@@ -1,7 +1,10 @@
+import { EvolutionScene } from '../components/EvolutionScene.js';
+import { useEffect, useState } from 'react';
+import { playTrack, stopMusic } from '../../audio/music.js';
 import { TabScreen } from '../../../components/ui/BottomNav.js';
 import { CreatureBadge } from '../../../components/ui/CreatureBadge.js';
 import { buttonStyles, hpColor, ProgressBar, ScreenTitle } from '../../../components/ui/ui.js';
-import { getSpecies } from '../../catalog/species.js';
+import { evolutionFor, getSpecies, habitatOf, HABITAT_LABEL, SPECIES } from '../../catalog/species.js';
 import { usePlayer } from '../../player/PlayerProvider.js';
 import { MAX_TEAM_SIZE } from '../../player/playerState.js';
 
@@ -9,7 +12,44 @@ export function TeamPage() {
   const { player, dispatch } = usePlayer();
   const byId = new Map(player.creatures.map((creature) => [creature.id, creature]));
   const slots = Array.from({ length: MAX_TEAM_SIZE }, (_, index) => byId.get(player.team[index] ?? ''));
-  const available = player.creatures.filter((creature) => !player.team.includes(creature.id));
+  const [dismissed, setDismissed] = useState(false);
+  const [attempt, setAttempt] = useState<{ creatureId: string; from: string; to: string } | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const exemplar = player.creatures.find(creature => creature.id === attempt?.creatureId);
+  const applied = attempt && (exemplar?.speciesId === attempt.to || exemplar?.previousForms?.includes(attempt.to));
+  const reveal = applied && !dismissed ? attempt : null;
+
+  useEffect(() => {
+    if (!reveal) return;
+    void playTrack('evolution');
+    return () => stopMusic(false, 'evolution');
+  }, [reveal]);
+
+  async function evolve(creatureId: string, from: string, to: string) {
+    setAttempt(null);
+    setDismissed(false);
+    setSaving(true);
+    setError('');
+    try {
+      if (await dispatch({ type: 'evolveCreature', creatureId, from, to })) setAttempt({ creatureId, from, to });
+      else setError('Este exemplar ainda não pode evoluir.');
+    } catch {
+      setError('Não foi possível salvar a evolução neste aparelho. Tente novamente.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const [sector, setSector] = useState('');
+  const [order, setOrder] = useState('name');
+  const groups = SPECIES.filter(species => !sector || habitatOf(species.id) === sector).map(species => ({
+    species,
+    members: player.creatures.filter(c => c.speciesId === species.id).sort((a,b) => b.level - a.level),
+  })).filter(group => group.members.length).sort((a,b) =>
+    (order === 'level' ? b.members[0]!.level - a.members[0]!.level : 0) || a.species.displayName.localeCompare(b.species.displayName, 'pt-BR'));
+
   const full = player.team.length >= MAX_TEAM_SIZE;
 
   return (
@@ -53,29 +93,34 @@ export function TeamPage() {
       </section>
       {player.team.length <= 1 && <p className="mt-3 mb-0 text-xs font-bold text-tinta-suave">A equipe precisa de pelo menos 1 Pokémon.</p>}
 
-      <section aria-labelledby="available-title" className="mt-6 flex flex-col gap-2.5">
-        <h2 id="available-title" className="m-0 font-display text-[21px] font-semibold">Do seu álbum</h2>
-        {available.length === 0 && <p className="m-0 text-sm font-bold text-tinta-suave">Capture mais Pokémon para montar a equipe.</p>}
-        {available.map((creature) => {
-          const species = getSpecies(creature.speciesId);
-          return (
-            <div key={creature.id} className="flex items-center gap-3 rounded-[18px] ink-border bg-white py-2 pr-2 pl-2.5">
-              <CreatureBadge kind={species.kind} image={species.image} color={species.color} size={40} />
-              <span className="min-w-0 flex-1 text-[15px] font-extrabold">
-                {species.displayName} <span className="font-bold text-tinta-suave">Nv. {creature.level}</span>
-              </span>
-              <button
-                type="button"
-                disabled={full}
-                onClick={() => dispatch({ type: 'addToTeam', creatureId: creature.id })}
-                className={buttonStyles.accent}
-              >
-                Adicionar
-              </button>
-            </div>
-          );
+      <h2 className="mt-5 font-display text-xl">Meus Pokémon</h2>
+      <div className="my-3 flex flex-wrap gap-2">
+        <label>Ordenar <select className="rounded-lg ink-border bg-white p-1" value={order} onChange={e => setOrder(e.target.value)}>
+          <option value="name">Alfabeto</option><option value="level">Maior nível</option></select></label>
+        <label>Setor <select className="max-w-48 rounded-lg ink-border bg-white p-1" value={sector} onChange={e => setSector(e.target.value)}>
+          <option value="">Todos os setores</option>{Object.entries(HABITAT_LABEL).map(([id,name]) => <option key={id} value={name}>{name}</option>)}</select></label>
+      </div>
+      <section className="grid grid-cols-3 items-start gap-2">
+        {groups.map(({ species, members }) => {
+          const rule = evolutionFor(species.id);
+          return <details key={species.id} className="min-w-0 rounded-xl sticker bg-white p-2 text-center text-xs">
+            <summary className="cursor-pointer">
+              <CreatureBadge kind={species.kind} image={species.image} color={species.color} size={52}/>
+              <strong className="block">{species.displayName} ×{members.length}</strong>
+              Nv. {members.slice(0,3).map(c => c.level).join(', ')}{members.length > 3 && '…'}
+            </summary>
+            {members.map(c => <div key={c.id} className="mt-2 border-t pt-2">
+              <p>Nv. {c.level} · {habitatOf(c.speciesId)}</p>
+              {player.team.includes(c.id) ? <p>Na equipe</p> :
+                <button className={buttonStyles.accent} disabled={full} onClick={() => dispatch({ type: 'addToTeam', creatureId: c.id })}>Adicionar</button>}
+              {rule && (c.level >= rule.level ? <button className="my-1 rounded-lg ink-border bg-amarelo p-1" disabled={saving || !!reveal} onClick={() => void evolve(c.id, species.id, rule.target)}>Evoluir para {getSpecies(rule.target).displayName}</button> : <p>Evolui no Nv. {rule.level}</p>)}
+            </div>)}
+          </details>;
         })}
       </section>
+      {attempt && !applied && <p role="alert">A evolução não foi aplicada ao progresso atual. Confira a sincronização no perfil.</p>}
+      {error && <p role="alert">{error}</p>}
+      {reveal && <EvolutionScene from={reveal.from} to={reveal.to} onClose={() => setDismissed(true)} />}
     </TabScreen>
   );
 }

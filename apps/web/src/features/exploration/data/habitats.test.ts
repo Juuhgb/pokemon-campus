@@ -1,7 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { getSpecies, habitatOf, HABITATS, REGULAR_SPECIES } from '../../catalog/species.js';
+import { getSpecies, habitatOf, HABITATS, REGULAR_SPECIES, SPECIES } from '../../catalog/species.js';
+import { polygonAreaSquareMeters } from '../utils/zoneGeometry.js';
 import { CAMPUS_ZONES } from './campusZones.js';
 import { createMockSpawns, MOCK_SLOT_MS } from './mockSpawns.js';
+
+it('gera dois encontros extras por zona e troca a rodada aos 20 minutos', () => {
+  const at = (time: string) => createMockSpawns(new Date('2026-11-18T14:' + time + 'Z'), CAMPUS_ZONES)
+    .filter(spawn => spawn.zoneId);
+  const first = at('00:00');
+  expect(at('19:59')).toEqual(first);
+  const next = at('20:00');
+  expect(next[0]!.spawnId).not.toBe(first[0]!.spawnId);
+  expect(first[0]!.expiresAt).toBe(next[0]!.startsAt);
+  for (const zone of CAMPUS_ZONES) {
+    const previousCount = Math.min(4, 1 + Math.round(polygonAreaSquareMeters(zone.boundary) / 4000));
+    expect(first.filter(spawn => spawn.zoneId === zone.id)).toHaveLength(previousCount + 2);
+  }
+});
 
 /** Espécies que apareceram em cada zona ao longo de muitas rodadas. */
 function spawnedByZone(rounds = 800) {
@@ -20,6 +35,8 @@ function spawnedByZone(rounds = 800) {
 
 describe('cada Pokémon na zona do curso que combina com ele', () => {
   it('toda espécie mora em exatamente uma zona de curso', () => {
+    const sectorNames = CAMPUS_ZONES.map(zone => zone.name);
+    for (const species of SPECIES) expect(sectorNames).toContain(habitatOf(species.id));
     const all = Object.values(HABITATS).flat();
     expect([...all].sort()).toEqual(REGULAR_SPECIES.map((species) => species.id).sort());
     expect(new Set(all).size).toBe(all.length);

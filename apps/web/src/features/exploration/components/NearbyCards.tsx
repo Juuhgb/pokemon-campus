@@ -1,3 +1,4 @@
+import { PokedexStatus } from '../../player/PokedexStatus.js';
 import { CreatureBadge } from '../../../components/ui/CreatureBadge.js';
 import { getSpecies, RARITY_LABEL } from '../../catalog/species.js';
 import type { GeoPoint } from '../types.js';
@@ -59,6 +60,7 @@ export function NearbyCards({ player, nearby, onSelect, rangeMeters = 300, layou
                   <span>
                     <span className="block font-display text-[17px] leading-tight font-semibold">{species.displayName}</span>
                     <span className="block text-xs font-bold text-tinta-suave">Nv. {spawn.level} · {RARITY_LABEL[spawn.rarity]}</span>
+                    <PokedexStatus speciesId={spawn.speciesId} />
                   </span>
                   <span className="flex items-center justify-between gap-1.5">
                     <span className="font-display text-xl font-bold whitespace-nowrap">{formatDistance(distanceMeters)}</span>

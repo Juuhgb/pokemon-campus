@@ -109,7 +109,7 @@ export function BattlePage() {
           <span className="rounded-full bg-tinta px-3 py-1 font-display text-[15px] font-semibold text-amarelo">Turno {battle.turn}</span>
           <ConnectionStatus />
         </div>
-        <HpCard combatant={shownFoe} note="selvagem" className="absolute top-[62px] left-3.5" />
+        <HpCard combatant={shownFoe} note="selvagem" showPokedex className="absolute top-[62px] left-3.5" />
 
         <div className="absolute top-[92px] right-[54px]">
           <div key={`foe-${turnKey}`} className={foeOuter} style={delay(counterAt)}>

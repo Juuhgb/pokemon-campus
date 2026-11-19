@@ -11,7 +11,7 @@ import type { EditableZoneRepository, ZoneRepository, ZoneStore } from './zoneRe
  *
  * Cada aparelho guarda a última versão recebida no IndexedDB, então o jogo continua usando as
  * zonas do admin mesmo offline. Como os spawns das zonas são gerados de forma determinística
- * (zona + janela de 30 min), todos os aparelhos com as mesmas zonas veem os mesmos Pokémon.
+ * (zona + janela de 20 min), todos os aparelhos com as mesmas zonas veem os mesmos Pokémon.
  */
 
 export interface WorldCache {

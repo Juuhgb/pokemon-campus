@@ -1,8 +1,9 @@
+import { PokedexStatus } from '../../player/PokedexStatus.js';
 import { hpColor, ProgressBar } from '../../../components/ui/ui.js';
 import { getSpecies } from '../../catalog/species.js';
 import type { Combatant } from '../battleState.js';
 
-export function HpCard({ combatant, note, className }: { combatant: Combatant; note?: string; className?: string }) {
+export function HpCard({ combatant, note, showPokedex = false, className }: { combatant: Combatant; note?: string; showPokedex?: boolean; className?: string }) {
   const species = getSpecies(combatant.speciesId);
   const percent = (Math.max(0, combatant.hp) / combatant.maxHp) * 100;
   return (
@@ -13,6 +14,7 @@ export function HpCard({ combatant, note, className }: { combatant: Combatant; n
       </div>
       <div className="mt-1.5"><ProgressBar percent={percent} color={hpColor(percent)} label={`Vida de ${species.displayName}`} /></div>
       <span className="text-[11px] font-extrabold text-tinta-suave">PV {Math.max(0, combatant.hp)}/{combatant.maxHp}{note ? ` · ${note}` : ''}</span>
+      {showPokedex && <div><PokedexStatus speciesId={combatant.speciesId} /></div>}
     </div>
   );
 }

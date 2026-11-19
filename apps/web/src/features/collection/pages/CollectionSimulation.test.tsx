@@ -8,7 +8,7 @@ afterEach(cleanup);
 it('adiciona exemplares prontos para evoluir e reinicia a coleção ao reabrir', () => {
   const view = render(<CollectionSimulation />);
   expect(screen.getByText('Evoluir para Ivysaur')).toBeTruthy();
-  fireEvent.change(screen.getByRole('combobox'), { target: { value: 'riolu' } });
+  fireEvent.change(screen.getByRole('combobox', { name: 'Espécie de teste' }), { target: { value: 'riolu' } });
   fireEvent.click(screen.getByRole('button', { name: 'Adicionar no nível 20' }));
   fireEvent.click(screen.getByRole('button', { name: 'Adicionar no nível 20' }));
   expect(screen.getAllByText('Evoluir para Lucario')).toHaveLength(2);

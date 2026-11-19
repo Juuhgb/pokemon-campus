@@ -1,3 +1,4 @@
+import { PokedexStatus } from '../../player/PokedexStatus.js';
 import { CreatureBadge } from '../../../components/ui/CreatureBadge.js';
 import { buttonStyles } from '../../../components/ui/ui.js';
 import { getSpecies, RARITY_CHIP, RARITY_LABEL } from '../../catalog/species.js';
@@ -76,7 +77,8 @@ export function EncounterSheet({ spawn, eligibility, now, zoneName, pending = fa
         <div className="flex flex-wrap gap-2">
           <span className="rounded-full border-2 border-tinta px-3 py-1 text-[13px] font-extrabold" style={{ background: species.color }}>{species.type}</span>
           <span className="rounded-full border-2 border-tinta px-3 py-1 text-[13px] font-extrabold" style={{ background: chip.bg, color: chip.fg }}>{RARITY_LABEL[spawn.rarity]}</span>
-          {zoneName && <span className="rounded-full border-2 border-tinta bg-white px-3 py-1 text-[13px] font-extrabold">{zoneName}</span>}
+          <PokedexStatus speciesId={spawn.speciesId} />
+            {zoneName && <span className="rounded-full border-2 border-tinta bg-white px-3 py-1 text-[13px] font-extrabold">{zoneName}</span>}
         </div>
 
         <div className={`flex items-center gap-3.5 rounded-[20px] sticker px-4 py-3.5 ${eligibility.allowed ? 'bg-verde' : 'bg-white'}`}>

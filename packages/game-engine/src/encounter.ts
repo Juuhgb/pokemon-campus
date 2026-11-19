@@ -34,6 +34,7 @@ export interface CaptureAttempt {
 }
 
 export interface BattleState {
+  sector?: { id: string; name: string };
   id: string;
   spawnId: string;
   seed: string;
@@ -75,7 +76,7 @@ export function createBattleRulesV1(getSpecies: (id: string) => BattleSpecies) {
   }
 
   function createBattle(
-    spawn: { spawnId: string; speciesId: string; level: number; spawnToken?: string; battleSeed?: string; rulesVersion?: number; encounterId?: string },
+    spawn: { sector?: { id: string; name: string }; spawnId: string; speciesId: string; level: number; spawnToken?: string; battleSeed?: string; rulesVersion?: number; encounterId?: string },
     team: readonly BattleCreature[],
   ): BattleState {
     if (spawn.rulesVersion !== undefined && spawn.rulesVersion !== 1) throw new Error('Unsupported battle rules version');
@@ -85,6 +86,7 @@ export function createBattleRulesV1(getSpecies: (id: string) => BattleSpecies) {
     return {
       id: spawn.encounterId ?? spawn.spawnId,
       spawnId: spawn.spawnId,
+      ...(spawn.sector && { sector: spawn.sector }),
       seed: spawn.battleSeed ?? battleSeed(spawn.spawnId),
       foe: toCombatant(spawn.speciesId, spawn.level),
       team: members,
@@ -172,7 +174,8 @@ export function createBattleRulesV1(getSpecies: (id: string) => BattleSpecies) {
     const { experience: base, points } = battleRewardsV1(state.status, level);
     const xpByCreature: Record<string, number> = {};
     state.team.forEach((member, index) => {
-      xpByCreature[member.creatureId] = index === state.activeIndex ? base : Math.floor(base / 3);
+      const share = index === state.activeIndex ? base : Math.floor(base / 3);
+      xpByCreature[member.creatureId] = share * 2;
     });
     return { points, xpByCreature };
   }

@@ -48,6 +48,8 @@ describe('TeamPage', () => {
     render(<PlayerProvider initial={player}><TeamPage /></PlayerProvider>);
     const removeBrasinha = screen.getByRole('button', { name: 'Tirar Charmander da equipe' }) as HTMLButtonElement;
     expect(removeBrasinha.disabled).toBe(true);
+    const add = screen.getByText('Bulbasaur ×1').closest('details')!;
+    add.open = true;
     fireEvent.click(screen.getByRole('button', { name: 'Adicionar' }));
     expect(screen.getByRole('button', { name: 'Tirar Bulbasaur da equipe' })).toBeTruthy();
     expect(removeBrasinha.disabled).toBe(false);
@@ -84,13 +86,36 @@ describe('CaptureThrow', () => {
 
 it('shows owned species details in the Pokedex and keeps unknown species hidden', () => {
   render(<PlayerProvider initial={player}><CollectionPage /></PlayerProvider>);
-  expect(screen.getAllByText('Ver na Pokédex')).toHaveLength(2);
-  expect(screen.getByText(/Tipo: Fogo/)).toBeTruthy();
-  expect(screen.getByText(/Nv. 15 · PV/)).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Charmander' })).toBeTruthy();
   expect(screen.getAllByText('???').length).toBeGreaterThan(0);
-  // A espécie de id "brasinha" é exibida como Charmander no catálogo atual.
+  const search = screen.getByRole('searchbox');
+  fireEvent.change(search, { target: { value: '#002' } });
+  const missing = screen.getByText('#002').closest('article')!;
+  expect(missing.textContent).toContain('Falta achar');
+  expect(missing.querySelector('.brightness-0 img')).toBeTruthy();
+  fireEvent.click(missing);
+  expect(screen.queryByRole('dialog')).toBeNull();
+  fireEvent.change(search, { target: { value: 'Squirtle' } });
+  expect(screen.queryByText('#002')).toBeNull();
+  fireEvent.change(search, { target: { value: '' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Raro' }));
+  expect(screen.getByText('#006')).toBeTruthy();
+  expect(screen.queryByText('#001')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Todos' }));
+  expect(screen.getByText('#001')).toBeTruthy();
   fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'Charmander' } });
-  expect(screen.getAllByText('Ver na Pokédex')).toHaveLength(1);
+  expect(screen.queryByRole('button', { name: 'Bulbasaur' })).toBeNull();
+  Object.defineProperty(HTMLDialogElement.prototype, 'showModal', { configurable: true, value() { this.open = true; } });
+  try {
+    fireEvent.click(screen.getByRole('button', { name: 'Charmander' }));
+    expect(screen.getByRole('dialog', { name: 'Charmander' })).toBeTruthy();
+    expect(screen.getByText('Medicina Veterinária')).toBeTruthy();
+    expect(screen.queryByText('Evoluir para Charmeleon')).toBeNull();
+    fireEvent.click(screen.getByText('Fechar'));
+    expect(screen.queryByRole('dialog')).toBeNull();
+  } finally {
+    Reflect.deleteProperty(HTMLDialogElement.prototype, 'showModal');
+  }
 });
 
 it('evolui o exemplar pelo álbum e revela a nova forma', async () => {
@@ -101,7 +126,7 @@ it('evolui o exemplar pelo álbum e revela a nova forma', async () => {
     value(this: HTMLDialogElement) { this.open = true; },
   });
   try {
-    render(<PlayerProvider initial={player}><CollectionPage /></PlayerProvider>);
+    render(<PlayerProvider initial={player}><TeamPage /></PlayerProvider>);
     const evolve = screen.getByText('Evoluir para Charmeleon');
     evolve.closest('details')!.open = true;
     fireEvent.click(evolve);
@@ -110,8 +135,8 @@ it('evolui o exemplar pelo álbum e revela a nova forma', async () => {
     expect(play).toHaveBeenCalledExactlyOnceWith('evolution');
     fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
     expect(stop).toHaveBeenCalledWith(false, 'evolution');
-    expect(screen.getByText('Charmander', { selector: 'h2' })).toBeTruthy();
-    expect(screen.getByText('Registrado')).toBeTruthy();
+    expect(screen.queryByText('Charmander ×1')).toBeNull();
+    expect(screen.getByText('Charmeleon ×1')).toBeTruthy();
     expect(screen.queryByText('Evoluir para Charmeleon')).toBeNull();
     expect(screen.getByText('Charmeleon', { selector: 'h2' })).toBeTruthy();
     expect(screen.getByText('Evolui no Nv. 16')).toBeTruthy();
@@ -120,4 +145,19 @@ it('evolui o exemplar pelo álbum e revela a nova forma', async () => {
     play.mockRestore();
     stop.mockRestore();
   }
+});
+
+it('filtra os exemplares por setor antes de contar e ordenar as espécies', () => {
+  const creatures = [
+    { ...newCreature('a', 'brasinha', 15, AT), sector: { id: 'vet', name: 'Veterinária' } },
+    { ...newCreature('b', 'brasinha', 6, AT), sector: { id: 'bio', name: 'Biologia' } },
+    { ...newCreature('c', 'brotinho', 10, AT), sector: { id: 'bio', name: 'Biologia' } },
+  ];
+  const { container } = render(<PlayerProvider initial={{ ...player, creatures }}><TeamPage /></PlayerProvider>);
+  const names = () => Array.from(container.querySelectorAll('summary strong'), el => el.textContent);
+  expect(names()).toEqual(['Bulbasaur ×1', 'Charmander ×2']);
+  fireEvent.change(screen.getByLabelText('Ordenar'), { target: { value: 'level' } });
+  expect(names()).toEqual(['Charmander ×2', 'Bulbasaur ×1']);
+  fireEvent.change(screen.getByLabelText('Setor'), { target: { value: 'Medicina Veterinária' } });
+  expect(names()).toEqual(['Charmander ×2']);
 });
